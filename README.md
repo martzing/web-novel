@@ -1,63 +1,69 @@
 # หมอกจันทร์ (Mokchan) · Xianxia web novel platform
 
-React (Vite + TS) + Go (chi + pgx) + PostgreSQL 16 + Redis 7. Phase-1 scaffold: catalog browse, novel detail, and chapter reading are wired end-to-end from Postgres to the browser. Coins, unlocks, auth, and writer workspace land in later phases.
+React (Vite + TS + TanStack Query) + Go 1.25 (Gin + GORM + pgx) + PostgreSQL 16
++ Redis 7.
+
+PRD phases 1–4 are implemented end to end: catalog and reader, accounts with
+synced reader preferences, library and bookmarks, a coin economy with mock
+purchases and chapter unlock, comments and reviews, the writer workspace with
+stats, plus follows, notifications and weekly ranking.
 
 ## Layout
 
 ```
 web-novel/
-├── backend/                      Go API (chi, pgx, goose)
+├── backend/                        Go API (Gin, GORM, goose)
 │   ├── cmd/
-│   │   ├── api/                  HTTP server entrypoint
-│   │   └── migrate/              goose migration runner
+│   │   ├── api/                    HTTP server entrypoint
+│   │   ├── migrate/                goose migration runner
+│   │   └── worker/                 background job runner
 │   ├── internal/
-│   │   ├── config/               environment/config loader
-│   │   ├── db/                   pgx pool setup
-│   │   ├── domain/catalog/       catalog business types and ports
-│   │   ├── entities/             shared persistence/domain entities
-│   │   ├── handler/catalog/      HTTP handlers and DTO mapping
-│   │   ├── httpx/                JSON/error response helpers
-│   │   ├── repository/catalog/   Postgres catalog repository
-│   │   ├── server/               chi router and middleware wiring
-│   │   └── service/catalog/      catalog application service + tests
-│   ├── migrations/               embedded SQL migrations and seed data
-│   ├── test/makeme/              test data builder helpers
-│   ├── .env.example              sample backend environment
+│   │   ├── auth/                   HS256 access tokens
+│   │   ├── config/                 environment loader
+│   │   ├── crypto/argon2id/        password hashing
+│   │   ├── db/                     GORM connection factory
+│   │   ├── domain/<context>/       business types, ports, pure policy
+│   │   ├── entities/               GORM persistence models
+│   │   ├── glossaryrender/         {{term}} → <span data-k> renderer
+│   │   ├── handler/<context>/      Gin handlers and response DTOs
+│   │   ├── httpx/                  error envelope, cursors, paging, idempotency
+│   │   ├── jobs/                   scheduler and background jobs
+│   │   ├── middleware/             auth, roles, rate limiting
+│   │   ├── ratelimit/              in-process token bucket, distinct counter
+│   │   ├── repository/<context>/   GORM adapters
+│   │   ├── repository/dbctx/       ambient-transaction plumbing
+│   │   ├── server/                 composition root and route wiring
+│   │   ├── service/<context>/      application use cases
+│   │   └── storage/                cover-upload adapters
+│   ├── migrations/                 embedded SQL migrations and seed data
+│   ├── test/apitest/               handler integration-test harness
+│   ├── test/makeme/                test data builders (testcontainers Postgres)
+│   ├── .env.example
 │   ├── Dockerfile
 │   ├── Makefile
 │   ├── go.mod
 │   └── go.sum
-├── frontend/                     Vite + React + TypeScript
+├── frontend/                       Vite + React + TypeScript
 │   ├── src/
-│   │   ├── layout/               app shell/navigation
-│   │   ├── lib/api.ts            typed API client
-│   │   ├── routes/               Home, Browse, Novel, Reader, Stub
-│   │   ├── App.tsx               route declarations
-│   │   ├── main.tsx              React bootstrap
-│   │   └── styles.css            global UI styles
-│   ├── .env.example              sample frontend environment
+│   │   ├── components/             shared UI pieces
+│   │   ├── layout/                 app shell, sidebar, bottom tab bar
+│   │   ├── lib/                    API client, auth, reader prefs, formatting
+│   │   ├── routes/                 page-level route components
+│   │   ├── styles/                 design tokens and stylesheets
+│   │   ├── App.tsx                 route declarations
+│   │   └── main.tsx                React bootstrap
+│   ├── .env.example
 │   ├── Dockerfile
 │   ├── index.html
 │   ├── nginx.conf
 │   ├── package.json
-│   ├── package-lock.json
 │   ├── tsconfig.json
 │   └── vite.config.ts
-├── docs/                         product and engineering docs
-│   ├── api-spec.md
-│   ├── architecture.md
-│   ├── database-schema.md
-│   ├── prd.md
-│   ├── README.md
-│   ├── test-cases.md
-│   └── user-stories.md
-├── design/                       static design mocks and support assets
-│   ├── Xianxia Platform.dc.html
-│   ├── Xianxia Reader.dc.html
-│   └── support.js
-├── .claude/skills/               local agent skill references
-├── .gitignore
-├── docker-compose.yml            Postgres, Redis, API, and web services
+├── docs/                           product and engineering docs
+├── design/                         static design mocks and support assets
+├── docker-compose.yml              Postgres, Redis, API, and web services
+├── AGENT.md                        shared agent playbook
+├── CLAUDE.md                       Claude-specific entrypoint
 └── README.md
 ```
 
@@ -67,9 +73,9 @@ Generated/local artifacts are intentionally left out of the map, including
 
 ## Requirements
 
-- Go 1.22+
-- Node 18+ (Node 16 works with the pinned Vite 4 but is not recommended)
-- Docker (for Postgres/Redis; or install them locally)
+- Go 1.25+
+- Node 18+
+- Docker (for Postgres/Redis, and for the backend integration tests)
 - `psql` if you want to poke the database
 
 ## Quick start (docker-compose)
@@ -86,6 +92,8 @@ Open:
 - API → http://localhost:8080/health
 - Postgres → localhost:5432 (user/pass/db: `mokchan`)
 
+The seeded translator account is `mokchan@example.com` / `mokchan-dev`.
+
 ## Local dev without docker
 
 ```bash
@@ -96,7 +104,7 @@ docker compose up -d postgres redis
 cd backend
 cp .env.example .env
 go mod tidy
-go run ./cmd/migrate -cmd up      # applies 0001_init.sql and 0002_seed.sql
+go run ./cmd/migrate -cmd up      # applies 0001 … 0006
 go run ./cmd/api                  # listens on :8080
 
 # 3. frontend
@@ -106,29 +114,77 @@ npm install
 npm run dev                       # http://localhost:5173, proxies /api → :8080
 ```
 
+`JWT_SECRET` must be at least 16 characters or the API refuses to start.
+
+Background jobs (bonus expiry, glossary re-render, scheduled publishing, stats
+rollups, weekly ranking) run inside the API when `RUN_JOBS_IN_API=true`, the
+default outside production. To run them separately:
+
+```bash
+cd backend
+go run ./cmd/worker          # scheduled
+go run ./cmd/worker -once    # run every job once and exit
+```
+
 ## Verifying end-to-end
 
 ```bash
 curl -s http://localhost:8080/health
-curl -s http://localhost:8080/api/v1/genres              | jq .
-curl -s http://localhost:8080/api/v1/novels?sort=popular | jq .
-curl -s http://localhost:8080/api/v1/novels/nine-streams-sword-immortal | jq .
+curl -s http://localhost:8080/api/v1/genres | jq .
+curl -s 'http://localhost:8080/api/v1/novels?q=เซียนดาบ' | jq .
+
+TOKEN=$(curl -sX POST http://localhost:8080/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"smoke","email":"smoke@example.com","password":"hunter2hunter2"}' \
+  | jq -r .token)
+
+curl -s http://localhost:8080/api/v1/auth/me -H "Authorization: Bearer $TOKEN" | jq .
+curl -sX POST http://localhost:8080/api/v1/purchases \
+  -H "Authorization: Bearer $TOKEN" -H 'Idempotency-Key: smoke-1' \
+  -H 'Content-Type: application/json' -d '{"pack_id":"3"}' | jq .
 ```
 
-Then browse http://localhost:5173 — the home page fetches from `/api/v1/novels`, the browse page filters by genre, novel detail lists arcs + chapters, and clicking chapter 87 opens the reader with the seeded chapter body.
+Then browse http://localhost:5173: register, pick genres, browse, open a novel,
+read a free chapter, change the reader theme and reload, tap an inline glossary
+term, hit a paid chapter, top up through the mock checkout, unlock, comment and
+rate.
 
-## What's implemented (Phase 1)
+## Testing
 
-- Full DDL for all Phase 1–4 tables (including coin ledger, glossary trigger, partitioned read events).
-- Seed data matching the design: novel `เซียนดาบเก้าสายธาร`, 4 arcs, chapters 86–88, glossary, coin packs.
-- Read-only API: `GET /genres`, `GET /novels`, `GET /novels/{slug}`, `GET /novels/{id}/chapters`, `GET /chapters/{id}` (locked chapters return `body_html: null`).
-- React shell (sidebar), home, browse with genre chips, novel detail, chapter reader honouring `data-k` glossary spans.
+```bash
+cd backend
+gofmt -l .
+go vet ./...
+go test ./...
+```
 
-## What's next
+The repository/handler suites run against a real PostgreSQL through
+testcontainers. **Without a reachable Docker socket they skip rather than fail**,
+so a green run can mean nothing ran. On Rancher Desktop:
 
-- **Phase 1b**: auth (register/login/JWT), reader prefs sync, bookmarks, reading progress.
-- **Phase 2**: coin wallet + mock payment (`POST /purchases`, `POST /purchases/{id}/mock-complete`), chapter unlock, comments.
-- **Phase 3**: writer workspace (drafts, publish, glossary editor, stats).
-- **Phase 4**: reviews, follows, notifications, ranking.
+```bash
+export DOCKER_HOST=unix://$HOME/.rd/docker.sock
+cd backend && go test -count=1 ./...
+go test -count=1 -v ./... | grep SKIP    # should print nothing
+```
 
-Planning artefacts (user stories, PRD, API spec, tests, schema deltas) live in the session memory file `/memories/session/plan.md`.
+Frontend:
+
+```bash
+cd frontend
+npm run typecheck
+npm run build
+```
+
+`docs/test-cases.md` maps every unit and integration case to its test file and
+function.
+
+## Not implemented
+
+- **Phase 5** — real payment providers (Omise / TrueMoney / Stripe). Phase 2
+  ships a mock provider behind `PAYMENTS_MOCK_ENABLED`; the checkout screen is a
+  UI shell over `POST /purchases` + `/mock-complete` and transmits no card data.
+- `GET /series/{id}` — the `series` table exists but is unused.
+- Most `/admin/*` endpoints. Only `POST /admin/wallet-adjust` is implemented,
+  because the coin test matrix requires it.
+- Browser end-to-end and load tests (tiers E and L in `docs/test-cases.md`).

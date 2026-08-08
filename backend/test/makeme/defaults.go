@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-func ptr[T any](value T) *T {
-	return &value
-}
-
 func fixtureCode(prefix string, sequence int64, width int) string {
 	return fmt.Sprintf("%s%0*d", prefix, width, sequence)
 }

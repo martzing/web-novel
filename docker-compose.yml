@@ -34,14 +34,22 @@ services:
       ENV: development
       DATABASE_URL: postgres://mokchan:mokchan@postgres:5432/mokchan?sslmode=disable
       REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: dev-secret-change-me
+      # Must be at least 16 characters or the API refuses to start.
+      JWT_SECRET: dev-secret-change-me-please
       CORS_ORIGINS: http://localhost:5173,http://localhost:8081
       PAYMENTS_MOCK_ENABLED: "true"
+      UPLOAD_DIR: /app/uploads
+      PUBLIC_UPLOAD_BASE: /uploads
+      # Development runs the background jobs inside the API, so no separate
+      # worker service is needed for a complete system.
+      RUN_JOBS_IN_API: "true"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
     ports:
       - "8080:8080"
 
@@ -56,3 +64,4 @@ services:
 
 volumes:
   pg_data:
+  uploads:

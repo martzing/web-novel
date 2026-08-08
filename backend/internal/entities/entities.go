@@ -1,6 +1,13 @@
+// Package entities holds the GORM persistence models. Only repository adapters
+// import it; domain packages never see these types.
 package entities
 
-import "time"
+import (
+	"slices"
+	"time"
+
+	"github.com/lib/pq"
+)
 
 // Genre matches the `genres` table.
 type Genre struct {
@@ -123,18 +130,85 @@ type GlossaryEntry struct {
 
 func (GlossaryEntry) TableName() string { return "glossary_entries" }
 
-// User matches the `users` table (subset needed for Phase 1 fixture wiring).
-// The `roles` text[] column is intentionally omitted so GORM lets Postgres apply its default.
+// Role names stored in users.roles.
+const (
+	RoleReader     = "reader"
+	RoleTranslator = "translator"
+	RoleAdmin      = "admin"
+)
+
+// User matches the `users` table.
+//
+// Roles maps the `text[]` column through pq.StringArray. It must always be set
+// on insert: once the field exists GORM sends it on every INSERT, so leaving it
+// nil writes NULL and violates the NOT NULL constraint rather than falling back
+// to the column's ARRAY['reader'] default.
 type User struct {
-	ID           int64     `gorm:"primaryKey;column:id"                   json:"id,string"`
-	Username     string    `gorm:"column:username;uniqueIndex;not null"   json:"username"`
-	Email        string    `gorm:"column:email;uniqueIndex;not null"      json:"email"`
-	PasswordHash string    `gorm:"column:password_hash;not null"          json:"-"`
-	DisplayName  string    `gorm:"column:display_name;not null"           json:"display_name"`
-	AvatarURL    *string   `gorm:"column:avatar_url"                      json:"avatar_url,omitempty"`
-	Status       string    `gorm:"column:status;not null;default:active"  json:"status"`
-	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime"       json:"created_at"`
-	UpdatedAt    time.Time `gorm:"column:updated_at;autoUpdateTime"       json:"updated_at"`
+	ID           int64          `gorm:"primaryKey;column:id"                     json:"id,string"`
+	Username     string         `gorm:"column:username;uniqueIndex;not null"     json:"username"`
+	Email        string         `gorm:"column:email;uniqueIndex;not null"        json:"email"`
+	PasswordHash string         `gorm:"column:password_hash;not null"            json:"-"`
+	DisplayName  string         `gorm:"column:display_name;not null"             json:"display_name"`
+	AvatarURL    *string        `gorm:"column:avatar_url"                        json:"avatar_url,omitempty"`
+	Roles        pq.StringArray `gorm:"column:roles;type:text[];not null"        json:"roles"`
+	Status       string         `gorm:"column:status;not null;default:active"    json:"status"`
+	CreatedAt    time.Time      `gorm:"column:created_at;autoCreateTime"         json:"created_at"`
+	UpdatedAt    time.Time      `gorm:"column:updated_at;autoUpdateTime"         json:"updated_at"`
 }
 
 func (User) TableName() string { return "users" }
+
+// HasRole reports whether the user carries the given role.
+func (u User) HasRole(role string) bool {
+	return slices.Contains(u.Roles, role)
+}
+
+// WriterProfile matches `writer_profiles`.
+type WriterProfile struct {
+	UserID     int64     `gorm:"primaryKey;column:user_id"          json:"user_id,string"`
+	PenName    string    `gorm:"column:pen_name;not null"           json:"pen_name"`
+	Bio        *string   `gorm:"column:bio"                         json:"bio,omitempty"`
+	SectName   *string   `gorm:"column:sect_name"                   json:"sect_name,omitempty"`
+	PayoutInfo string    `gorm:"column:payout_info;type:jsonb;default:'{}'" json:"payout_info"`
+	UpdatedAt  time.Time `gorm:"column:updated_at;autoUpdateTime"   json:"updated_at"`
+}
+
+func (WriterProfile) TableName() string { return "writer_profiles" }
+
+// UserPrefs matches `user_prefs` — reader settings synced across devices.
+type UserPrefs struct {
+	UserID      int64     `gorm:"primaryKey;column:user_id"                json:"user_id,string"`
+	Theme       string    `gorm:"column:theme;not null;default:light"      json:"theme"`
+	Font        string    `gorm:"column:font;not null;default:loop"        json:"font"`
+	FontSize    int16     `gorm:"column:font_size;not null;default:20"     json:"font_size"`
+	LineHeight  float64   `gorm:"column:line_height;not null;default:2.0"  json:"line_height"`
+	ColumnWidth string    `gorm:"column:column_width;not null;default:normal" json:"column_width"`
+	UpdatedAt   time.Time `gorm:"column:updated_at;autoUpdateTime"         json:"updated_at"`
+}
+
+func (UserPrefs) TableName() string { return "user_prefs" }
+
+// UserGenrePref matches `user_genre_prefs` — onboarding taste weights.
+type UserGenrePref struct {
+	UserID  int64 `gorm:"primaryKey;column:user_id"          json:"user_id,string"`
+	GenreID int64 `gorm:"primaryKey;column:genre_id"         json:"genre_id,string"`
+	Weight  int16 `gorm:"column:weight;not null;default:1"   json:"weight"`
+}
+
+func (UserGenrePref) TableName() string { return "user_genre_prefs" }
+
+// RefreshToken matches `refresh_tokens` (migration 0003). Only the SHA-256 of
+// the token is stored, so a database dump grants no sessions.
+type RefreshToken struct {
+	ID         int64      `gorm:"primaryKey;column:id"`
+	UserID     int64      `gorm:"column:user_id;not null;index"`
+	FamilyID   string     `gorm:"column:family_id;not null;index"`
+	TokenHash  []byte     `gorm:"column:token_hash;not null;uniqueIndex"`
+	UserAgent  *string    `gorm:"column:user_agent"`
+	ExpiresAt  time.Time  `gorm:"column:expires_at;not null"`
+	RevokedAt  *time.Time `gorm:"column:revoked_at"`
+	ReplacedBy *int64     `gorm:"column:replaced_by"`
+	CreatedAt  time.Time  `gorm:"column:created_at;autoCreateTime"`
+}
+
+func (RefreshToken) TableName() string { return "refresh_tokens" }

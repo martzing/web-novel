@@ -6,11 +6,14 @@ editing guardrails.
 
 ## Quick Context
 
-Mokchan is a xianxia web novel platform. The current implementation covers a
-Phase 1 read-only experience: catalog browse, novel detail, and chapter reader.
-Later phases include auth, reader preferences, wallet/coins, purchases,
-unlocks, comments, writer workspace, reviews, follows, notifications, and
-ranking.
+Mokchan (หมอกจันทร์) is a Thai-first web novel platform for translated Chinese
+xianxia and wuxia works. PRD phases 1–4 are implemented: catalog and reader,
+accounts and synced preferences, library and bookmarks, a coin economy with
+mock purchases and chapter unlock, comments and reviews, the writer workspace
+with stats, plus follows, notifications and weekly ranking.
+
+Phase 5 (real payment providers), `GET /series/{id}`, and most `/admin/*`
+endpoints are deliberately not implemented.
 
 ## Before Editing
 
@@ -30,8 +33,12 @@ ranking.
 - Put database mapping and queries in repositories.
 - Register new backend routes and dependencies from `backend/internal/server/`.
 - Keep React route/page work under `frontend/src/routes/`, shared API calls in
-  `frontend/src/lib/api.ts`, and shell/navigation work under
-  `frontend/src/layout/`.
+  `frontend/src/lib/api.ts`, styling in `frontend/src/styles/`, and
+  shell/navigation work under `frontend/src/layout/`.
+
+`AGENT.md` has a "Rules With Teeth" section listing the traps that have already
+caused defects here — gin wildcard names, the single coin write path, counting
+runes for Thai, and Thai search ranking. Read it before touching those areas.
 
 ## Common Commands
 
@@ -42,6 +49,15 @@ cd backend
 go test ./...
 go run ./cmd/migrate -cmd up
 go run ./cmd/api
+go run ./cmd/worker
+```
+
+Backend integration tests need a reachable Docker socket, or testcontainers
+**skips** them silently:
+
+```bash
+export DOCKER_HOST=unix://$HOME/.rd/docker.sock   # Rancher Desktop
+cd backend && go test -count=1 ./...
 ```
 
 Frontend:

@@ -1,230 +1,178 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
-import { api, NovelListItem } from "../lib/api";
+import { api } from "../lib/api";
+import { useAuth } from "../lib/auth";
+import { greeting, numberTH, percent, relativeTime } from "../lib/format";
+import { Cover, Empty, Loading, NovelCard } from "../components";
 
 export default function Home() {
-  const [popular, setPopular] = useState<NovelListItem[] | null>(null);
-  const [latest, setLatest] = useState<NovelListItem[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([
-      api.listNovels({ sort: "popular" }),
-      api.listNovels({ sort: "latest" }),
-    ])
-      .then(([p, l]) => {
-        if (cancelled) return;
-        setPopular(p);
-        setLatest(l);
-      })
-      .catch((e: Error) => !cancelled && setError(e.message));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const latest = useQuery({
+    queryKey: ["novels", "latest"],
+    queryFn: () => api.listNovels({ sort: "latest", limit: 8 }),
+  });
+
+  const ranking = useQuery({
+    queryKey: ["ranking", "weekly"],
+    queryFn: () => api.weeklyRanking(5),
+  });
+
+  const shelf = useQuery({
+    queryKey: ["shelf", "reading"],
+    queryFn: () => api.getShelf("reading"),
+    enabled: Boolean(user),
+  });
+
+  const continueReading = shelf.data?.data?.[0];
+  const featured = ranking.data?.data?.[0];
 
   return (
-    <section style={{ maxWidth: 1080 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: 20,
-        }}
-      >
-        <h1
-          className="serif"
-          style={{ fontSize: 30, fontWeight: 600, margin: 0 }}
-        >
-          สวัสดียามบ่าย
-        </h1>
-        <div style={{ fontSize: 12.5, color: "var(--soft)" }}>
-          อ่านสะสมสัปดาห์นี้ 4 ชั่วโมง 12 นาที
+    <section>
+      <div className="page-head">
+        <h1 className="page-title">{greeting()}</h1>
+        <div className="muted" style={{ fontSize: 12.5 }}>
+          {user ? `ยินดีต้อนรับ ${user.display_name}` : "เข้าสู่ระบบเพื่อบันทึกตำแหน่งการอ่าน"}
         </div>
       </div>
 
-      {error && (
-        <div
-          style={{
-            marginTop: 24,
-            padding: 14,
-            background: "#FFF3F0",
-            border: "1px solid rgba(168,56,43,0.2)",
-            borderRadius: 3,
-            color: "var(--red)",
-            fontSize: 13,
-          }}
-        >
-          {error}
-        </div>
+      {user && (
+        <>
+          <div className="section-head">
+            <div className="eyebrow">อ่านค้างไว้</div>
+            <Link to="/library" className="muted" style={{ fontSize: 12 }}>
+              ดูทั้งหมด →
+            </Link>
+          </div>
+
+          {shelf.isLoading ? (
+            <Loading rows={1} />
+          ) : continueReading ? (
+            <Link
+              to={`/novels/${continueReading.slug}`}
+              className="card"
+              style={{ display: "flex", gap: 22, marginTop: 14, color: "inherit" }}
+            >
+              <Cover
+                url={continueReading.cover_url}
+                titleCN={continueReading.title_cn}
+                width={74}
+                height={104}
+              />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  {continueReading.title_cn}
+                </div>
+                <div className="serif" style={{ fontSize: 19, fontWeight: 600, marginTop: 3 }}>
+                  {continueReading.title_th}
+                </div>
+                <div className="muted" style={{ fontSize: 12.5, marginTop: 8 }}>
+                  {continueReading.last_chapter_no
+                    ? `บทที่ ${continueReading.last_chapter_no} · อ่านไปแล้ว ${percent(continueReading.pct)}`
+                    : "ยังไม่เริ่มอ่าน"}
+                </div>
+              </div>
+              <div style={{ alignSelf: "center", color: "var(--red)", fontSize: 13, whiteSpace: "nowrap" }}>
+                อ่านต่อ →
+              </div>
+            </Link>
+          ) : (
+            <Empty>ยังไม่มีเรื่องที่อ่านค้างไว้ ลองเลือกสักเรื่องจากรายการด้านล่าง</Empty>
+          )}
+        </>
       )}
 
-      <div
-        style={{
-          marginTop: 46,
-          display: "grid",
-          gridTemplateColumns: "1.35fr 1fr",
-          gap: 40,
-          alignItems: "start",
-        }}
-      >
-        <div>
-          <div className="eyebrow">อันดับสัปดาห์นี้</div>
-          <div style={{ marginTop: 16, display: "grid" }}>
-            {(popular ?? Array.from({ length: 5 }, () => null)).map((n, i) => (
-              <RankRow key={n?.id ?? `p${i}`} rank={i + 1} n={n} />
-            ))}
+      {featured && (
+        <>
+          <div className="section-head">
+            <div className="eyebrow">แปลใหม่ประจำสัปดาห์</div>
           </div>
-        </div>
-
-        <div>
-          <div className="eyebrow">อัปเดตล่าสุด</div>
-          <div
-            style={{
-              marginTop: 18,
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(158px, 1fr))",
-              gap: "26px 22px",
-            }}
+          <Link
+            to={`/novels/${featured.slug}`}
+            className="card"
+            style={{ display: "block", marginTop: 14, color: "inherit" }}
           >
-            {(latest ?? Array.from({ length: 4 }, () => null)).map((n, i) => (
-              <CoverCard key={n?.id ?? `l${i}`} n={n} />
-            ))}
-          </div>
-        </div>
+            <div
+              className="cover"
+              style={{ width: "100%", height: 190, borderRadius: "var(--r2)" }}
+            >
+              {featured.cover_url ? (
+                <img src={featured.cover_url} alt="" />
+              ) : (
+                <span className="serif muted" style={{ fontSize: 22 }}>
+                  {featured.title_cn ?? featured.title_th}
+                </span>
+              )}
+            </div>
+            <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {featured.genres.map((g) => (
+                <span key={g.id} className="pill">
+                  {g.name_th}
+                </span>
+              ))}
+            </div>
+            <h2 style={{ fontSize: 22, marginTop: 10 }}>{featured.title_th}</h2>
+            <div className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>
+              {numberTH(featured.followers_count)} ผู้ติดตาม · {numberTH(featured.chapters_count)} บท
+            </div>
+          </Link>
+        </>
+      )}
+
+      <div className="section-head">
+        <div className="eyebrow">อันดับสัปดาห์นี้</div>
       </div>
+      {ranking.isLoading ? (
+        <Loading />
+      ) : ranking.data && ranking.data.data.length > 0 ? (
+        <div className="rows" style={{ marginTop: 14 }}>
+          {ranking.data.data.map((novel) => (
+            <Link key={novel.id} to={`/novels/${novel.slug}`} className="row">
+              <span className="mono" style={{ color: "var(--gold)", minWidth: 26, fontSize: 15 }}>
+                {novel.rank}
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="serif" style={{ fontSize: 15, fontWeight: 600 }}>
+                  {novel.title_th}
+                </span>
+                <span className="muted" style={{ display: "block", fontSize: 12, marginTop: 2 }}>
+                  {novel.genres.map((g) => g.name_th).join(" · ")} · {numberTH(novel.chapters_count)} บท
+                </span>
+              </span>
+              <span className="mono muted" style={{ fontSize: 13 }}>
+                {novel.rating_avg.toFixed(1)}
+              </span>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <Empty>ยังไม่มีข้อมูลอันดับ</Empty>
+      )}
+
+      <div className="section-head">
+        <div className="eyebrow">อัปเดตล่าสุด</div>
+        <Link to="/browse" className="muted" style={{ fontSize: 12 }}>
+          ดูทั้งหมด →
+        </Link>
+      </div>
+      {latest.isLoading ? (
+        <Loading />
+      ) : latest.data && latest.data.data.length > 0 ? (
+        <div className="grid grid--cards" style={{ marginTop: 14 }}>
+          {latest.data.data.map((novel) => (
+            <NovelCard key={novel.id} novel={novel} />
+          ))}
+        </div>
+      ) : (
+        <Empty>ยังไม่มีนิยายในระบบ</Empty>
+      )}
+
+      {latest.data?.data?.[0]?.slug && (
+        <div className="muted" style={{ fontSize: 11.5, marginTop: 26 }}>
+          อัปเดตล่าสุด {relativeTime(new Date().toISOString())}
+        </div>
+      )}
     </section>
-  );
-}
-
-function RankRow({ rank, n }: { rank: number; n: NovelListItem | null }) {
-  if (!n) return <SkeletonRow />;
-  return (
-    <Link
-      to={`/novels/${encodeURIComponent(n.slug)}`}
-      style={{
-        display: "flex",
-        gap: 16,
-        alignItems: "center",
-        padding: "14px 6px",
-        borderTop: "1px solid rgba(35,32,27,0.09)",
-        color: "inherit",
-      }}
-    >
-      <div
-        className="serif"
-        style={{ fontSize: 21, color: "var(--red)", minWidth: 24 }}
-      >
-        {rank}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {n.title_th}
-        </div>
-        <div style={{ fontSize: 11.5, color: "var(--soft)", marginTop: 3 }}>
-          {n.genres.map((g) => g.name_th).join(" · ")} · {n.chapters_count} บท
-        </div>
-      </div>
-      <div className="mono" style={{ fontSize: 11.5, color: "var(--soft)" }}>
-        {n.rating_avg.toFixed(1)}
-      </div>
-    </Link>
-  );
-}
-
-function CoverCard({ n }: { n: NovelListItem | null }) {
-  if (!n) return <SkeletonCard />;
-  return (
-    <Link
-      to={`/novels/${encodeURIComponent(n.slug)}`}
-      style={{ color: "inherit" }}
-    >
-      <div
-        style={{
-          aspectRatio: "3 / 4",
-          borderRadius: 3,
-          background:
-            "repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "1px solid rgba(35,32,27,0.08)",
-        }}
-      >
-        <div
-          className="serif"
-          style={{
-            writingMode: "vertical-rl",
-            fontSize: 17,
-            color: "var(--soft)",
-            letterSpacing: "0.18em",
-          }}
-        >
-          {n.title_cn ?? n.title_th}
-        </div>
-      </div>
-      <div
-        style={{
-          fontSize: 13.5,
-          fontWeight: 600,
-          marginTop: 10,
-          lineHeight: 1.5,
-        }}
-      >
-        {n.title_th}
-      </div>
-      <div style={{ fontSize: 11.5, color: "var(--soft)", marginTop: 4 }}>
-        {n.chapters_count} บท · {n.followers_count.toLocaleString()} ผู้ติดตาม
-      </div>
-    </Link>
-  );
-}
-
-function SkeletonRow() {
-  return (
-    <div
-      style={{
-        padding: "14px 6px",
-        borderTop: "1px solid rgba(35,32,27,0.09)",
-        color: "var(--soft)",
-        fontSize: 12,
-      }}
-    >
-      กำลังโหลด…
-    </div>
-  );
-}
-
-function SkeletonCard() {
-  return (
-    <div>
-      <div
-        style={{
-          aspectRatio: "3 / 4",
-          borderRadius: 3,
-          background: "rgba(35,32,27,0.05)",
-          border: "1px solid rgba(35,32,27,0.06)",
-        }}
-      />
-      <div
-        style={{
-          height: 12,
-          marginTop: 10,
-          background: "rgba(35,32,27,0.08)",
-          borderRadius: 2,
-        }}
-      />
-    </div>
   );
 }

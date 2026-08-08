@@ -5,13 +5,17 @@ platform with a Go backend, React frontend, PostgreSQL, and Redis.
 
 ## Project Snapshot
 
-- Backend: Go module in `backend/`, currently using Gin, GORM, goose
-  migrations, PostgreSQL, and Redis configuration.
-- Frontend: Vite, React 18, TypeScript, and React Router in `frontend/`.
+- Backend: Go 1.25 module in `backend/`, using Gin, GORM, goose migrations,
+  PostgreSQL, argon2id password hashing, and `golang-jwt` access tokens.
+- Frontend: Vite, React 18, TypeScript, React Router, and TanStack Query in
+  `frontend/`.
 - Runtime: `docker-compose.yml` starts Postgres, Redis, API, and web services.
-- Current product phase: read-only catalog, novel detail, and chapter reader.
-  Auth, wallet, purchases, unlocks, comments, and writer workspace are planned
-  for later phases.
+- Current product phase: PRD phases 1–4 are implemented — catalog and reader,
+  accounts and preferences, library and bookmarks, coins with mock purchases
+  and chapter unlock, comments and reviews, writer workspace with stats, plus
+  follows, notifications and weekly ranking.
+- Not implemented: `GET /series/{id}`, most `/admin/*` endpoints (only
+  `POST /admin/wallet-adjust` exists), and real payment providers (Phase 5).
 
 ## Source Of Truth
 
@@ -24,31 +28,93 @@ platform with a Go backend, React frontend, PostgreSQL, and Redis.
 
 ## Repository Map
 
+Backend:
+
 - `backend/cmd/api/`: API entrypoint.
 - `backend/cmd/migrate/`: migration runner.
+- `backend/cmd/worker/`: background job runner.
 - `backend/internal/domain/<context>/`: business types, errors, and ports.
 - `backend/internal/service/<context>/`: application use cases.
 - `backend/internal/repository/<context>/`: database adapters.
 - `backend/internal/handler/<context>/`: HTTP handlers and response DTOs.
 - `backend/internal/entities/`: persistence models.
 - `backend/internal/server/`: composition root and route wiring.
+- `backend/internal/auth/`: JWT issue and parse.
+- `backend/internal/crypto/argon2id/`: password hashing.
+- `backend/internal/middleware/`: auth, roles, rate limiting.
+- `backend/internal/ratelimit/`: in-process token bucket and distinct counter.
+- `backend/internal/glossaryrender/`: pure `{{term}}` → `<span data-k>` renderer.
+- `backend/internal/jobs/`: scheduler and background jobs.
+- `backend/internal/storage/`: cover-upload adapters.
+- `backend/internal/httpx/`: error envelope, cursors, paging, idempotency keys.
+- `backend/internal/domain/page`, `domain/roles`: stdlib-only shared vocabulary.
+- `backend/internal/repository/dbctx/`: ambient-transaction plumbing.
 - `backend/test/makeme/`: test data builder helpers.
-- `frontend/src/layout/`: application shell/navigation.
-- `frontend/src/lib/api.ts`: typed API client.
+- `backend/test/apitest/`: shared handler integration-test harness.
+
+Frontend:
+
+- `frontend/src/styles/`: design tokens and stylesheets.
+- `frontend/src/lib/`: API client, auth context, reader prefs, formatting.
+- `frontend/src/components/`: shared UI pieces.
+- `frontend/src/layout/`: application shell, sidebar, bottom tab bar.
 - `frontend/src/routes/`: page-level route components.
+
+## Bounded Contexts
+
+`identity`, `catalog`, `reading`, `library`, `wallet`, `social`, `writer`,
+`notification`. Contexts never import one another; where one needs another's
+data it declares a narrow port (for example `reading.Entitlements`, satisfied by
+the wallet repository) that the composition root wires up.
 
 ## Architecture Rules
 
 - Keep domain packages framework-free. They should not import handlers,
-  repositories, persistence entities, Gin, GORM, or other adapters.
+  repositories, persistence entities, Gin, GORM, or other adapters. The only
+  exceptions are `domain/page` and `domain/roles`, which are stdlib-only shared
+  vocabulary.
 - Services depend on domain ports and own use-case orchestration.
-- Repositories implement domain ports and contain database-specific code.
-- Handlers own HTTP parsing, status codes, JSON DTOs, and error mapping.
+- Repositories implement domain ports and contain database-specific code. Each
+  method begins `db := dbctx.From(ctx, r.db)` so it joins an ambient
+  transaction when one is present.
+- Handlers own HTTP parsing, status codes, JSON DTOs, and error mapping. Never
+  return a raw error string to the client; use `httpx.Internal`.
 - Wire new dependencies in `backend/internal/server/server.go`.
 - Add schema changes through new migration files; do not edit applied migration
   semantics casually.
 - Keep persistence structs in `internal/entities`; keep JSON tags out of domain
   models unless the architecture changes deliberately.
+
+## Rules With Teeth
+
+These encode defects that have already bitten this codebase.
+
+- **Gin wildcard names must match across a path segment.** `/novels/:slug` and
+  `/novels/:id/chapters` panic at startup. Every `/novels/...` route uses `:id`,
+  and the service resolves id-or-slug.
+- **One coin write path.** Every coin movement goes through
+  `wallet.Repository.Apply`, which locks `wallet_balances` FOR UPDATE first.
+  Never write `coin_ledger`, `wallet_balances`, `chapter_unlocks` or
+  `writer_earnings` directly.
+- **`coin_ledger.idempotency_key` and `ref_id` are pointers.** Postgres treats
+  NULLs as distinct; a non-pointer string writes `''` and the second key-less
+  row per user violates the unique index.
+- **Count runes, not bytes, for Thai.** Comment length, bookmark excerpts and
+  passwords all use `utf8.RuneCountInString`. Thai is three bytes per character
+  and the database CHECKs count characters.
+- **Thai search cannot rely on tsvector alone.** `เซียนดาบ` is a substring of
+  the single lexeme `เซียนดาบเก้าสายธาร`. The ranking blends trigram
+  similarity and ILIKE with `ts_rank`; do not "simplify" it.
+- **Rate limiters are per-engine**, constructed inside `server.New`, never
+  package globals, or handler tests leak throttle state into each other.
+- **`SetTrustedProxies` must stay explicit.** Gin's `ClientIP` trusts
+  `X-Forwarded-For` by default, which defeats the per-IP limiter.
+- **Advisory locks in jobs are transaction-scoped** (`pg_try_advisory_xact_lock`).
+  A session-scoped lock can be taken and released on different pooled
+  connections and leak forever.
+- **`makeme` builders must be named `ANew<EntityStructName>`.** `Many(n)`
+  resolves siblings by reflection on that name.
+- **Composite-PK entities must tag every key column** `gorm:"primaryKey"`.
 
 ## Development Commands
 
@@ -57,9 +123,12 @@ Backend:
 ```bash
 cd backend
 go mod tidy
+gofmt -l .
+go vet ./...
 go test ./...
 go run ./cmd/migrate -cmd up
 go run ./cmd/api
+go run ./cmd/worker            # or ./cmd/worker -once
 ```
 
 Frontend:
@@ -84,21 +153,25 @@ Useful smoke checks:
 ```bash
 curl -s http://localhost:8080/health
 curl -s http://localhost:8080/api/v1/genres
-curl -s http://localhost:8080/api/v1/novels?sort=popular
+curl -s 'http://localhost:8080/api/v1/novels?q=เซียนดาบ'
 curl -s http://localhost:8080/api/v1/novels/nine-streams-sword-immortal
 ```
 
 ## Testing Guidance
 
-- Prefer focused Go unit tests for domain/service behavior.
-- Use hand-written fakes for service tests; `backend/internal/service/catalog`
-  is the current reference pattern.
-- Use real Postgres integration coverage for repository behavior when database
-  behavior matters.
-- Run `npm run typecheck` or `npm run build` after TypeScript or routing
-  changes.
-- For migrations, verify both the migration runner and affected API paths when
-  practical.
+- Domain and service behaviour: focused unit tests with hand-written fakes.
+  `internal/service/catalog/service_test.go` is the reference pattern.
+- Pure policy lives in the domain so it can be tested without a database:
+  `wallet.PlanSpend`, `reading.Decide`, `social.ValidateComment`,
+  `writer.PruneRevisions`, `glossaryrender.Render`, `jobs.NextDailyAt`.
+- Handler and repository behaviour: integration tests through `test/apitest`,
+  which builds a real engine over a testcontainers Postgres.
+- **Integration tests need a reachable Docker socket.** Without it testcontainers
+  *skips* rather than fails, so a green run can mean nothing ran. On Rancher
+  Desktop: `export DOCKER_HOST=unix://$HOME/.rd/docker.sock`. Confirm with
+  `go test -v ./... | grep SKIP`.
+- Run `npm run typecheck` or `npm run build` after TypeScript or routing changes.
+- `docs/test-cases.md` maps every U and I case to its test file and function.
 
 ## Editing Guardrails
 
@@ -108,7 +181,19 @@ curl -s http://localhost:8080/api/v1/novels/nine-streams-sword-immortal
 - Preserve Thai copy and seeded novel data unless the task specifically changes
   product content.
 - Keep frontend changes consistent with the existing app shell and route
-  patterns.
-- Update docs when changing setup, commands, API behavior, schema, or project
+  patterns. Styling belongs in `frontend/src/styles/` as tokens and classes;
+  inline styles cannot express the responsive breakpoints.
+- Update docs when changing setup, commands, API behaviour, schema, or project
   structure.
 - Keep changes scoped; avoid broad rewrites when a small patch solves the task.
+
+## Known Risks
+
+- `chapter_bodies.body_source` is rendered into `body_html` without
+  sanitisation, so a translator can inject HTML. Acceptable while translator
+  accounts are admin-provisioned; close it with an allowlist sanitiser before
+  opening translator signup.
+- Access tokens stay valid until they expire (15 minutes by default) even after
+  logout, because there is no shared denylist. Clients must discard them.
+- Rate limiting is in-process: with N API replicas the effective limit is N×.
+  Rate-limit at the edge in production.

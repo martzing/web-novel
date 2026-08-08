@@ -129,3 +129,90 @@ When you add e.g. `wallet`:
 5. Register the wiring in `internal/server/server.go`.
 6. Add builders to `test/makeme/wallet_builders.go`.
 7. Add rows/tables in a new migration if needed.
+
+## The bounded contexts
+
+| Context | Owns | Notes |
+| --- | --- | --- |
+| `identity` | users, writer_profiles, user_prefs, user_genre_prefs, refresh_tokens | Auth, profile and preferences all mutate one aggregate. |
+| `catalog` | genres, novels, novel_genres, arcs, chapters (read), glossary (read), ranking_snapshots (read) | Anonymous and cacheable. |
+| `reading` | chapter_bodies (read), reading_progress, chapter_read_events | Owns the entitlement decision — the one place `locked` is computed. |
+| `library` | library_entries, bookmarks, follows | Three per-user↔novel relations with one ownership rule. |
+| `wallet` | wallet_balances, coin_ledger, coin_packs, purchases, chapter_unlocks, writer_earnings, payouts | Must be one context: they commit together. |
+| `social` | comments, comment_likes, reviews | Shared soft-delete and denormalised counters. |
+| `writer` | chapters (write), chapter_bodies (write), chapter_drafts, chapter_glossary_refs, glossary CRUD, daily stats (read) | One persona, one authorization predicate. |
+| `notification` | notifications | Thin on purpose, so `writer` and `social` depend on it and not on each other. |
+
+Contexts never import one another. Where one needs another's data it declares a
+narrow port that the composition root satisfies — `reading.Entitlements` and
+`catalog.Entitlements` are both implemented by the wallet repository,
+`notification.Followers` by the library repository.
+
+## Shared vocabulary packages
+
+`domain/page` (cursor paging) and `domain/roles` (role names) are stdlib-only
+and dependency-free, so every domain package may import them. This is a
+deliberate, narrow exception to the dependency rule: the alternative is copying
+an identical `Page` struct into eight packages.
+
+## Transactions
+
+Two mechanisms, and the domain never sees `*gorm.DB`:
+
+1. **Repository-owned transactions** — the default. A use case whose writes stay
+   inside one context puts the whole transaction inside one repository method:
+   `wallet.Apply`, `writer.PublishChapter`, `social.UpsertReview`.
+2. **Ambient transactions** — every repository method starts
+   `db := dbctx.From(ctx, r.db)`, which returns the transaction published on the
+   context when there is one and the pooled handle otherwise. That makes
+   repositories transparently composable inside a larger transaction (the
+   background jobs use this) without a transaction type appearing in any port
+   signature.
+
+## The single coin write path
+
+Every coin movement in the system — top-up, unlock, refund, bonus grant, bonus
+expiry, admin adjustment — is expressed as a `wallet.Command` and applied by
+`wallet.Repository.Apply`, in one transaction:
+
+1. ensure a `wallet_balances` row exists, then lock it `FOR UPDATE`;
+2. replay check on `(user_id, idempotency_key)` — a hit returns the stored
+   result and writes nothing;
+3. child preconditions (existing unlock, purchase still pending);
+4. call the pure planner (`PlanSpend` / `PlanCredit` / `PlanAdjust` /
+   `PlanBonusExpiry`), writing any `bonus_expire` row before the main row so the
+   ledger stays a valid running total;
+5. update the balance and write the child row referencing the new ledger id.
+
+The wallet row is the only lock any coin operation takes first, so there is
+exactly one lock-acquisition order and deadlock is structurally impossible.
+A concurrent double-unlock therefore resolves to one `200`, one
+`409 CHAPTER_ALREADY_UNLOCKED`, and exactly one debit.
+
+The policy is pure and lives in `domain/wallet/spend.go`; only the locking and
+row writes live in the repository. That is what lets U-COIN-01 and U-COIN-02 be
+plain unit tests.
+
+## Background jobs
+
+`internal/jobs` holds a scheduler and eight jobs. Every job takes `now` as a
+parameter instead of calling `time.Now`, so each is deterministic under test,
+and each wraps its work in a **transaction-scoped** advisory lock
+(`pg_try_advisory_xact_lock`) so multiple runners are safe. A session-scoped
+lock would be unsafe here: GORM hands out pooled connections, so the lock could
+be taken and released on different ones.
+
+Jobs run inside `cmd/api` when `RUN_JOBS_IN_API=true` (the default outside
+production) and in `cmd/worker` otherwise.
+
+## Known risks
+
+- `chapter_bodies.body_source` is rendered into `body_html` without
+  sanitisation, so a translator can inject HTML. Acceptable while translator
+  accounts are admin-provisioned; close it with an allowlist sanitiser before
+  opening translator signup.
+- Access tokens remain valid until they expire (15 minutes by default) even
+  after logout, because there is no shared denylist. Documented in the API spec;
+  clients must discard them.
+- Rate limiting is in-process, so with N API replicas the effective limit is N×.
+  Rate-limit at the edge in production.

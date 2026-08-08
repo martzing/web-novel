@@ -143,13 +143,63 @@ Unlock-specific error codes: `CHAPTER_ALREADY_UNLOCKED`, `INSUFFICIENT_COINS`, `
 | GET    | `/search?q=&type=novel\|chapter\|character` |
 | GET    | `/ranking/weekly?limit=`                    |
 
-## Phase-1 endpoints (implemented in this repo)
+## Notifications (Phase 4)
 
-The endpoints below are already wired end-to-end in the current backend:
+Not in the original spec; added because Phase 4 and R-17 require notifying
+followers of new chapters.
 
-- `GET /health`
-- `GET /api/v1/genres`
-- `GET /api/v1/novels?q=&genre=&sort=popular|latest`
-- `GET /api/v1/novels/{slug}`
-- `GET /api/v1/novels/{id}/chapters`
-- `GET /api/v1/chapters/{id}`
+| Method | Path                                  |
+| ------ | ------------------------------------- |
+| GET    | `/me/notifications?unread=true`       |
+| GET    | `/me/notifications/unread-count`      |
+| POST   | `/me/notifications/read` (`{ids: []}` — empty means all) |
+
+---
+
+## Implementation status
+
+All of the above are implemented except where noted below.
+
+### Deviations from this document
+
+- **`/novels/{id}` accepts an id *or* a slug.** Gin panics at startup when two
+  different wildcard names occupy the same path segment, so `/novels/{slug}`
+  and `/novels/{id}/chapters` cannot coexist. Every `/novels/...` route uses one
+  `:id` parameter and the service resolves numeric ids and slugs alike. Both
+  spellings in this document therefore work.
+- **`GET /novels/{id}/chapters` accepts optional auth** and adds an `unlocked`
+  boolean per row, resolved in one bulk query, so the table of contents can show
+  ownership. Additive.
+- **`GET /novels/{id}/reviews` adds `my_review`** for an authenticated caller,
+  so the review form opens pre-filled.
+- **`GET /writer/earnings` adds `available_satang`**, the amount still
+  withdrawable after pending payouts.
+- **Cursor pagination is keyset, never `OFFSET`.** A cursor is bound to the sort
+  order it was minted under; replaying it against a different `?sort=` is
+  `400 BAD_CURSOR` rather than a silently mixed ordering.
+- **`POST /auth/logout` revokes the refresh-token family only.** The access
+  token stays valid until it expires (15 minutes by default); there is no shared
+  denylist. Clients must discard it.
+- **`POST /purchases` requires `Idempotency-Key`** as well, deduplicated through
+  `purchases.idempotency_key` (migration 0005) since it writes no ledger row.
+
+### Not implemented
+
+- `GET /series/{id}` — the `series` table exists but is unused.
+- `GET /novels/{id}/glossary` is implemented; `GET /search` is an alias of
+  `GET /novels` with the same blended ranking.
+- Most of **Admin**. Only `POST /admin/wallet-adjust` exists, because the coin
+  test matrix requires it. `/admin/reports`, comment moderation, coin-pack CRUD
+  and payout approval are not built, and no tables back the report queue.
+- Real payment providers (Phase 5). `provider` is always `mock`.
+
+### Error codes
+
+Beyond the unlock codes above: `INVALID_CREDENTIALS`, `EMAIL_TAKEN`,
+`USERNAME_TAKEN`, `INVALID_USERNAME`, `INVALID_EMAIL`, `WEAK_PASSWORD`,
+`INVALID_REFRESH_TOKEN`, `INVALID_PREFS`, `INVALID_STATUS`, `BAD_ID`,
+`BAD_CURSOR`, `IDEMPOTENCY_KEY_REQUIRED`, `INVALID_IDEMPOTENCY_KEY`,
+`IDEMPOTENCY_KEY_CONFLICT`, `PURCHASE_NOT_PENDING`, `COMMENT_EMPTY`,
+`COMMENT_TOO_LONG`, `REPLY_TOO_DEEP`, `INVALID_RATING`, `SLUG_TAKEN`,
+`CHAPTER_NO_TAKEN`, `INVALID_PRICE`, `UNSUPPORTED_FILE`, `FILE_TOO_LARGE`,
+`RATE_LIMITED`, `FORBIDDEN`, `NOT_FOUND`, `INTERNAL`.

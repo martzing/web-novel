@@ -1,166 +1,118 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
-import { api, Genre, NovelListItem } from "../lib/api";
+import { api } from "../lib/api";
+import { numberTH } from "../lib/format";
+import { Empty, ErrorNote, Loading, NovelCard } from "../components";
+
+type Sort = "popular" | "latest";
 
 export default function Browse() {
-  const [q, setQ] = useState("");
-  const [activeGenre, setActiveGenre] = useState<string>("");
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [results, setResults] = useState<NovelListItem[]>([]);
+  const [query, setQuery] = useState("");
+  const [submitted, setSubmitted] = useState("");
+  const [genre, setGenre] = useState("");
+  const [sort, setSort] = useState<Sort>("popular");
 
-  useEffect(() => {
-    api
-      .listGenres()
-      .then(setGenres)
-      .catch(() => setGenres([]));
-  }, []);
+  const genres = useQuery({ queryKey: ["genres"], queryFn: api.listGenres });
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      api
-        .listNovels({ q, genre: activeGenre })
-        .then(setResults)
-        .catch(() => setResults([]));
-    }, 180);
-    return () => clearTimeout(t);
-  }, [q, activeGenre]);
+  const novels = useQuery({
+    queryKey: ["novels", { q: submitted, genre, sort }],
+    queryFn: () => api.listNovels({ q: submitted, genre, sort, limit: 30 }),
+    // Keeping the previous page visible avoids a flash of empty state while a
+    // new filter loads.
+    placeholderData: keepPreviousData,
+  });
+
+  const results = novels.data?.data ?? [];
 
   return (
-    <section style={{ maxWidth: 1080 }}>
-      <h1
-        className="serif"
-        style={{ fontSize: 28, fontWeight: 600, margin: 0 }}
-      >
-        หมวดหมู่และค้นหา
-      </h1>
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="ค้นหาชื่อเรื่อง ชื่อจีน ผู้แปล หรือชื่อตัวละคร"
-        style={{
-          width: "100%",
-          marginTop: 22,
-          padding: "15px 18px",
-          border: "1px solid rgba(35,32,27,0.16)",
-          borderRadius: 3,
-          background: "var(--panel)",
-          fontSize: 14,
-          outline: "none",
+    <section>
+      <div className="page-head">
+        <h1 className="page-title">หมวดหมู่และค้นหา</h1>
+      </div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setSubmitted(query.trim());
         }}
-      />
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 20 }}>
-        <Chip
-          label="ทั้งหมด"
-          active={activeGenre === ""}
-          onClick={() => setActiveGenre("")}
+        style={{ marginTop: 22, display: "flex", gap: 10 }}
+      >
+        <input
+          className="input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="ค้นหาชื่อเรื่อง ชื่อจีน ผู้แต่ง หรือชื่อตัวละคร"
+          aria-label="ค้นหานิยาย"
         />
-        {genres.map((g) => (
-          <Chip
-            key={g.slug}
-            label={g.name_th}
-            active={activeGenre === g.slug}
-            onClick={() => setActiveGenre(g.slug)}
-          />
-        ))}
-      </div>
+        <button className="btn btn--primary" type="submit">
+          ค้นหา
+        </button>
+      </form>
 
-      <div style={{ marginTop: 34, fontSize: 12.5, color: "var(--soft)" }}>
-        {results.length} เรื่อง
-      </div>
-
-      <div style={{ marginTop: 16 }}>
-        {results.map((n) => (
-          <Link
-            key={n.id}
-            to={`/novels/${encodeURIComponent(n.slug)}`}
-            style={{
-              display: "flex",
-              gap: 20,
-              padding: "18px 8px",
-              borderTop: "1px solid rgba(35,32,27,0.09)",
-              color: "inherit",
-            }}
+      <div className="chips" style={{ marginTop: 18 }}>
+        <button
+          className={`chip${genre === "" ? " is-active" : ""}`}
+          onClick={() => setGenre("")}
+        >
+          ทั้งหมด
+        </button>
+        {genres.data?.data.map((g) => (
+          <button
+            key={g.id}
+            className={`chip${genre === g.slug ? " is-active" : ""}`}
+            onClick={() => setGenre(genre === g.slug ? "" : g.slug)}
           >
-            <div
-              style={{
-                flex: "0 0 62px",
-                height: 84,
-                borderRadius: 2,
-                background:
-                  "repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                className="serif"
-                style={{
-                  writingMode: "vertical-rl",
-                  fontSize: 13,
-                  color: "var(--soft)",
-                }}
-              >
-                {n.title_cn ?? n.title_th}
-              </div>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="serif" style={{ fontSize: 17, fontWeight: 600 }}>
-                {n.title_th}
-              </div>
-              <div
-                style={{ fontSize: 11.5, color: "var(--gold)", marginTop: 4 }}
-              >
-                {n.genres.map((g) => g.name_th).join(" · ")}
-              </div>
-            </div>
-            <div
-              style={{
-                flex: "0 0 84px",
-                textAlign: "right",
-                fontSize: 11.5,
-                color: "var(--soft)",
-              }}
-            >
-              <div className="mono" style={{ color: "var(--ink)" }}>
-                {n.rating_avg.toFixed(1)}
-              </div>
-              <div style={{ marginTop: 4 }}>{n.chapters_count} บท</div>
-            </div>
-          </Link>
+            {g.name_th}
+          </button>
         ))}
       </div>
-    </section>
-  );
-}
 
-function Chip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        padding: "9px 16px",
-        border: "1px solid rgba(35,32,27,0.14)",
-        borderRadius: 999,
-        background: active ? "var(--ink)" : "transparent",
-        color: active ? "var(--bg)" : "var(--ink)",
-        cursor: "pointer",
-        fontSize: 12.5,
-        fontFamily: "inherit",
-      }}
-    >
-      {label}
-    </button>
+      <div
+        style={{
+          marginTop: 24,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <div className="muted" style={{ fontSize: 12.5 }}>
+          {novels.isLoading ? "กำลังค้นหา…" : `พบ ${numberTH(results.length)} เรื่อง`}
+          {submitted && ` สำหรับ “${submitted}”`}
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {(
+            [
+              ["popular", "เรียงตามความนิยม"],
+              ["latest", "อัปเดตล่าสุด"],
+            ] as [Sort, string][]
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              className={`chip${sort === key ? " is-active" : ""}`}
+              onClick={() => setSort(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {novels.isError ? (
+        <ErrorNote message={(novels.error as Error).message} />
+      ) : novels.isLoading ? (
+        <Loading rows={4} />
+      ) : results.length === 0 ? (
+        <Empty>ไม่พบนิยายที่ตรงกับเงื่อนไข ลองเปลี่ยนคำค้นหรือหมวดหมู่</Empty>
+      ) : (
+        <div className="grid grid--cards" style={{ marginTop: 18 }}>
+          {results.map((novel) => (
+            <NovelCard key={novel.id} novel={novel} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

@@ -41,6 +41,10 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
+	// In development the background jobs run here, so a single `docker compose
+	// up` is a complete system. In production they belong to cmd/worker.
+	server.StartJobs(ctx, cfg, gormDB)
+
 	go func() {
 		slog.Info("http listening", "addr", srv.Addr, "env", cfg.Env)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {

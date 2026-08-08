@@ -11,7 +11,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
@@ -276,12 +275,6 @@ func (m *MakeMe) close() {
 func (m *MakeMe) next() int64 {
 	m.t.Helper()
 	return runningNumber.Add(1)
-}
-
-func (m *MakeMe) fixtureTime(sequence int64) time.Time {
-	m.t.Helper()
-	location := time.FixedZone("Asia/Bangkok", 7*60*60)
-	return time.Date(2026, time.January, 2, 3, 4, 5, 0, location).Add(time.Duration(sequence) * time.Second)
 }
 
 func skipIfProviderUnavailable(t testing.TB) {

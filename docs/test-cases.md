@@ -7,6 +7,25 @@ Tiers:
 - **E** — end-to-end, browser + API.
 - **L** — load / non-functional.
 
+## Status
+
+Every **U** and **I** case below is implemented; the mapping table at the end of
+this document names the file and function for each. **E** and **L** are out of
+scope for phases 1–4 — see "Out of scope" at the end.
+
+Run them with:
+
+```bash
+cd backend
+go test ./...
+```
+
+The I tier runs against a real PostgreSQL through testcontainers. **Without a
+reachable Docker socket testcontainers skips rather than fails**, so a green run
+can mean nothing ran. On Rancher Desktop, export
+`DOCKER_HOST=unix://$HOME/.rd/docker.sock` and confirm with
+`go test -v ./... | grep SKIP`.
+
 ## Auth
 
 | ID        | Tier | Scenario                   | Expected                                         |
@@ -105,3 +124,88 @@ Invariant, per user: `sum(coin_ledger.delta) == wallet_balances.balance` and `su
 | ---- | ---- | -------------------------------------------------- | ---------------------------------- |
 | L-01 | L    | 500 concurrent chapter GETs (warm)                 | p95 ≤ 400 ms.                      |
 | L-02 | L    | 100 concurrent unlocks on same chapter (100 users) | All succeed; no deadlocks in 60 s. |
+
+---
+
+## Where each case lives
+
+Paths are relative to `backend/`.
+
+### Unit tier
+
+| ID        | File · Function                                                                        |
+| --------- | -------------------------------------------------------------------------------------- |
+| U-AUTH-01 | `internal/crypto/argon2id/hasher_test.go` · `TestHash_UsesConfiguredArgon2idParams`     |
+| U-COIN-01 | `internal/domain/wallet/spend_test.go` · `TestPlanSpend_UsesBonusBeforePaid`            |
+| U-COIN-02 | `internal/domain/wallet/spend_test.go` · `TestPlanSpend_ExpiredBonusEmitsExpiryEntryBeforeSpend` |
+
+### Integration tier
+
+| ID         | File · Function                                                                                       |
+| ---------- | ----------------------------------------------------------------------------------------------------- |
+| I-AUTH-01  | `internal/handler/identity/handler_integration_test.go` · `TestRegister_DuplicateEmailReturns409AndCreatesNoUser` |
+| I-AUTH-02  | same · `TestLogin_WrongPasswordReturns401WithoutLeakingEmailExistence`                                |
+| I-AUTH-03  | same · `TestRefresh_RevokedTokenReturns401AndRevokesFamily`                                           |
+| I-CAT-01   | `internal/handler/catalog/handler_integration_test.go` · `TestNovelsEndpoint_SearchGenreAndSort`       |
+| I-CAT-02   | same · `TestNovelsEndpoint_SearchGenreAndSort/I-CAT-02_genre_filter`                                  |
+| I-CAT-03   | same · `TestNovelDetailEndpoint`                                                                      |
+| I-RD-01    | `internal/handler/reading/handler_integration_test.go` · `TestGetChapter_FreeChapterAsAnonymousReturnsBody` |
+| I-RD-02    | same · `TestGetChapter_LockedWithoutUnlockReturnsLockedTrueNullBody`                                  |
+| I-RD-03    | same · `TestGetChapter_LockedAfterUnlockReturnsBody`                                                  |
+| I-RD-04    | same · `TestProgress_PutThenGetReturnsParaAnchor42`                                                   |
+| I-BM-01    | `internal/handler/library/handler_integration_test.go` · `TestBookmarks_OnlyOwnerSeesOwnBookmarks`     |
+| I-BM-02    | same · `TestBookmarks_DeleteAnotherUsersBookmarkReturns403`                                           |
+| I-LIB-01   | same · `TestLibrary_MoveReadingToDoneUpdatesCounts`                                                   |
+| I-COIN-01M | `internal/handler/wallet/handler_integration_test.go` · `TestCreatePurchase_SameIdempotencyKeyCreatesOnePendingRow` |
+| I-COIN-02  | same · `TestUnlockChapter_ConcurrentDoubleClickYieldsOneDebit`                                        |
+| I-COIN-03  | same · `TestUnlockChapter_InsufficientCoinsReturns402AndWritesNoLedgerRow`                            |
+| I-COIN-04  | same · `TestUnlockChapter_ZeroPriceReturns400ChapterNotForSale`                                       |
+| I-COIN-05  | same · `TestUnlockChapter_ChapterUnlockReferencesCreatedLedgerID`                                     |
+| I-COIN-06  | same · `TestAdminWalletAdjust_WritesAdjustLedgerWithActorAndReason`                                   |
+| I-COIN-07  | same · `TestMockComplete_TwiceCreditsWalletOnce`                                                      |
+| I-COIN-08  | same · `TestMockComplete_Returns404WhenPaymentsMockDisabled`                                          |
+| I-COIN-09  | `internal/jobs/jobs_integration_test.go` · `TestBonusExpiryJob_WritesBonusExpireLedgerAndZeroesBalance` |
+| I-COIN-10  | `internal/handler/wallet/handler_integration_test.go` · `TestUnlockChapter_ExpiredBonusBeforeCronTreatsBonusAsZero` |
+| invariant  | same · `TestLedger_ReconcilesWithTheWalletBalance`; `internal/jobs/jobs_integration_test.go` · `TestReconcileJob_ReportsZeroDiscrepancyOnAConsistentLedger` |
+| I-GLO-01   | `internal/handler/writer/handler_integration_test.go` · `TestPublishChapter_RendersGlossarySpansAndStampsGlossaryRev` |
+| I-GLO-02   | `internal/jobs/jobs_integration_test.go` · `TestRerenderJob_UpdatesBodyHTMLAndLiftsGlossaryRev`        |
+| I-GLO-03   | same · `TestRerenderJob_.../a_stale_body_still_serves_the_old_HTML`                                   |
+| I-CM-01    | `internal/handler/social/handler_integration_test.go` · `TestCreateComment_Over5000CharsReturns400`    |
+| I-CM-02    | same · `TestLikeComment_TwiceKeepsCountAtOne`                                                          |
+| I-CM-03    | same · `TestTranslatorReply_SerializedWithRoleTranslator`                                             |
+| I-WR-01    | `internal/handler/writer/handler_integration_test.go` · `TestAutosave_KeepsLast20Revisions`            |
+| I-WR-02    | same · `TestPublish_FutureScheduledAtHiddenFromReadersUntilTime`                                      |
+| I-WR-03    | same · `TestWriterA_CannotEditWriterBsChapter`                                                        |
+| I-WR-04    | same · `TestWriterStats_TotalsMatchChapterDailyStatsFixture`                                          |
+| I-SEC-01   | `internal/handler/reading/handler_integration_test.go` · `TestGetChapter_DraftChapterAsReaderReturns404` |
+| I-SEC-02   | `internal/handler/catalog/handler_integration_test.go` · `TestSearchNovels_SQLInjectionInQueryIsParameterized` |
+| I-SEC-03   | `internal/handler/identity/handler_integration_test.go` · `TestAuthRoutes_RateLimitedPerIP`            |
+| I-SEC-04   | `internal/handler/library/handler_integration_test.go` · `TestLibrary_CannotSeeAnotherUsersProgressOrShelf` |
+| I-SEC-05   | `internal/handler/reading/handler_integration_test.go` · `TestGetChapter_LimitsDistinctBodiesPerUserPerMinute` |
+
+### Supporting unit tests
+
+These have no row above but de-risk the integration tier:
+
+`internal/auth/jwt_test.go` (round trip, alg-none rejected, tampered signature,
+foreign secret, expiry) · `internal/domain/wallet/spend_test.go` (insufficient
+funds, credit expiry, adjust clamping, `NetCoins` rounding) ·
+`internal/glossaryrender/render_test.go` (binding, unknown markers preserved,
+escaping, dedupe) · `internal/domain/reading/entitlement_test.go` ·
+`internal/domain/social/validate_test.go` (runes not bytes, `CanDelete`) ·
+`internal/domain/identity/prefs_test.go` · `internal/domain/writer/rules_test.go`
+(`PruneRevisions`, `ResolveArcID`, `PublishDecision`, `TrendPct`, `Aggregate`,
+slug safety) · `internal/httpx/cursor_test.go` ·
+`internal/ratelimit/limiter_test.go` (fake clock) ·
+`internal/jobs/scheduler_test.go` (Bangkok rollover, month clamping) ·
+`internal/service/identity/service_test.go` ·
+`internal/service/catalog/service_test.go` ·
+`internal/handler/catalog/handler_integration_test.go` ·
+`TestServerNew_RegistersAllRoutesWithoutPanic` (guards the gin wildcard trap).
+
+### Out of scope
+
+| ID                              | Why                                                                                                                    |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| E-RD-01, E-RD-02, E-RD-03, E-COIN-01 | Browser end-to-end; the repository has no browser toolchain. Each has an I-tier proxy: I-RD-04 (cross-device resume), the prefs round-trip test, I-GLO-01 (glossary payload), I-COIN-07 (wallet after top-up). |
+| L-01, L-02                      | Load testing needs k6/vegeta and a provisioned environment. The design choices that serve them are in place: keyset pagination, one lock-acquisition order in `wallet.Apply`, and the `chapters_novel_pub` partial index. Note `test/makeme` caps the pool at 5 connections, so L-02 would need that raised. |

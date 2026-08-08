@@ -1,0 +1,405 @@
+/* Reusable pieces shared by every screen, matching the mockup component set. */
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.muted {
+  color: var(--soft);
+}
+
+.page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 30px;
+}
+
+.section-head {
+  margin-top: var(--s6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r3);
+  padding: 20px;
+}
+
+.cover {
+  background: var(--cover);
+  border-radius: var(--r1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover__cn {
+  font-family: var(--font-serif);
+  color: var(--soft);
+  font-size: 13px;
+  writing-mode: vertical-rl;
+  opacity: 0.75;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  padding: 11px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r2);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fffdf8;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fffdf8;
+}
+
+.btn--ghost {
+  border-color: transparent;
+  color: var(--soft);
+  padding: 8px 10px;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--sm {
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+/* ── Chips, pills, tabs ─────────────────────────────────────────────────── */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.chip {
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--soft);
+  font-size: 12.5px;
+}
+
+.chip:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.chip.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  background: var(--hover);
+  color: var(--soft);
+}
+
+.pill--gold {
+  background: rgba(169, 128, 63, 0.16);
+  color: var(--gold);
+}
+
+.pill--red {
+  background: rgba(168, 56, 43, 0.14);
+  color: var(--red);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--s5);
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  border: 0;
+  background: none;
+  padding: 12px 0;
+  font-size: 13.5px;
+  color: var(--soft);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+
+.tab.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--red);
+}
+
+/* ── Forms ──────────────────────────────────────────────────────────────── */
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 12px;
+  color: var(--soft);
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r2);
+  background: var(--panel);
+  font-size: 13.5px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.9;
+}
+
+.form-error {
+  color: var(--red);
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+
+/* ── Feedback ───────────────────────────────────────────────────────────── */
+
+.skeleton {
+  background: var(--hover);
+  border-radius: var(--r2);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.empty {
+  padding: 44px 20px;
+  text-align: center;
+  color: var(--soft);
+  font-size: 13.5px;
+  line-height: 2;
+}
+
+.progress {
+  height: 3px;
+  background: var(--line);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.progress__bar {
+  height: 100%;
+  background: var(--red);
+}
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--gold);
+  font-size: 15px;
+}
+
+.star-btn {
+  border: 0;
+  background: none;
+  padding: 0 1px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--line-strong);
+}
+
+.star-btn.is-on {
+  color: var(--gold);
+}
+
+/* ── Grids and lists ────────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  gap: var(--s4);
+}
+
+.grid--cards {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.grid--kpi {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.rows {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r3);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 13px 16px;
+  background: var(--panel);
+  color: inherit;
+}
+
+.row:hover {
+  background: var(--hover);
+}
+
+/* Wide content scrolls inside its own box rather than the page. */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 460px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.table th {
+  color: var(--soft);
+  font-weight: 400;
+  font-size: 11.5px;
+}
+
+/* ── Modal / bottom sheet ───────────────────────────────────────────────── */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s4);
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r3);
+  padding: 26px;
+}
+
+@media (max-width: 767px) {
+  /* On a phone the modal becomes a bottom sheet. */
+  .scrim {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    max-width: none;
+    border-radius: var(--r3) var(--r3) 0 0;
+    padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
+  }
+
+  .page-title {
+    font-size: 23px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+}
+
+/* ── Chapter body ───────────────────────────────────────────────────────── */
+
+.chapter-body p {
+  margin: 0 0 1.4em;
+}
+
+/* Inline glossary terms are baked into body_html by the renderer. */
+.chapter-body [data-k] {
+  border-bottom: 1px dashed var(--noteline);
+  cursor: pointer;
+}

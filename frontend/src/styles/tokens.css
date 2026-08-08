@@ -1,0 +1,101 @@
+/*
+ * Design tokens, lifted from design/Xianxia Platform.dc.html and
+ * design/Xianxia Reader.dc.html.
+ *
+ * The reader's three themes are the same token names redefined under
+ * [data-theme], so every component follows the theme without knowing it exists.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Palette — light (the platform default) */
+  --bg: #faf8f3;
+  --panel: #fffdf8;
+  --panel-blur: rgba(250, 248, 243, 0.93);
+  --sidebar: #f3efe6;
+  --ink: #23201b;
+  --soft: #6b6357;
+  --line: rgba(35, 32, 27, 0.1);
+  --line-strong: rgba(35, 32, 27, 0.16);
+  --hover: rgba(35, 32, 27, 0.05);
+  --active: rgba(35, 32, 27, 0.08);
+  --red: #a8382b;
+  --gold: #a9803f;
+  --sel: rgba(168, 56, 43, 0.15);
+  --noteline: rgba(35, 32, 27, 0.42);
+  --cover: repeating-linear-gradient(135deg, #e7e0d2 0 6px, #f0eade 6px 12px);
+
+  /* Type */
+  --font-ui: "IBM Plex Sans Thai", system-ui, sans-serif;
+  --font-serif: Trirong, serif;
+  --font-reading: Sarabun, serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  /* Spacing scale */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 22px;
+  --s6: 30px;
+  --s7: 44px;
+
+  /* Radii — the mockups are deliberately near-square */
+  --r1: 2px;
+  --r2: 3px;
+  --r3: 4px;
+  --r-pill: 999px;
+
+  /* Shell */
+  --sidebar-w: 244px;
+  --content-max: 1080px;
+}
+
+/* Reader themes. Each redefines the same tokens, so switching theme restyles
+   the entire reader without any component opting in. */
+[data-theme="sepia"] {
+  color-scheme: light;
+  --bg: #f1e6d0;
+  --panel: #f8f0de;
+  --panel-blur: rgba(241, 230, 208, 0.93);
+  --sidebar: #ecdfc5;
+  --ink: #3a3025;
+  --soft: #7a6a52;
+  --line: rgba(58, 48, 37, 0.14);
+  --line-strong: rgba(58, 48, 37, 0.2);
+  --hover: rgba(58, 48, 37, 0.06);
+  --active: rgba(58, 48, 37, 0.1);
+  --red: #9c3a25;
+  --gold: #96762f;
+  --sel: rgba(156, 58, 37, 0.16);
+  --noteline: rgba(58, 48, 37, 0.45);
+  --cover: repeating-linear-gradient(135deg, #e3d5b6 0 6px, #ede2c8 6px 12px);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --panel: #1c1b19;
+  --panel-blur: rgba(18, 18, 17, 0.93);
+  --sidebar: #191817;
+  --ink: #cfc8ba;
+  --soft: #8b8478;
+  --line: rgba(207, 200, 186, 0.14);
+  --line-strong: rgba(207, 200, 186, 0.22);
+  --hover: rgba(207, 200, 186, 0.07);
+  --active: rgba(207, 200, 186, 0.12);
+  --red: #c4574a;
+  --gold: #be9758;
+  --sel: rgba(196, 87, 74, 0.2);
+  --noteline: rgba(207, 200, 186, 0.4);
+  --cover: repeating-linear-gradient(135deg, #2a2825 0 6px, #232120 6px 12px);
+}
+
+/* Reader typography controls, driven by the settings panel. */
+:root {
+  --reader-font: "Sarabun";
+  --reader-size: 20px;
+  --reader-leading: 2;
+  --reader-width: 640px;
+}

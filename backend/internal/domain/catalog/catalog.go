@@ -1,4 +1,3 @@
-package catalog
 // Package catalog is the domain layer for novels, chapters and glossaries.
 // It holds business types and the repository port; it must not import any
 // storage or transport package.
@@ -26,12 +25,18 @@ type Novel struct {
 	FollowersCount int
 	ChaptersCount  int
 	Genres         []Genre
+	// UpdatedAt is RFC3339 and doubles as the keyset cursor value for the
+	// "latest" ordering.
+	UpdatedAt string
 }
 
-// NovelDetail is a Novel with the arc list attached, used on the detail page.
+// NovelDetail is a Novel with arcs and glossary size attached, used on the
+// detail page.
 type NovelDetail struct {
 	Novel
-	Arcs []Arc
+	Arcs          []Arc
+	GlossaryCount int
+	CommentsCount int
 }
 
 // Arc groups a range of chapters under a story section (ภาค).
@@ -52,14 +57,40 @@ type Chapter struct {
 	ChapterNo   int
 	Title       string
 	PriceCoins  int
+	WordCount   int
 	PublishedAt string
+
+	// Unlocked is filled in for authenticated table-of-contents requests so the
+	// UI can show an "อ่านต่อ" affordance instead of a lock on owned chapters.
+	Unlocked bool
 }
 
-// ChapterView is what a reader receives: chapter metadata plus body when unlocked.
-type ChapterView struct {
-	Chapter
-	Locked   bool
-	BodyHTML string
+// GlossaryGroup is one category of glossary entries within a novel.
+type GlossaryGroup struct {
+	ID      int64
+	NovelID int64
+	Name    string
+	SortNo  int
+	Entries []GlossaryEntry
+}
+
+// GlossaryEntry is a single term, keyed by TermKey which is what the inline
+// <span data-k="..."> in a rendered chapter body refers to.
+type GlossaryEntry struct {
+	ID      int64
+	GroupID int64
+	TermKey string
+	TitleTH string
+	TitleCN string
+	Body    string
+	Kind    string
+}
+
+// RankedNovel is one row of the weekly leaderboard.
+type RankedNovel struct {
+	Novel
+	Rank  int
+	Score float64
 }
 
 // NovelFilter carries the query parameters used to list novels.
@@ -68,4 +99,16 @@ type NovelFilter struct {
 	GenreSlug string
 	Sort      string // "popular" | "latest"
 	Limit     int
+	// AfterID is the keyset cursor position: only novels ordered strictly after
+	// this id are returned.
+	AfterID int64
+	// AfterValue is the sort-key of the cursor row (updated_at for "latest",
+	// followers_count for "popular").
+	AfterValue string
 }
+
+// Sort orders accepted by NovelFilter.
+const (
+	SortPopular = "popular"
+	SortLatest  = "latest"
+)

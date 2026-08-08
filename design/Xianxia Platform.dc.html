@@ -65,7 +65,7 @@
         <button data-s="library" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 12px; color: #6B6357;">ดูทั้งหมด →</button>
       </div>
       <a data-flex="cont" href="Xianxia%20Reader.dc.html" style="display: flex; gap: 22px; align-items: stretch; margin-top: 14px; padding: 20px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; color: inherit;">
-        <div style="flex: 0 0 74px; height: 104px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
+        <div data-contcover style="flex: 0 0 74px; height: 104px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
           <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 15px; color: #6B6357; letter-spacing: 0.14em;">九流剑仙</div>
         </div>
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
@@ -533,7 +533,7 @@
 
             <div style="border-top: 1px solid rgba(35,32,27,0.08);">
               <sc-for list="{{ bk.arcs }}" as="a" hint-placeholder-count="4">
-                <div style="display: flex; align-items: center; gap: 16px; padding: 13px 24px; border-bottom: 1px solid rgba(35,32,27,0.05);">
+                <div data-arcrow style="display: flex; align-items: center; gap: 16px; padding: 13px 24px; border-bottom: 1px solid rgba(35,32,27,0.05);">
                   <div style="font-family: Trirong, serif; font-size: 13px; color: #A8382B; min-width: 60px; white-space: nowrap;">ภาคที่ {{ a.n }}</div>
                   <div data-lock="{{ a.dim }}" style="flex: 1; min-width: 0; font-size: 13.5px; color: #23201B;">{{ a.name }}</div>
                   <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357; min-width: 74px; text-align: right;">{{ a.range }}</div>
@@ -884,17 +884,32 @@ class Component extends DCLogic {
     } : { marginTop: 'auto', display: 'grid', flexDirection: 'column', alignItems: 'stretch', gap: '8px' });
 
     all('[data-navrow]').forEach((n) => set(n, m ? { display: 'flex', flexDirection: 'row', gap: '2px', flex: '0 0 auto' } : { display: 'grid', gap: '2px' }));
-    all('[data-navrow] button').forEach((b) => set(b, { whiteSpace: 'nowrap', padding: m ? '9px 12px' : '10px 12px' }));
+    all('[data-navrow] button').forEach((b) => set(b, { whiteSpace: 'nowrap', gap: '8px', padding: m ? '9px 12px' : '10px 12px' }));
     all('[data-sidefoot] button').forEach((b) => set(b, { whiteSpace: 'nowrap', padding: m ? '9px 12px' : '8px 12px' }));
     set(one('[data-sidefoot] a'), m ? { whiteSpace: 'nowrap', padding: '9px 14px' } : { whiteSpace: 'nowrap', padding: '12px', display: 'block', textAlign: 'center' });
 
+    set(one('[data-main]'), { padding: m ? '24px 16px 72px' : (this.state.screen === 'onboard' ? '64px 56px 96px' : '44px 56px 96px') });
     set(one('[data-grid="home"]'), { gridTemplateColumns: m ? '1fr' : '1.35fr 1fr', gap: m ? '34px' : '40px', marginTop: m ? '34px' : '46px' });
     set(one('[data-grid="kpi"]'), { gridTemplateColumns: m ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)' });
     set(one('[data-grid="write"]'), { gridTemplateColumns: m ? '1fr' : '250px 1fr', gap: m ? '18px' : '30px' });
-    set(one('[data-flex="cont"]'), { flexDirection: m ? 'column' : 'row', gap: m ? '16px' : '22px' });
+    set(one('[data-flex="cont"]'), { flexDirection: m ? 'column' : 'row', gap: m ? '16px' : '22px', alignItems: m ? 'flex-start' : 'stretch' });
+    set(one('[data-contcover]'), { flex: '0 0 auto', width: '74px', height: '104px' });
     set(one('[data-flex="detail"]'), { flexDirection: m ? 'column' : 'row', gap: m ? '24px' : '38px' });
     set(one('[data-detailcover]'), { flex: m ? '0 0 auto' : '0 0 200px', width: m ? '150px' : 'auto' });
-    all('[data-flex="book"]').forEach((el) => set(el, { padding: m ? '18px' : '24px', gap: m ? '18px' : '24px' }));
+    all('[data-flex="book"]').forEach((el) => {
+      set(el, { padding: m ? '18px' : '24px', gap: m ? '16px' : '24px', alignItems: 'flex-start' });
+      const kids = el.children;
+      set(kids[0], { flex: m ? '0 0 68px' : '0 0 96px' });
+      set(kids[1], { flex: m ? '1 1 180px' : '1 1 0%', minWidth: '0' });
+      set(kids[2], { flex: m ? '1 1 100%' : '0 0 auto', minWidth: m ? '0' : '132px', display: 'grid', gap: '8px' });
+    });
+    all('[data-arcrow]').forEach((el) => {
+      set(el, { flexWrap: m ? 'wrap' : 'nowrap', gap: m ? '4px 12px' : '16px', padding: m ? '12px 18px' : '13px 24px' });
+      const k = el.children;
+      set(k[1], { flex: m ? '1 1 auto' : '1 1 0%' });
+      set(k[2], { minWidth: m ? '0' : '74px', textAlign: m ? 'left' : 'right' });
+      set(k[3], { minWidth: m ? '0' : '96px', textAlign: m ? 'left' : 'right', marginLeft: m ? 'auto' : '0' });
+    });
   }
   componentDidUpdate() { this.syncVars(); }
 

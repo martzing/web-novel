@@ -1,8 +1,28 @@
 package makeme
 
 import (
+	"sync"
+
+	"github.com/lib/pq"
+
+	"github.com/mokchan/webnovel-backend/internal/crypto/argon2id"
 	"github.com/mokchan/webnovel-backend/internal/entities"
 )
+
+// DefaultPassword is the plaintext behind every fixture user's password hash,
+// so auth integration tests can log a fixture account in.
+const DefaultPassword = "fixture-password"
+
+// defaultPasswordHash is derived once per test binary. The cost is deliberately
+// low: fixtures need a *parseable argon2id* hash, not a slow one.
+var defaultPasswordHash = sync.OnceValue(func() string {
+	hasher := argon2id.New(argon2id.Params{Memory: 8 * 1024, Time: 1, Parallelism: 1})
+	hash, err := hasher.Hash(DefaultPassword)
+	if err != nil {
+		panic("makeme: hash default password: " + err.Error())
+	}
+	return hash
+})
 
 // ANewGenre creates a Genre builder with a unique slug and Thai name.
 func (m *MakeMe) ANewGenre() *Builder[entities.Genre] {
@@ -24,9 +44,13 @@ func (m *MakeMe) ANewUser() *Builder[entities.User] {
 	model := &entities.User{
 		Username:     fixtureCode("user_", seq, 6),
 		Email:        fixtureCode("user_", seq, 6) + "@example.com",
-		PasswordHash: "$2a$10$placeholderplaceholderplaceholderplaceholderplaceh",
+		PasswordHash: defaultPasswordHash(),
 		DisplayName:  fixtureThaiText("ผู้ใช้", seq),
-		Status:       "active",
+		// Roles must be set explicitly: entities.User now maps the column, so
+		// GORM sends it on INSERT and a nil value would violate NOT NULL rather
+		// than falling back to the ARRAY['reader'] default.
+		Roles:  pq.StringArray{entities.RoleReader},
+		Status: "active",
 	}
 	return newBuilder(m, model, func(row *entities.User) map[string]any {
 		return map[string]any{"username": row.Username}

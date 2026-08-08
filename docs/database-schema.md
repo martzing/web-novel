@@ -249,10 +249,50 @@ Aggregates powering the writer stats page (ยอดอ่าน, ผู้ต�
 
 ## Migration & seed layout
 
-| File                                                                      | Purpose                                                                                                                            |
-| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| [`backend/migrations/0001_init.sql`](../backend/migrations/0001_init.sql) | All tables above, plus the glossary trigger and the wallet expiry partial index.                                                   |
-| [`backend/migrations/0002_seed.sql`](../backend/migrations/0002_seed.sql) | Genres, translator account, the featured novel `เซียนดาบเก้าสายธาร`, its arcs, chapters 86–88, glossary entries, and 4 coin packs. |
+| File                                                                                                        | Purpose                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| [`0001_init.sql`](../backend/migrations/0001_init.sql)                                                       | All tables above, plus the glossary trigger and the wallet expiry partial index.                                                   |
+| [`0002_seed.sql`](../backend/migrations/0002_seed.sql)                                                       | Genres, translator account, the featured novel `เซียนดาบเก้าสายธาร`, its arcs, chapters 86–88, glossary entries, and 4 coin packs. |
+| [`0003_auth.sql`](../backend/migrations/0003_auth.sql)                                                       | `refresh_tokens` and its indexes; replaces the seeded placeholder password hash with a real argon2id hash.                         |
+| [`0004_search.sql`](../backend/migrations/0004_search.sql)                                                   | `search_tsv` refresh trigger and backfill, plus trigram indexes for the blended search ranking.                                    |
+| [`0005_purchases_idempotency.sql`](../backend/migrations/0005_purchases_idempotency.sql)                     | `purchases.idempotency_key` + unique index; `chapter_unlocks (user_id)` index.                                                     |
+| [`0006_notifications.sql`](../backend/migrations/0006_notifications.sql)                                     | Notification dedupe indexes, `comments (parent_id)`, `chapter_read_events (chapter_id, occurred_at)`.                              |
+
+### `refresh_tokens` (0003)
+
+| Column        | Notes                                                             |
+| ------------- | ----------------------------------------------------------------- |
+| `token_hash`  | `BYTEA UNIQUE` — only `sha256(token)` is stored                   |
+| `family_id`   | `UUID`; a rotation chain. Replaying a revoked token revokes the whole family |
+| `replaced_by` | Self-FK to the successor token                                    |
+| `revoked_at`  | Set on rotation, logout, or reuse detection                       |
+
+The seeded translator's development password is `mokchan-dev`.
+
+### Search ranking (0004)
+
+The trigger keeps `search_tsv` current, but **tsvector alone cannot serve Thai
+search**: `เซียนดาบ` is a substring of the single lexeme
+`เซียนดาบเก้าสายธาร`, so `plainto_tsquery` misses it. The repository blends
+trigram `similarity()`, `ILIKE` and `ts_rank`; user input is escaped with an
+explicit `ESCAPE '\'` so `%` and `_` are literal. Do not reduce this to a pure
+tsvector match — test I-CAT-01 covers exactly this case.
+
+### Idempotency (0005)
+
+`POST /purchases` creates a `pending` row and writes no ledger entry, so
+`coin_ledger`'s unique key cannot dedupe it. `purchases.idempotency_key` with
+`UNIQUE (user_id, idempotency_key)` fills that gap (test I-COIN-01M). NULLs are
+distinct in Postgres, so rows without a key coexist freely under both indexes —
+which is also what lets every key-less `bonus_expire` ledger row coexist.
+
+### Notification dedupe (0006)
+
+Unique partial indexes on `(user_id, payload->>'chapter_id') WHERE
+kind='new_chapter'` and the equivalent for replies. Unpublishing and
+republishing a chapter is a normal editorial action, so fan-out relies on these
+indexes plus `ON CONFLICT DO NOTHING` rather than on the caller remembering not
+to repeat itself.
 
 Applied via `goose`:
 
@@ -262,8 +302,25 @@ go run ./cmd/migrate -cmd up
 go run ./cmd/migrate -cmd status
 ```
 
-## Open items to watch after Phase 1
+## Open items
 
-- Add a `revoked_refresh_tokens` table (or Redis set) once auth is wired.
-- Introduce monthly partition creation cron for `chapter_read_events` before Phase 4.
-- Consider a materialized view for the weekly ranking if Redis is unavailable in production.
+Resolved:
+
+- ~~Add a `revoked_refresh_tokens` table (or Redis set) once auth is wired.~~
+  Done in 0003 as `refresh_tokens` with family-based revocation. Postgres rather
+  than Redis: rotation needs a compare-and-swap, and reuse detection needs the
+  revoked row to survive — a TTL cache would evict exactly the evidence that
+  matters.
+- ~~Introduce monthly partition creation cron for `chapter_read_events`.~~ Done:
+  `jobs.PartitionJob` creates the current and next month's partitions monthly.
+- ~~Consider a materialized view for the weekly ranking.~~ Done without Redis:
+  `jobs.RankingJob` writes `ranking_snapshots` every Monday, and the read path
+  falls back to live popularity when no snapshot exists yet.
+
+Still open:
+
+- `chapter_daily_stats.coins_earned` attributes an unlock to the day it happened
+  rather than to the chapter's own read events; revisit if per-chapter revenue
+  reporting needs to be exact.
+- No table backs `GET /admin/reports`; add `comment_reports` when comment
+  moderation is built.

@@ -1,0 +1,304 @@
+/* Element defaults and the responsive app shell. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background 420ms ease,
+    color 420ms ease;
+  /* Wide content scrolls inside its own container; the page itself never does. */
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--red);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--gold);
+}
+
+input,
+textarea,
+button,
+select {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--sel);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 6px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.serif {
+  font-family: var(--font-serif);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.reading {
+  font-family: var(--font-reading);
+}
+
+/* ── App shell ──────────────────────────────────────────────────────────── */
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.shell__main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--s7) 56px 96px;
+}
+
+.shell__inner {
+  max-width: var(--content-max);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--sidebar);
+  border-right: 1px solid var(--line);
+  padding: 28px 18px;
+}
+
+.sidebar__brand {
+  padding: 0 10px 26px;
+}
+
+.sidebar__title {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.sidebar__sub {
+  font-size: 11.5px;
+  color: var(--soft);
+  margin-top: 3px;
+}
+
+.sidebar__nav {
+  display: grid;
+  gap: 2px;
+}
+
+.sidebar__foot {
+  margin-top: auto;
+  display: grid;
+  gap: var(--s2);
+  padding: 0 2px;
+}
+
+.navitem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: var(--r2);
+  font-size: 13.5px;
+  color: var(--soft);
+  width: 100%;
+}
+
+.navitem:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.navitem.is-active {
+  background: var(--active);
+  color: var(--ink);
+}
+
+.navitem__badge {
+  font-size: 11px;
+  color: var(--soft);
+  font-family: var(--font-mono);
+}
+
+/* The glyph only appears once the sidebar collapses to an icon rail. */
+.navitem__icon {
+  display: none;
+}
+
+/* The mobile top bar and bottom tab bar are hidden on desktop. */
+.topbar,
+.tabbar {
+  display: none;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 1279px) {
+  .shell__main {
+    padding: 36px 36px 96px;
+  }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --sidebar-w: 76px;
+  }
+
+  /* The sidebar collapses to an icon rail: labels go, glyphs stay. */
+  .sidebar {
+    padding: 20px 10px;
+    align-items: center;
+  }
+
+  .sidebar__brand,
+  .sidebar__sub,
+  .navitem__label,
+  .navitem__badge,
+  .sidebar__section,
+  .sidebar__foot {
+    display: none;
+  }
+
+  .navitem {
+    justify-content: center;
+    padding: 12px 0;
+  }
+
+  .navitem__icon {
+    display: block;
+    font-size: 18px;
+  }
+
+  .shell__main {
+    padding: 28px 24px 96px;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Below 768px the rail becomes a bottom tab bar, which is where a thumb is. */
+  .sidebar {
+    display: none;
+  }
+
+  .shell {
+    flex-direction: column;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s3);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 12px 16px;
+    background: var(--panel-blur);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .topbar__title {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .tabbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--panel-blur);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .tabbar__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 9px 0 8px;
+    border: 0;
+    background: none;
+    font-size: 10.5px;
+    color: var(--soft);
+  }
+
+  .tabbar__item.is-active {
+    color: var(--red);
+  }
+
+  .tabbar__icon {
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .shell__main {
+    /* Clear the fixed tab bar. */
+    padding: 20px 16px calc(84px + env(safe-area-inset-bottom));
+  }
+}
