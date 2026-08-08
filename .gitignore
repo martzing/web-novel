@@ -1,0 +1,26 @@
+# Backend
+backend/bin/
+backend/tmp/
+backend/*.log
+backend/.env
+backend/vendor/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/tsconfig.tsbuildinfo
+
+# Local generated assets
+.thumbnail
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+
+# Docker
+.docker-data/

@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=IBM+Plex+Mono:wght@400&family=Trirong:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #FAF8F3; color: #23201B; font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; }
+  ::selection { background: rgba(168,56,43,0.15); }
+  a { color: #A8382B; text-decoration: none; }
+  a:hover { color: #A9803F; }
+  input, textarea, button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(35,32,27,0.16); border-radius: 6px; }
+</style>
+</helmet>
+
+<div data-root style="display: flex; min-height: 100vh; align-items: stretch;">
+
+  <aside data-sidebar style="display: var(--nav-d, flex); flex-direction: column; width: 244px; flex: 0 0 244px; position: sticky; top: 0; height: 100vh; box-sizing: border-box; background: #F3EFE6; border-right: 1px solid rgba(35,32,27,0.09); padding: 28px 18px;">
+    <div data-brand style="padding: 0 10px 26px;">
+      <div data-brandtitle style="font-family: Trirong, serif; font-size: 21px; font-weight: 600; letter-spacing: 0.01em;">หมอกจันทร์</div>
+      <div data-brandsub style="font-size: 11.5px; color: #6B6357; margin-top: 3px;">หอนิยายจีนแปล</div>
+    </div>
+
+    <nav data-navrow style="display: grid; gap: 2px;">
+      <button data-s="home" onClick="{{ go }}" style="display: flex; align-items: center; justify-content: space-between; text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-home-bg, rgba(35,32,27,0.06)); color: var(--n-home-c, #23201B);">หน้าแรก</button>
+      <button data-s="browse" onClick="{{ go }}" style="display: flex; align-items: center; justify-content: space-between; text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-browse-bg, transparent); color: var(--n-browse-c, #6B6357);">หมวดหมู่และค้นหา</button>
+      <button data-s="library" onClick="{{ go }}" style="display: flex; align-items: center; justify-content: space-between; text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-library-bg, transparent); color: var(--n-library-c, #6B6357);"><span>ชั้นหนังสือ</span><span style="font-size: 11px; color: #6B6357;">12</span></button>
+      <button data-s="coins" onClick="{{ go }}" style="display: flex; align-items: center; justify-content: space-between; text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-coins-bg, transparent); color: var(--n-coins-c, #6B6357);"><span>เหรียญ</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A9803F;">240</span></button>
+    </nav>
+
+    <div data-writergroup style="display: var(--writer-d, grid);">
+    <div data-writerlabel style="margin: 24px 10px 10px; font-size: 10.5px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">สำหรับนักเขียน</div>
+    <nav data-navrow style="display: grid; gap: 2px;">
+      <button data-s="write" onClick="{{ go }}" style="text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-write-bg, transparent); color: var(--n-write-c, #6B6357);">เขียนบท</button>
+      <button data-s="stats" onClick="{{ go }}" style="text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-stats-bg, transparent); color: var(--n-stats-c, #6B6357);">สถิติผลงาน</button>
+    </nav>
+    </div>
+
+    <div data-sidefoot style="margin-top: auto; display: grid; gap: 8px; padding: 0 2px;">
+      <button data-s="onboard" onClick="{{ go }}" style="text-align: left; border: 0; background: none; cursor: pointer; padding: 8px 12px; font-size: 12px; color: #6B6357;">ตั้งค่าแนวที่ชอบ</button>
+      <a href="Xianxia%20Reader.dc.html" style="display: block; padding: 12px; text-align: center; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; font-size: 12.5px; color: #23201B;">เปิดหน้าอ่าน →</a>
+    </div>
+  </aside>
+
+  <main data-main style="flex: 1; min-width: 0; padding: var(--shell-p, 44px 56px 96px);">
+
+    <section style="display: var(--s-home, block); max-width: 1080px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px;">
+        <h1 style="font-family: Trirong, serif; font-size: 30px; font-weight: 600; margin: 0;">สวัสดียามบ่าย</h1>
+        <div style="font-size: 12.5px; color: #6B6357;">อ่านสะสมสัปดาห์นี้ 4 ชั่วโมง 12 นาที</div>
+      </div>
+
+      <div style="margin-top: 30px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+        <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">อ่านค้างไว้</div>
+        <button data-s="library" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 12px; color: #6B6357;">ดูทั้งหมด →</button>
+      </div>
+      <a data-flex="cont" href="Xianxia%20Reader.dc.html" style="display: flex; gap: 22px; align-items: stretch; margin-top: 14px; padding: 20px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; color: inherit;">
+        <div style="flex: 0 0 74px; height: 104px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
+          <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 15px; color: #6B6357; letter-spacing: 0.14em;">九流剑仙</div>
+        </div>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+          <div style="font-family: Trirong, serif; font-size: 19px; font-weight: 600;">เซียนดาบเก้าสายธาร</div>
+          <div style="font-size: 12.5px; color: #6B6357; margin-top: 5px;">ภาคที่ 2 · สำนักเมฆาวสันต์ · บทที่ 87 — ดาบแรกใต้ฟ้าหมอก</div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px;">
+            <div style="flex: 1; height: 3px; background: rgba(35,32,27,0.10); border-radius: 2px; overflow: hidden;"><div style="width: 41%; height: 100%; background: #A8382B;"></div></div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357;">87 / 214</div>
+          </div>
+        </div>
+        <div style="align-self: center; padding: 12px 20px; border: 1px solid #A8382B; border-radius: 3px; color: #A8382B; font-size: 13px; white-space: nowrap;">อ่านต่อ</div>
+      </a>
+
+      <div data-grid="home" style="margin-top: 46px; display: grid; grid-template-columns: 1.35fr 1fr; gap: 40px; align-items: start;">
+        <div>
+          <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">แปลใหม่ประจำสัปดาห์</div>
+          <div style="margin-top: 16px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; overflow: hidden;">
+            <div style="height: 172px; background: repeating-linear-gradient(135deg, #E7E0D2 0 8px, #F0EADE 8px 16px); display: flex; align-items: center; justify-content: center; position: relative;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #8A8172; letter-spacing: 0.06em;">ภาพหน้าปกแบนเนอร์ 1080×340</div>
+            </div>
+            <div style="padding: 22px 24px 24px;">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #A9803F;"><span>เซียน</span><span style="opacity: 0.5;">·</span><span>ย้อนเวลา</span></div>
+              <div style="font-family: Trirong, serif; font-size: 23px; font-weight: 600; margin-top: 8px;">คืนกลับสู่ปีที่สิบเก้า</div>
+              <p style="font-size: 13.5px; line-height: 1.95; color: #6B6357; margin: 10px 0 0; font-family: Sarabun, sans-serif; text-wrap: pretty;">เมื่อผู้บำเพ็ญขั้นแปรวิญญาณตายลงกลางฟ้าลงทัณฑ์ เขาลืมตาขึ้นอีกครั้งในร่างของตัวเองตอนอายุสิบเก้า ในคืนก่อนที่สำนักจะถูกเผา</p>
+              <div style="display: flex; gap: 10px; margin-top: 18px;">
+                <button data-s="detail" onClick="{{ go }}" style="padding: 11px 22px; border: 0; border-radius: 3px; background: #23201B; color: #FAF8F3; font-size: 13px; cursor: pointer;">ดูรายละเอียด</button>
+                <button data-s="detail" onClick="{{ go }}" style="padding: 11px 22px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; color: #23201B; font-size: 13px; cursor: pointer;">เพิ่มลงชั้นหนังสือ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">อันดับสัปดาห์นี้</div>
+          <div style="margin-top: 16px; display: grid;">
+            <sc-for list="{{ ranked }}" as="nv" hint-placeholder-count="5">
+              <button data-n="{{ nv.id }}" onClick="{{ openNovel }}" style="display: flex; gap: 16px; align-items: center; text-align: left; width: 100%; border: 0; border-top: 1px solid rgba(35,32,27,0.09); background: none; cursor: pointer; padding: 14px 6px;" style-hover="background: rgba(35,32,27,0.03);">
+                <div style="font-family: Trirong, serif; font-size: 21px; color: #A8382B; min-width: 24px;">{{ nv.rank }}</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ nv.t }}</div>
+                  <div style="font-size: 11.5px; color: #6B6357; margin-top: 3px;">{{ nv.genre }} · {{ nv.ch }} บท</div>
+                </div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6B6357;">{{ nv.score }}</div>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 50px; font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">อัปเดตล่าสุด</div>
+      <div style="margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 26px 22px;">
+        <sc-for list="{{ novels }}" as="nv" hint-placeholder-count="8">
+          <button data-n="{{ nv.id }}" onClick="{{ openNovel }}" style="text-align: left; border: 0; background: none; padding: 0; cursor: pointer;">
+            <div style="aspect-ratio: 3 / 4; border-radius: 3px; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(35,32,27,0.08);">
+              <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 17px; color: #6B6357; letter-spacing: 0.18em;">{{ nv.cn }}</div>
+            </div>
+            <div style="font-size: 13.5px; font-weight: 600; margin-top: 10px; line-height: 1.5;">{{ nv.t }}</div>
+            <div style="font-size: 11.5px; color: #6B6357; margin-top: 4px;">อัปเดต {{ nv.upd }} · {{ nv.ch }} บท</div>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: var(--s-browse, none); max-width: 1080px;">
+      <h1 style="font-family: Trirong, serif; font-size: 28px; font-weight: 600; margin: 0;">หมวดหมู่และค้นหา</h1>
+      <input data-x type="text" placeholder="ค้นหาชื่อเรื่อง ชื่อจีน ผู้แปล หรือชื่อตัวละคร" onInput="{{ onSearch }}" style="width: 100%; box-sizing: border-box; margin-top: 22px; padding: 15px 18px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px;">
+        <sc-for list="{{ genres }}" as="g" hint-placeholder-count="8">
+          <button data-g="{{ g.name }}" onClick="{{ pickGenre }}" style="padding: 9px 16px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; background: transparent; cursor: pointer; font-size: 12.5px; color: #23201B;">{{ g.name }}</button>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 34px;">
+        <div style="font-size: 12.5px; color: #6B6357;">{{ resultLabel }}</div>
+        <div style="font-size: 12.5px; color: #6B6357;">เรียงตามความนิยม</div>
+      </div>
+
+      <div style="margin-top: 16px; display: grid; gap: 0;">
+        <sc-for list="{{ results }}" as="nv" hint-placeholder-count="6">
+          <button data-n="{{ nv.id }}" onClick="{{ openNovel }}" style="display: flex; gap: 20px; text-align: left; width: 100%; border: 0; border-top: 1px solid rgba(35,32,27,0.09); background: none; cursor: pointer; padding: 18px 8px;" style-hover="background: rgba(35,32,27,0.03);">
+            <div style="flex: 0 0 62px; height: 84px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
+              <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 13px; color: #6B6357; letter-spacing: 0.14em;">{{ nv.cn }}</div>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-family: Trirong, serif; font-size: 17px; font-weight: 600;">{{ nv.t }}</div>
+              <div style="font-size: 11.5px; color: #A9803F; margin-top: 4px;">{{ nv.genre }} · แปลโดย {{ nv.tr }}</div>
+              <div style="font-family: Sarabun, sans-serif; font-size: 13px; line-height: 1.85; color: #6B6357; margin-top: 7px;">{{ nv.desc }}</div>
+            </div>
+            <div style="flex: 0 0 84px; text-align: right; font-size: 11.5px; color: #6B6357;">
+              <div style="font-family: 'IBM Plex Mono', monospace; color: #23201B;">{{ nv.score }}</div>
+              <div style="margin-top: 4px;">{{ nv.ch }} บท</div>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: var(--s-detail, none); max-width: 940px;">
+      <button data-s="home" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 12.5px; color: #6B6357; padding: 0 0 22px;">← กลับ</button>
+      <div data-flex="detail" style="display: flex; gap: 38px; align-items: flex-start;">
+        <div data-detailcover style="flex: 0 0 200px;">
+          <div style="aspect-ratio: 3 / 4; border-radius: 3px; border: 1px solid rgba(35,32,27,0.08); background: repeating-linear-gradient(135deg, #E7E0D2 0 7px, #F0EADE 7px 14px); display: flex; align-items: center; justify-content: center;">
+            <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 26px; color: #6B6357; letter-spacing: 0.2em;">九流剑仙</div>
+          </div>
+          <a href="Xianxia%20Reader.dc.html" style="display: block; margin-top: 14px; padding: 14px; text-align: center; background: #A8382B; color: #FAF8F3; border-radius: 3px; font-size: 13.5px;">อ่านต่อบทที่ 87</a>
+          <button style="width: 100%; margin-top: 8px; padding: 13px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 13px;">อยู่ในชั้นหนังสือแล้ว</button>
+        </div>
+
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 12px; color: #A9803F;">เซียน · กำลังภายใน · แปลจาก 九流剑仙</div>
+          <h1 style="font-family: Trirong, serif; font-size: 34px; font-weight: 600; margin: 8px 0 0;">เซียนดาบเก้าสายธาร</h1>
+          <div style="font-size: 13px; color: #6B6357; margin-top: 8px;">ผู้แต่ง เยี่ยจื่อหลิง · แปลโดย สำนักแปลหมอกจันทร์</div>
+
+          <div style="display: flex; gap: 26px; flex-wrap: wrap; margin-top: 24px; padding: 18px 0; border-top: 1px solid rgba(35,32,27,0.09); border-bottom: 1px solid rgba(35,32,27,0.09);">
+            <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">4.8</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">2,140 รีวิว</div></div>
+            <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">214</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">บททั้งหมด</div></div>
+            <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">4</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">ภาค</div></div>
+            <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">38,400</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">ผู้ติดตาม</div></div>
+          </div>
+
+          <p style="font-family: Sarabun, sans-serif; font-size: 14.5px; line-height: 2; color: #3A342B; margin: 22px 0 0; text-wrap: pretty;">เยี่ยหลิงเฟิงเกิดมาพร้อมเส้นชี่ที่แคบกว่าคนทั่วไปเกือบครึ่ง สามปีในสำนักเมฆาวสันต์เขาได้แต่แบกฟืนขึ้นเขา จนคืนหนึ่งเขาพบคัมภีร์ดาบที่ถูกเผาไปครึ่งเล่มในลำธารใต้หน้าผา และค้นพบว่าวิชาที่โลกทั้งใบทิ้งไปแล้วนั้น ออกแบบมาสำหรับคนที่เส้นชี่แคบอย่างเขาโดยเฉพาะ</p>
+
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <a href="Xianxia%20Reader.dc.html" style="font-size: 12.5px; padding: 9px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; color: #23201B;">อภิธานศัพท์ 27 คำ</a>
+            <button data-s="comments" onClick="{{ go }}" style="font-size: 12.5px; padding: 9px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; background: none; cursor: pointer; color: #23201B;">ความเห็น 1,208</button>
+            <button data-s="series" onClick="{{ go }}" style="font-size: 12.5px; padding: 9px 15px; border: 1px solid #A8382B; border-radius: 999px; background: none; cursor: pointer; color: #A8382B;">ดูทั้งชุด · 5 เรื่อง 8 ภาค</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 48px; display: flex; align-items: baseline; justify-content: space-between;">
+        <div style="font-family: Trirong, serif; font-size: 20px; font-weight: 600;">สารบัญ</div>
+        <div style="font-size: 12px; color: #6B6357;">บทที่ 1–48 (ภาคที่ 1) อ่านฟรี · บทหลังจากนั้น 5 เหรียญต่อบท</div>
+      </div>
+
+      <div style="margin-top: 18px; border-top: 1px solid rgba(35,32,27,0.09);">
+        <sc-for list="{{ detailChapters }}" as="c" hint-placeholder-count="8">
+          <div data-chrow style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 13px 8px; border-bottom: 1px solid rgba(35,32,27,0.07);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6B6357; min-width: 34px;">{{ c.n }}</div>
+            <div data-lock="{{ c.lockedFlag }}" style="flex: 1; min-width: 0; font-size: 14px; color: #23201B;">{{ c.title }}</div>
+            <div style="font-size: 11.5px; color: #6B6357;">{{ c.date }}</div>
+            <button data-n="{{ c.n }}" data-locked="{{ c.lockedFlag }}" onClick="{{ chapterClick }}" style="min-width: 96px; padding: 8px 14px; border: 1px solid rgba(35,32,27,0.14); border-radius: 3px; background: none; cursor: pointer; font-size: 12px; color: #23201B;">{{ c.action }}</button>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: var(--s-library, none); max-width: 900px;">
+      <h1 style="font-family: Trirong, serif; font-size: 28px; font-weight: 600; margin: 0;">ชั้นหนังสือ</h1>
+      <div style="display: flex; gap: 4px; margin-top: 22px; border-bottom: 1px solid rgba(35,32,27,0.10);">
+        <button data-t="reading" onClick="{{ setTab }}" style="border: 0; background: none; cursor: pointer; padding: 12px 16px; font-size: 13.5px; color: var(--t-reading-c, #23201B); border-bottom: 2px solid var(--t-reading-b, #A8382B); margin-bottom: -1px;">กำลังอ่าน 5</button>
+        <button data-t="saved" onClick="{{ setTab }}" style="border: 0; background: none; cursor: pointer; padding: 12px 16px; font-size: 13.5px; color: var(--t-saved-c, #6B6357); border-bottom: 2px solid var(--t-saved-b, transparent); margin-bottom: -1px;">บันทึกไว้ 4</button>
+        <button data-t="done" onClick="{{ setTab }}" style="border: 0; background: none; cursor: pointer; padding: 12px 16px; font-size: 13.5px; color: var(--t-done-c, #6B6357); border-bottom: 2px solid var(--t-done-b, transparent); margin-bottom: -1px;">อ่านจบแล้ว 3</button>
+      </div>
+
+      <div style="margin-top: 6px;">
+        <sc-for list="{{ shelf }}" as="b" hint-placeholder-count="5">
+          <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding: 20px 8px; border-bottom: 1px solid rgba(35,32,27,0.08);">
+            <div style="flex: 0 0 58px; height: 78px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
+              <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 12px; color: #6B6357; letter-spacing: 0.14em;">{{ b.cn }}</div>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-family: Trirong, serif; font-size: 16.5px; font-weight: 600;">{{ b.t }}</div>
+              <div style="font-size: 12px; color: #6B6357; margin-top: 4px;">{{ b.sub }}</div>
+              <div style="display: flex; align-items: center; gap: 12px; margin-top: 12px; max-width: 420px;">
+                <div style="flex: 1; height: 3px; background: rgba(35,32,27,0.10); border-radius: 2px; overflow: hidden;"><div data-bar="{{ b.pct }}" style="width: 0%; height: 100%; background: #A8382B; transition: width 400ms ease;"></div></div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357;">{{ b.progress }}</div>
+              </div>
+            </div>
+            <a href="Xianxia%20Reader.dc.html" style="padding: 10px 18px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; font-size: 12.5px; color: #23201B;">{{ b.cta }}</a>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: var(--s-coins, none); max-width: 820px;">
+      <h1 style="font-family: Trirong, serif; font-size: 28px; font-weight: 600; margin: 0;">เหรียญ</h1>
+      <div style="margin-top: 22px; padding: 28px 30px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 12px; color: #6B6357;">ยอดคงเหลือ</div>
+          <div style="font-family: Trirong, serif; font-size: 38px; font-weight: 600; margin-top: 4px; color: #A9803F;">240</div>
+          <div style="font-size: 12px; color: #6B6357;">ปลดล็อกได้อีกราว 48 บท</div>
+        </div>
+        <div style="text-align: right; font-size: 12.5px; color: #6B6357; line-height: 2;">
+          <div>ใช้ไปเดือนนี้ 165 เหรียญ</div>
+          <div>เหรียญโบนัสหมดอายุ 12 ก.ย.</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 34px; font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">เติมเหรียญ</div>
+      <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+        <sc-for list="{{ packs }}" as="p" hint-placeholder-count="4">
+          <button data-p="{{ p.id }}" onClick="{{ buyPack }}" style="position: relative; text-align: left; padding: 22px 18px; border: 1px solid rgba(35,32,27,0.12); border-radius: 4px; background: #FFFDF8; cursor: pointer;" style-hover="border-color: #A8382B;">
+            <sc-if value="{{ p.best }}" hint-placeholder-val="{{ false }}">
+              <div style="position: absolute; top: -9px; left: 18px; background: #A8382B; color: #FAF8F3; font-size: 10px; padding: 3px 8px; border-radius: 2px;">คุ้มที่สุด</div>
+            </sc-if>
+            <div style="font-family: Trirong, serif; font-size: 24px; font-weight: 600;">{{ p.coins }}</div>
+            <div style="font-size: 11.5px; color: #6B6357; margin-top: 2px;">{{ p.sub }}</div>
+            <div style="margin-top: 16px; font-size: 14px;">{{ p.price }}</div>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 40px; font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">ประวัติการใช้</div>
+      <div style="margin-top: 14px; border-top: 1px solid rgba(35,32,27,0.09);">
+        <sc-for list="{{ ledger }}" as="l" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 16px; padding: 13px 4px; border-bottom: 1px solid rgba(35,32,27,0.07); font-size: 13px;">
+            <div style="flex: 1;">{{ l.what }}</div>
+            <div style="font-size: 11.5px; color: #6B6357;">{{ l.when }}</div>
+            <div data-amt="{{ l.amt }}" style="font-family: 'IBM Plex Mono', monospace; min-width: 60px; text-align: right; color: #23201B;">{{ l.amt }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: var(--s-comments, none); max-width: 760px;">
+      <button data-s="detail" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 12.5px; color: #6B6357; padding: 0 0 20px;">← เซียนดาบเก้าสายธาร</button>
+      <h1 style="font-family: Trirong, serif; font-size: 25px; font-weight: 600; margin: 0;">ความเห็นบทที่ 87</h1>
+      <div style="font-size: 12.5px; color: #6B6357; margin-top: 6px;">ดาบแรกใต้ฟ้าหมอก · 1,208 ความเห็น</div>
+
+      <div style="margin-top: 24px; padding: 18px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px;">
+        <textarea data-x placeholder="เขียนความเห็นถึงบทนี้ (ติดสปอยล์ให้กดปุ่มซ่อนสปอยล์)" style="width: 100%; box-sizing: border-box; min-height: 74px; border: 0; outline: none; resize: vertical; background: none; font-family: Sarabun, sans-serif; font-size: 14px; line-height: 1.9; color: #23201B;"></textarea>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; border-top: 1px solid rgba(35,32,27,0.08); padding-top: 12px;">
+          <button style="border: 1px solid rgba(35,32,27,0.14); background: none; border-radius: 999px; cursor: pointer; font-size: 11.5px; padding: 6px 13px; color: #6B6357;">ซ่อนสปอยล์</button>
+          <button style="border: 0; background: #23201B; color: #FAF8F3; border-radius: 3px; cursor: pointer; font-size: 13px; padding: 10px 22px;">ส่งความเห็น</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 18px; margin-top: 26px; font-size: 12.5px; color: #6B6357;">
+        <span style="color: #23201B;">ยอดนิยม</span><span>ล่าสุด</span><span>เฉพาะที่มีคนตอบ</span>
+      </div>
+
+      <div style="margin-top: 8px;">
+        <sc-for list="{{ comments }}" as="c" hint-placeholder-count="4">
+          <div style="padding: 22px 0; border-top: 1px solid rgba(35,32,27,0.09);">
+            <div style="display: flex; align-items: baseline; gap: 10px;">
+              <div style="font-size: 13.5px; font-weight: 600;">{{ c.user }}</div>
+              <div style="font-size: 11px; color: #A9803F;">{{ c.badge }}</div>
+              <div style="font-size: 11px; color: #6B6357; margin-left: auto;">{{ c.when }}</div>
+            </div>
+            <div style="font-family: Sarabun, sans-serif; font-size: 14px; line-height: 1.95; color: #3A342B; margin-top: 8px; text-wrap: pretty;">{{ c.body }}</div>
+            <div style="display: flex; gap: 18px; margin-top: 10px; font-size: 12px; color: #6B6357;">
+              <span>เห็นด้วย {{ c.likes }}</span>
+              <span>ตอบกลับ</span>
+            </div>
+            <sc-if value="{{ c.hasReply }}" hint-placeholder-val="{{ false }}">
+              <div style="margin: 14px 0 0 18px; padding: 14px 0 0 18px; border-left: 2px solid rgba(35,32,27,0.10);">
+                <div style="display: flex; align-items: baseline; gap: 10px;">
+                  <div style="font-size: 13px; font-weight: 600;">{{ c.replyUser }}</div>
+                  <div style="font-size: 11px; color: #A8382B;">ผู้แปล</div>
+                </div>
+                <div style="font-family: Sarabun, sans-serif; font-size: 13.5px; line-height: 1.9; color: #6B6357; margin-top: 6px;">{{ c.reply }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: var(--s-write, none); max-width: 1120px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between;">
+        <h1 style="font-family: Trirong, serif; font-size: 26px; font-weight: 600; margin: 0;">เขียนบท</h1>
+        <div style="font-size: 12px; color: #6B6357;">บันทึกอัตโนมัติเมื่อ 2 นาทีที่แล้ว</div>
+      </div>
+
+      <div data-grid="write" style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; margin-top: 26px; align-items: start;">
+        <div style="border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; background: #FFFDF8; overflow: hidden;">
+          <div style="padding: 14px 16px; border-bottom: 1px solid rgba(35,32,27,0.09); font-size: 12px; color: #6B6357;">ร่างและบทที่เผยแพร่</div>
+          <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="6">
+            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(35,32,27,0.06);">
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357;">{{ d.n }}</div>
+                <div style="font-size: 13px; flex: 1; min-width: 0;">{{ d.t }}</div>
+              </div>
+              <div data-status="{{ d.status }}" style="font-size: 10.5px; color: #A9803F; margin-top: 4px;">{{ d.status }}</div>
+            </div>
+          </sc-for>
+          <button style="width: 100%; padding: 14px; border: 0; background: none; cursor: pointer; font-size: 13px; color: #A8382B;">+ สร้างบทใหม่</button>
+        </div>
+
+        <div style="border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; background: #FFFDF8;">
+          <div style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid rgba(35,32,27,0.09); flex-wrap: wrap;">
+            <button style="border: 1px solid rgba(35,32,27,0.12); background: none; border-radius: 3px; cursor: pointer; font-size: 12px; padding: 7px 12px;">แทรกเชิงอรรถ</button>
+            <button style="border: 1px solid rgba(35,32,27,0.12); background: none; border-radius: 3px; cursor: pointer; font-size: 12px; padding: 7px 12px;">ผูกศัพท์อภิธาน</button>
+            <button style="border: 1px solid rgba(35,32,27,0.12); background: none; border-radius: 3px; cursor: pointer; font-size: 12px; padding: 7px 12px;">คั่นฉาก</button>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: #6B6357;">
+              <span>ราคาปลดล็อก</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; border: 1px solid rgba(35,32,27,0.12); border-radius: 3px; padding: 5px 10px; color: #A9803F;">5 เหรียญ</span>
+            </div>
+          </div>
+
+          <div style="padding: 26px 30px 20px;">
+            <input data-x type="text" value="ดาบแรกใต้ฟ้าหมอก" style="width: 100%; box-sizing: border-box; border: 0; outline: none; background: none; font-family: Trirong, serif; font-size: 26px; font-weight: 600; color: #23201B;">
+            <div style="font-size: 11.5px; color: #6B6357; margin-top: 6px;">บทที่ 87 · ภาคที่ 2 สำนักเมฆาวสันต์</div>
+            <textarea data-x onInput="{{ onDraft }}" style="width: 100%; box-sizing: border-box; margin-top: 20px; min-height: 340px; border: 0; outline: none; resize: vertical; background: none; font-family: Sarabun, sans-serif; font-size: 16px; line-height: 2; color: #23201B;">หิมะบางโปรยลงเหนือหุบเขาเมฆาวสันต์มาตั้งแต่ยามดึก พอฟ้าสาง ลานฝึกก็ขาวจนแทบมองไม่เห็นรอยหินใต้ฝ่าเท้า
+
+เยี่ยหลิงเฟิงยืนอยู่กลางลาน มือขวากุมด้ามกระบี่ไม้ที่สึกจนมันวาว เขาสูดลมเย็นเข้าเต็มปอด แล้วปล่อยให้ชี่ไหลออกจากตันเถียน ขึ้นไปตามจิงม่ายทั้งสิบสองสาย</textarea>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid rgba(35,32,27,0.09);">
+            <div style="font-size: 11.5px; color: #6B6357;">{{ wordCount }} ตัวอักษร · เชิงอรรถ 6 จุด · ศัพท์ผูกแล้ว 4 คำ</div>
+            <div style="display: flex; gap: 8px;">
+              <button style="border: 1px solid rgba(35,32,27,0.14); background: none; border-radius: 3px; cursor: pointer; font-size: 13px; padding: 10px 18px;">บันทึกร่าง</button>
+              <button style="border: 0; background: #A8382B; color: #FAF8F3; border-radius: 3px; cursor: pointer; font-size: 13px; padding: 10px 22px;">ตั้งเวลาเผยแพร่</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display: var(--s-stats, none); max-width: 980px;">
+      <h1 style="font-family: Trirong, serif; font-size: 26px; font-weight: 600; margin: 0;">สถิติผลงาน</h1>
+      <div style="font-size: 12.5px; color: #6B6357; margin-top: 6px;">เซียนดาบเก้าสายธาร · 14 วันล่าสุด</div>
+
+      <div data-grid="kpi" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 26px;">
+        <div style="padding: 20px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px;">
+          <div style="font-size: 11.5px; color: #6B6357;">ยอดอ่าน</div>
+          <div style="font-family: Trirong, serif; font-size: 27px; font-weight: 600; margin-top: 5px;">182,940</div>
+          <div style="font-size: 11.5px; color: #A8382B; margin-top: 3px;">+12.4%</div>
+        </div>
+        <div style="padding: 20px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px;">
+          <div style="font-size: 11.5px; color: #6B6357;">ผู้ติดตามใหม่</div>
+          <div style="font-family: Trirong, serif; font-size: 27px; font-weight: 600; margin-top: 5px;">2,318</div>
+          <div style="font-size: 11.5px; color: #A8382B; margin-top: 3px;">+6.1%</div>
+        </div>
+        <div style="padding: 20px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px;">
+          <div style="font-size: 11.5px; color: #6B6357;">เหรียญที่ได้รับ</div>
+          <div style="font-family: Trirong, serif; font-size: 27px; font-weight: 600; margin-top: 5px; color: #A9803F;">41,650</div>
+          <div style="font-size: 11.5px; color: #6B6357; margin-top: 3px;">ราว ฿12,900</div>
+        </div>
+        <div style="padding: 20px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px;">
+          <div style="font-size: 11.5px; color: #6B6357;">อ่านจบต่อบท</div>
+          <div style="font-family: Trirong, serif; font-size: 27px; font-weight: 600; margin-top: 5px;">86%</div>
+          <div style="font-size: 11.5px; color: #6B6357; margin-top: 3px;">ค่าเฉลี่ยหมวด 71%</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 34px; padding: 24px 26px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between;">
+          <div style="font-size: 13.5px; font-weight: 600;">ยอดอ่านรายวัน</div>
+          <div style="font-size: 11.5px; color: #6B6357;">สูงสุด 18,240 ครั้ง (พฤ. ที่แล้ว)</div>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 10px; height: 168px; margin-top: 22px;">
+          <div style="flex: 1; height: 44%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 52%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 38%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 61%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 74%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 100%; background: #A8382B; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 69%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 47%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 55%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 42%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 66%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 81%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 58%; background: #E3DCCC; border-radius: 2px 2px 0 0;"></div>
+          <div style="flex: 1; height: 63%; background: #C79C6E; border-radius: 2px 2px 0 0;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 10.5px; color: #6B6357;">
+          <span>26 ก.ค.</span><span>2 ส.ค.</span><span>8 ส.ค.</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 32px; font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">บทที่ทำผลงานดีที่สุด</div>
+      <div style="margin-top: 14px; border-top: 1px solid rgba(35,32,27,0.09);">
+        <sc-for list="{{ topChapters }}" as="c" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 18px; padding: 14px 4px; border-bottom: 1px solid rgba(35,32,27,0.07); font-size: 13px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6B6357; min-width: 34px;">{{ c.n }}</div>
+            <div style="flex: 1; min-width: 0;">{{ c.t }}</div>
+            <div style="min-width: 90px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{ c.views }}</div>
+            <div style="min-width: 80px; text-align: right; font-size: 12px; color: #A9803F;">{{ c.coins }}</div>
+            <div style="min-width: 60px; text-align: right; font-size: 12px; color: #6B6357;">{{ c.done }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: var(--s-onboard, none); max-width: 720px; margin: 0 auto; padding-top: 40px;">
+      <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">ขั้นที่ 1 จาก 2</div>
+      <h1 style="font-family: Trirong, serif; font-size: 32px; font-weight: 600; margin: 12px 0 0;">ชอบอ่านแนวไหน</h1>
+      <p style="font-family: Sarabun, sans-serif; font-size: 15px; line-height: 1.95; color: #6B6357; margin: 10px 0 0;">เลือกอย่างน้อย 3 แนว เราจะใช้จัดหน้าแรกให้ตรงกับที่คุณอ่านจริง ปรับเปลี่ยนภายหลังได้ตลอด</p>
+
+      <div data-onboard style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px;">
+        <sc-for list="{{ genres }}" as="g" hint-placeholder-count="8">
+          <button data-g="{{ g.name }}" onClick="{{ toggleTaste }}" style="padding: 14px 22px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; background: transparent; cursor: pointer; font-size: 14px; color: #23201B;">
+            <span style="font-family: Trirong, serif;">{{ g.cn }}</span>
+            <span style="margin-left: 9px;">{{ g.name }}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 26px; border-top: 1px solid rgba(35,32,27,0.10);">
+        <div style="font-size: 13.5px; font-weight: 600;">ความยาวที่ชอบ</div>
+        <div style="display: flex; gap: 10px; margin-top: 12px;">
+          <button style="padding: 12px 20px; border: 1px solid rgba(35,32,27,0.14); border-radius: 3px; background: none; cursor: pointer; font-size: 13px;">สั้น ต่ำกว่า 100 บท</button>
+          <button style="padding: 12px 20px; border: 1px solid #A8382B; border-radius: 3px; background: none; cursor: pointer; font-size: 13px; color: #A8382B;">กลาง 100–400 บท</button>
+          <button style="padding: 12px 20px; border: 1px solid rgba(35,32,27,0.14); border-radius: 3px; background: none; cursor: pointer; font-size: 13px;">ยาว เกิน 400 บท</button>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px; margin-top: 40px;">
+        <button data-s="home" onClick="{{ go }}" style="padding: 14px 34px; border: 0; border-radius: 3px; background: #23201B; color: #FAF8F3; cursor: pointer; font-size: 14px;">ถัดไป</button>
+        <button data-s="home" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 13px; color: #6B6357;">ข้ามไปก่อน</button>
+        <div style="margin-left: auto; font-size: 12px; color: #6B6357;">{{ tasteLabel }}</div>
+      </div>
+    </section>
+
+    <section style="display: var(--s-series, none); max-width: 1000px;">
+      <button data-s="detail" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 12.5px; color: #6B6357; padding: 0 0 20px;">← เซียนดาบเก้าสายธาร</button>
+
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 12px; color: #A9803F;">ชุดหนังสือ · 九流系列</div>
+          <h1 style="font-family: Trirong, serif; font-size: 32px; font-weight: 600; margin: 8px 0 0;">ชุดเก้าสายธาร</h1>
+          <div style="font-size: 13px; color: #6B6357; margin-top: 7px;">เยี่ยจื่อหลิง · แปลโดย สำนักแปลหมอกจันทร์</div>
+        </div>
+        <div style="display: flex; gap: 30px;">
+          <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">5</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">เรื่องในชุด</div></div>
+          <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">8</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">ภาค</div></div>
+          <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">562</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">บททั้งชุด</div></div>
+          <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px; color: #A8382B;">16%</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">คุณอ่านไปแล้ว</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top: 34px; font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">ลำดับการอ่านที่แนะนำ</div>
+      <div style="display: flex; gap: 10px; margin-top: 14px; overflow-x: auto; padding-bottom: 4px;">
+        <sc-for list="{{ readingOrder }}" as="o" hint-placeholder-count="5">
+          <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 11px; padding: 12px 16px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 3px;">
+            <div style="font-family: Trirong, serif; font-size: 17px; color: #A8382B;">{{ o.n }}</div>
+            <div>
+              <div style="font-size: 13px; white-space: nowrap;">{{ o.t }}</div>
+              <div style="font-size: 10.5px; color: #6B6357; margin-top: 2px; white-space: nowrap;">{{ o.note }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 40px; font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">เรื่องหลัก</div>
+      <div style="margin-top: 16px; display: grid; gap: 16px;">
+        <sc-for list="{{ seriesBooks }}" as="bk" hint-placeholder-count="2">
+          <div style="background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; overflow: hidden;">
+            <div data-flex="book" style="display: flex; gap: 24px; padding: 24px; align-items: flex-start; flex-wrap: wrap;">
+              <div style="flex: 0 0 96px;">
+                <div style="aspect-ratio: 3 / 4; border-radius: 2px; border: 1px solid rgba(35,32,27,0.08); background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
+                  <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 15px; color: #6B6357; letter-spacing: 0.16em;">{{ bk.cn }}</div>
+                </div>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+                  <div style="font-size: 11.5px; color: #A9803F;">{{ bk.order }}</div>
+                  <div data-state="{{ bk.state }}" style="font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(35,32,27,0.14); color: #6B6357;">{{ bk.state }}</div>
+                </div>
+                <div style="font-family: Trirong, serif; font-size: 21px; font-weight: 600; margin-top: 7px;">{{ bk.t }}</div>
+                <div style="font-family: Sarabun, sans-serif; font-size: 13.5px; line-height: 1.9; color: #6B6357; margin-top: 8px; text-wrap: pretty;">{{ bk.desc }}</div>
+                <div style="display: flex; align-items: center; gap: 14px; margin-top: 16px; max-width: 460px;">
+                  <div style="flex: 1; height: 3px; background: rgba(35,32,27,0.10); border-radius: 2px; overflow: hidden;"><div data-bar="{{ bk.pct }}" style="width: 0%; height: 100%; background: #A8382B; transition: width 400ms ease;"></div></div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357; white-space: nowrap;">{{ bk.progress }}</div>
+                </div>
+              </div>
+              <div style="flex: 0 0 auto; display: grid; gap: 8px; min-width: 132px;">
+                <button data-s="detail" onClick="{{ go }}" style="padding: 11px 18px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 12.5px; white-space: nowrap;">{{ bk.cta }}</button>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(35,32,27,0.08);">
+              <sc-for list="{{ bk.arcs }}" as="a" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 16px; padding: 13px 24px; border-bottom: 1px solid rgba(35,32,27,0.05);">
+                  <div style="font-family: Trirong, serif; font-size: 13px; color: #A8382B; min-width: 60px; white-space: nowrap;">ภาคที่ {{ a.n }}</div>
+                  <div data-lock="{{ a.dim }}" style="flex: 1; min-width: 0; font-size: 13.5px; color: #23201B;">{{ a.name }}</div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357; min-width: 74px; text-align: right;">{{ a.range }}</div>
+                  <div style="font-size: 11.5px; color: #6B6357; min-width: 96px; text-align: right;">{{ a.state }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 40px; font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">เรื่องเกี่ยวเนื่อง</div>
+      <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+        <sc-for list="{{ sideWorks }}" as="w" hint-placeholder-count="3">
+          <button data-s="detail" onClick="{{ go }}" style="text-align: left; display: flex; gap: 16px; padding: 18px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; cursor: pointer;" style-hover="border-color: #A8382B;">
+            <div style="flex: 0 0 54px; height: 74px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
+              <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 12px; color: #6B6357; letter-spacing: 0.14em;">{{ w.cn }}</div>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 11px; color: #A9803F;">{{ w.type }}</div>
+              <div style="font-family: Trirong, serif; font-size: 15.5px; font-weight: 600; margin-top: 4px; line-height: 1.45;">{{ w.t }}</div>
+              <div style="font-size: 11.5px; color: #6B6357; margin-top: 6px;">{{ w.meta }}</div>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 34px; padding: 20px 22px; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; background: #F3EFE6; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div style="font-size: 13px; line-height: 1.9; color: #6B6357; max-width: 560px;">ติดตามทั้งชุดเพื่อรับแจ้งเตือนเมื่อมีบทใหม่ในเรื่องใดก็ตามในชุดนี้ รวมถึงภาคพิเศษที่ปล่อยระหว่างรอภาคต่อ</div>
+        <button style="padding: 12px 24px; border: 0; border-radius: 3px; background: #23201B; color: #FAF8F3; cursor: pointer; font-size: 13px; white-space: nowrap;">ติดตามทั้งชุด</button>
+      </div>
+    </section>
+
+    <section style="display: var(--s-checkout, none); max-width: 940px;">
+      <button data-s="coins" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 12.5px; color: #6B6357; padding: 0 0 20px;">← กลับไปเลือกแพ็ก</button>
+      <h1 style="font-family: Trirong, serif; font-size: 28px; font-weight: 600; margin: 0;">ชำระเงิน</h1>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 34px; margin-top: 26px; align-items: start;">
+
+        <div style="display: var(--pay-form-d, block);">
+          <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">ช่องทางชำระเงิน</div>
+
+          <div style="margin-top: 14px; display: grid; gap: 10px;">
+
+            <div data-method="card" style="border: 1px solid rgba(35,32,27,0.12); border-radius: 4px; background: #FFFDF8; overflow: hidden;">
+              <button data-m="card" onClick="{{ setMethod }}" style="display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; padding: 17px 20px;">
+                <span data-dot="card" style="width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(35,32,27,0.28); flex: 0 0 15px; box-shadow: inset 0 0 0 3px #FFFDF8;"></span>
+                <span style="flex: 1; min-width: 0; font-size: 14px; white-space: nowrap;">บัตรเครดิต / เดบิต</span>
+                <span style="flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #6B6357;">VISA · MASTERCARD · JCB</span>
+              </button>
+              <div style="display: var(--m-card-d, block); padding: 4px 20px 22px;">
+                <div style="display: grid; gap: 12px;">
+                  <label style="display: block;">
+                    <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">หมายเลขบัตร</span>
+                    <input data-x type="text" placeholder="0000 0000 0000 0000" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-family: 'IBM Plex Mono', monospace; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+                  </label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <label style="display: block;">
+                      <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">วันหมดอายุ</span>
+                      <input data-x type="text" placeholder="ดด / ปป" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-family: 'IBM Plex Mono', monospace; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+                    </label>
+                    <label style="display: block;">
+                      <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">รหัสหลังบัตร</span>
+                      <input data-x type="text" placeholder="123" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-family: 'IBM Plex Mono', monospace; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+                    </label>
+                  </div>
+                  <label style="display: block;">
+                    <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ชื่อบนบัตร</span>
+                    <input data-x type="text" placeholder="ชื่อ นามสกุล" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: #6B6357; cursor: pointer;">
+                    <input data-x type="checkbox" style="accent-color: #A8382B; width: 15px; height: 15px;">
+                    <span>บันทึกบัตรใบนี้ไว้สำหรับการซื้อครั้งถัดไป</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div data-method="promptpay" style="border: 1px solid rgba(35,32,27,0.12); border-radius: 4px; background: #FFFDF8; overflow: hidden;">
+              <button data-m="promptpay" onClick="{{ setMethod }}" style="display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; padding: 17px 20px;">
+                <span data-dot="promptpay" style="width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(35,32,27,0.28); flex: 0 0 15px; box-shadow: inset 0 0 0 3px #FFFDF8;"></span>
+                <span style="flex: 1; min-width: 0; font-size: 14px; white-space: nowrap;">พร้อมเพย์ (QR)</span>
+                <span style="flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; color: #6B6357;">ไม่มีค่าธรรมเนียม</span>
+              </button>
+              <div style="display: var(--m-promptpay-d, none); padding: 4px 20px 22px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 22px; align-items: center;">
+                  <div style="flex: 0 0 148px; height: 148px; border-radius: 3px; border: 1px solid rgba(35,32,27,0.12); background: repeating-linear-gradient(45deg, #E7E0D2 0 5px, #F6F2E9 5px 10px); display: flex; align-items: center; justify-content: center; text-align: center;">
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #8A8172; line-height: 1.7;">QR<br>พร้อมเพย์</div>
+                  </div>
+                  <div style="flex: 1 1 200px; min-width: 0; font-size: 13px; line-height: 2; color: #6B6357;">
+                    <div style="color: #23201B;">สแกนด้วยแอปธนาคารเพื่อชำระเงิน</div>
+                    <div>ชื่อบัญชี บจก. หมอกจันทร์ ดิจิทัล</div>
+                    <div>QR หมดอายุใน <span style="font-family: 'IBM Plex Mono', monospace; color: #A8382B;">09:58</span> นาที</div>
+                    <div style="margin-top: 6px;">เหรียญจะเข้าบัญชีอัตโนมัติภายใน 1 นาทีหลังชำระ</div>
+                  </div>
+                </div>
+                <button style="margin-top: 16px; padding: 10px 16px; border: 1px solid rgba(35,32,27,0.14); border-radius: 3px; background: none; cursor: pointer; font-size: 12.5px;">บันทึกภาพ QR</button>
+              </div>
+            </div>
+
+            <div data-method="truemoney" style="border: 1px solid rgba(35,32,27,0.12); border-radius: 4px; background: #FFFDF8; overflow: hidden;">
+              <button data-m="truemoney" onClick="{{ setMethod }}" style="display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; padding: 17px 20px;">
+                <span data-dot="truemoney" style="width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(35,32,27,0.28); flex: 0 0 15px; box-shadow: inset 0 0 0 3px #FFFDF8;"></span>
+                <span style="flex: 1; min-width: 0; font-size: 14px; white-space: nowrap;">ทรูมันนี่ วอลเล็ท</span>
+                <span style="flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; color: #6B6357;">ยืนยันด้วย OTP</span>
+              </button>
+              <div style="display: var(--m-truemoney-d, none); padding: 4px 20px 22px;">
+                <label style="display: block;">
+                  <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">เบอร์โทรที่ผูกกับวอลเล็ท</span>
+                  <input data-x type="text" placeholder="08X-XXX-XXXX" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-family: 'IBM Plex Mono', monospace; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+                </label>
+                <div style="font-size: 12.5px; line-height: 1.95; color: #6B6357; margin-top: 12px;">ระบบจะส่งรหัส OTP 6 หลักไปยังเบอร์นี้ กรอกรหัสเพื่อยืนยันการตัดเงินจากวอลเล็ท</div>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="margin-top: 18px; font-size: 11.5px; line-height: 1.9; color: #6B6357;">การกดชำระเงินถือว่ายอมรับเงื่อนไขการซื้อเหรียญ เหรียญที่ซื้อแล้วไม่สามารถขอคืนเป็นเงินสดได้ และใช้ได้เฉพาะภายในหมอกจันทร์</div>
+        </div>
+
+        <div style="display: var(--pay-done-d, none);">
+          <div style="padding: 40px 34px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; text-align: center;">
+            <div style="width: 44px; height: 44px; margin: 0 auto; border-radius: 50%; border: 1px solid #A8382B; display: flex; align-items: center; justify-content: center; color: #A8382B; font-size: 19px;">✓</div>
+            <div style="font-family: Trirong, serif; font-size: 23px; font-weight: 600; margin-top: 18px;">เติมเหรียญสำเร็จ</div>
+            <div style="font-size: 13.5px; color: #6B6357; margin-top: 8px;">{{ paidLine }}</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 26px;">
+              <button data-s="coins" onClick="{{ go }}" style="padding: 12px 22px; border: 0; border-radius: 3px; background: #23201B; color: #FAF8F3; cursor: pointer; font-size: 13px; white-space: nowrap;">ดูยอดเหรียญ</button>
+              <a href="Xianxia%20Reader.dc.html" style="padding: 12px 22px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; font-size: 13px; color: #23201B; white-space: nowrap;">กลับไปอ่านต่อ</a>
+            </div>
+          </div>
+        </div>
+
+        <div style="position: sticky; top: 30px; min-width: 0; max-width: 340px; padding: 24px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px;">
+          <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">สรุปคำสั่งซื้อ</div>
+          <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 16px;">
+            <div style="font-family: Trirong, serif; font-size: 34px; font-weight: 600; color: #A9803F;">{{ packCoins }}</div>
+            <div style="font-size: 13px; color: #6B6357;">เหรียญ</div>
+          </div>
+          <div style="font-size: 12.5px; color: #6B6357; margin-top: 2px;">{{ packSub }}</div>
+
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(35,32,27,0.09); display: grid; gap: 9px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between;"><span style="color: #6B6357;">ราคาแพ็ก</span><span>{{ packPrice }}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: #6B6357;">ส่วนลดสมาชิก</span><span style="color: #3F5D52;">−฿0</span></div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: #6B6357;">ภาษีมูลค่าเพิ่ม</span><span>รวมแล้ว</span></div>
+          </div>
+
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(35,32,27,0.09); display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 13.5px;">ยอดชำระ</span>
+            <span style="font-family: Trirong, serif; font-size: 24px; font-weight: 600;">{{ packPrice }}</span>
+          </div>
+
+          <input data-x type="text" placeholder="โค้ดส่วนลด" style="width: 100%; box-sizing: border-box; margin-top: 18px; padding: 12px 14px; border: 1px dashed rgba(35,32,27,0.20); border-radius: 3px; background: #FAF8F3; font-size: 13px; outline: none;" style-focus="border-color: #A8382B;">
+
+          <button onClick="{{ payNow }}" style="display: var(--pay-btn-d, block); width: 100%; margin-top: 14px; padding: 15px; border: 0; border-radius: 3px; background: #A8382B; color: #FAF8F3; cursor: pointer; font-size: 14px;">{{ payLabel }}</button>
+          <div style="font-size: 11px; color: #6B6357; text-align: center; margin-top: 12px;">ชำระผ่านช่องทางที่เข้ารหัสตามมาตรฐาน PCI DSS</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div data-x onClick="{{ closeUnlock }}" style="position: fixed; inset: 0; z-index: 90; background: rgba(12,11,10,0.44); opacity: var(--u-op, 0); pointer-events: var(--u-pe, none); transition: opacity 260ms ease;"></div>
+  <div style="position: fixed; z-index: 95; left: 50%; top: 50%; width: min(420px, calc(100vw - 32px)); box-sizing: border-box; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.12); border-radius: 4px; box-shadow: 0 28px 70px rgba(12,11,10,0.26); padding: 30px 32px; transform: translate(-50%, calc(-50% + var(--u-y, 10px))); opacity: var(--u-op, 0); pointer-events: var(--u-pe, none); transition: opacity 260ms ease, transform 260ms ease;">
+    <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">บทนี้ยังไม่ปลดล็อก</div>
+    <div style="font-family: Trirong, serif; font-size: 22px; font-weight: 600; margin-top: 10px;">บทที่ {{ unlockN }} — {{ unlockTitle }}</div>
+    <div style="font-family: Sarabun, sans-serif; font-size: 13.5px; line-height: 1.95; color: #6B6357; margin-top: 10px;">ใช้ 5 เหรียญเพื่อปลดล็อกถาวร อ่านซ้ำได้ไม่จำกัด หรือเปิดปลดล็อกอัตโนมัติ ให้บทใหม่พร้อมอ่านทันทีที่ผู้แปลเผยแพร่</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding: 14px 16px; background: #F3EFE6; border-radius: 3px;">
+      <span style="font-size: 12.5px; color: #6B6357;">ยอดคงเหลือ</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #A9803F;">240 เหรียญ</span>
+    </div>
+    <div style="display: grid; gap: 8px; margin-top: 18px;">
+      <button onClick="{{ closeUnlock }}" style="padding: 14px; border: 0; border-radius: 3px; background: #A8382B; color: #FAF8F3; cursor: pointer; font-size: 13.5px;">ปลดล็อกบทนี้ 5 เหรียญ</button>
+      <button onClick="{{ closeUnlock }}" style="padding: 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 13.5px;">เปิดปลดล็อกอัตโนมัติเมื่อมีบทใหม่</button>
+      <button onClick="{{ closeUnlock }}" style="padding: 10px; border: 0; background: none; cursor: pointer; font-size: 12.5px; color: #6B6357;">ยังไม่ปลดล็อก</button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;browse&quot;,&quot;detail&quot;,&quot;series&quot;,&quot;library&quot;,&quot;coins&quot;,&quot;checkout&quot;,&quot;comments&quot;,&quot;write&quot;,&quot;stats&quot;,&quot;onboard&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;หน้าจอ&quot;},&quot;showWriterTools&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;หน้าจอ&quot;}}">
+const NOVELS = [
+  { id:1, t:'เซียนดาบเก้าสายธาร', cn:'九流剑仙', genre:'เซียน', ch:214, score:'4.8', tr:'หมอกจันทร์', upd:'2 ชม.ที่แล้ว', desc:'ศิษย์แบกฟืนที่เส้นชี่แคบผิดปกติ พบคัมภีร์ดาบครึ่งเล่มที่ถูกเผาในลำธารใต้หน้าผา' },
+  { id:2, t:'คืนกลับสู่ปีที่สิบเก้า', cn:'重回十九', genre:'ย้อนเวลา', ch:143, score:'4.9', tr:'หมอกจันทร์', upd:'วันนี้', desc:'ผู้บำเพ็ญขั้นแปรวิญญาณตายกลางฟ้าลงทัณฑ์ แล้วลืมตาขึ้นในร่างตัวเองตอนอายุสิบเก้า' },
+  { id:3, t:'กระบี่เดียวดายใต้ฟ้ากว้าง', cn:'独剑长天', genre:'กำลังภายใน', ch:402, score:'4.7', tr:'ใบชาเย็น', upd:'เมื่อวาน', desc:'จอมยุทธ์ไร้สังกัดเดินทางจากด่านเหนือลงใต้เพื่อทวงคืนชื่อของอาจารย์ที่ตายไปแล้ว' },
+  { id:4, t:'บันทึกหมอยาเมืองชิงเหอ', cn:'青河药录', genre:'เซียน', ch:96, score:'4.6', tr:'หมอกจันทร์', upd:'3 วันที่แล้ว', desc:'หมอยาสามัญชนที่แยกแยะสมุนไพรเซียนได้ด้วยกลิ่น ถูกลากเข้าสงครามระหว่างสามสำนักใหญ่' },
+  { id:5, t:'นางพญาสำนักดอกท้อ', cn:'桃花宗主', genre:'โรแมนซ์จีน', ch:158, score:'4.5', tr:'ใบชาเย็น', upd:'4 วันที่แล้ว', desc:'เจ้าสำนักหญิงที่ถูกลอบสังหารในคืนแต่งงาน ตื่นขึ้นมาในวันที่ยังไม่มีใครรู้แผนนั้น' },
+  { id:6, t:'หมอกเลือดเขาฉางไป๋', cn:'长白血雾', genre:'กำลังภายใน', ch:271, score:'4.6', tr:'ลมเหนือ', upd:'5 วันที่แล้ว', desc:'คณะล่าสัตว์ป่าหิมะพบหมู่บ้านที่หายไปเมื่อร้อยปีก่อน ยังมีควันไฟลอยจากปล่องทุกหลัง' },
+  { id:7, t:'ผู้บำเพ็ญที่ถูกลืม', cn:'无名修士', genre:'เซียน', ch:320, score:'4.4', tr:'ลมเหนือ', upd:'สัปดาห์ที่แล้ว', desc:'ชายที่ไม่มีใครจำชื่อเขาได้เกินหนึ่งวัน ใช้ข้อจำกัดนั้นบำเพ็ญวิชาที่ไม่มีใครขวางได้' },
+  { id:8, t:'ตำนานเจ็ดตระกูลใต้', cn:'南七家传', genre:'ราชสำนัก', ch:88, score:'4.3', tr:'ใบชาเย็น', upd:'สัปดาห์ที่แล้ว', desc:'เจ็ดตระกูลแบ่งอำนาจในแดนใต้มาสามร้อยปี จนลูกนอกสมรสคนหนึ่งกลับมาพร้อมตราประทับเก่า' }
+];
+
+const GENRES = [
+  { name:'เซียน', cn:'仙' }, { name:'กำลังภายใน', cn:'武' }, { name:'ย้อนเวลา', cn:'回' },
+  { name:'ระบบ', cn:'系' }, { name:'ราชสำนัก', cn:'宫' }, { name:'โรแมนซ์จีน', cn:'情' },
+  { name:'ปรมาจารย์', cn:'尊' }, { name:'ทะลุมิติ', cn:'穿' }
+];
+
+const SHELF = {
+  reading: [
+    { cn:'九流剑仙', t:'เซียนดาบเก้าสายธาร', sub:'บทที่ 87 · อ่านล่าสุดเมื่อวาน', progress:'41%', pct:41, cta:'อ่านต่อ' },
+    { cn:'重回十九', t:'คืนกลับสู่ปีที่สิบเก้า', sub:'บทที่ 12 · อ่านล่าสุด 3 วันที่แล้ว', progress:'8%', pct:8, cta:'อ่านต่อ' },
+    { cn:'独剑长天', t:'กระบี่เดียวดายใต้ฟ้ากว้าง', sub:'บทที่ 245 · มีบทใหม่ 4 บท', progress:'61%', pct:61, cta:'อ่านต่อ' },
+    { cn:'青河药录', t:'บันทึกหมอยาเมืองชิงเหอ', sub:'บทที่ 71 · อ่านล่าสุดสัปดาห์ที่แล้ว', progress:'74%', pct:74, cta:'อ่านต่อ' },
+    { cn:'长白血雾', t:'หมอกเลือดเขาฉางไป๋', sub:'บทที่ 30 · ค้างไว้นาน', progress:'11%', pct:11, cta:'อ่านต่อ' }
+  ],
+  saved: [
+    { cn:'桃花宗主', t:'นางพญาสำนักดอกท้อ', sub:'บันทึกไว้เมื่อ 12 ก.ค.', progress:'ยังไม่เริ่ม', pct:0, cta:'เริ่มอ่าน' },
+    { cn:'无名修士', t:'ผู้บำเพ็ญที่ถูกลืม', sub:'บันทึกไว้เมื่อ 3 ก.ค.', progress:'ยังไม่เริ่ม', pct:0, cta:'เริ่มอ่าน' },
+    { cn:'南七家传', t:'ตำนานเจ็ดตระกูลใต้', sub:'บันทึกไว้เมื่อ 28 มิ.ย.', progress:'ยังไม่เริ่ม', pct:0, cta:'เริ่มอ่าน' },
+    { cn:'穿云志', t:'จดหมายเหตุทะลุเมฆ', sub:'บันทึกไว้เมื่อ 20 มิ.ย.', progress:'ยังไม่เริ่ม', pct:0, cta:'เริ่มอ่าน' }
+  ],
+  done: [
+    { cn:'剑起微尘', t:'กระบี่เริ่มจากธุลี', sub:'อ่านจบ 2 มิ.ย. · ให้ 5 ดาว', progress:'100%', pct:100, cta:'อ่านซ้ำ' },
+    { cn:'寒山问道', t:'ถามทางที่เขาเหมันต์', sub:'อ่านจบ 14 พ.ค.', progress:'100%', pct:100, cta:'อ่านซ้ำ' },
+    { cn:'旧刀新雪', t:'ดาบเก่าหิมะใหม่', sub:'อ่านจบ 2 พ.ค. · เขียนรีวิวแล้ว', progress:'100%', pct:100, cta:'อ่านซ้ำ' }
+  ]
+};
+
+const LEDGER = [
+  { what:'ปลดล็อกบทที่ 83–87 · เซียนดาบเก้าสายธาร', when:'เมื่อวาน', amt:'−25' },
+  { what:'เติมเหรียญ แพ็ก 300', when:'3 ส.ค.', amt:'+315' },
+  { what:'ปลดล็อกทั้งภาค 2 · กระบี่เดียวดายใต้ฟ้ากว้าง', when:'1 ส.ค.', amt:'−260' },
+  { what:'โบนัสเช็กอิน 7 วัน', when:'29 ก.ค.', amt:'+20' },
+  { what:'ปลดล็อกบทที่ 68–70 · บันทึกหมอยาเมืองชิงเหอ', when:'26 ก.ค.', amt:'−15' }
+];
+
+const COMMENTS = [
+  { user:'ผู้ผ่านทางสายลม', badge:'อ่านครบ 200 บท', when:'6 ชั่วโมงที่แล้ว', likes:'482', body:'ฉากที่ไป๋เฉินเทชาทิ้งลงหิมะแทนที่จะห้าม คือทั้งหมดที่ต้องรู้เกี่ยวกับตัวละครนี้แล้ว คนเขียนไม่ต้องอธิบายอะไรเลยสักคำ', hasReply:true, replyUser:'สำนักแปลหมอกจันทร์', reply:'ต้นฉบับใช้คำว่า 泼 ซึ่งแรงกว่าคำว่าเทเล็กน้อย แต่ในบริบทไทยเราเลือกคำที่ไม่ดังเกินฉากครับ' },
+  { user:'เจ้าของโรงเตี๊ยม', badge:'', when:'9 ชั่วโมงที่แล้ว', likes:'311', body:'รอบทนี้มาสามสัปดาห์ คุ้มมาก ขอบคุณทีมแปลที่ทำเชิงอรรถเรื่องเส้นชี่ไว้ให้ด้วย ไม่งั้นคงงงว่าทำไมท่าที่หนึ่งถึงอันตรายขนาดนั้น', hasReply:false },
+  { user:'หิมะเดือนสาม', badge:'นักอ่านอันดับ 12', when:'เมื่อวาน', likes:'256', body:'สังเกตว่าคนแต่งใช้คำว่าแบกฟืนซ้ำสามครั้งในบทเดียว น่าจะตั้งใจให้เป็นสัญลักษณ์ เดาว่าตอนจบภาคนี้จะมีฉากที่เขาวางฟืนลง', hasReply:true, replyUser:'สำนักแปลหมอกจันทร์', reply:'เดาได้ดีครับ ต้นฉบับใช้คำเดียวกันทั้งสามจุดจริง เราจึงคงคำเดิมไว้ไม่เปลี่ยนคำพ้อง' },
+  { user:'ลมผ่านด่านเหนือ', badge:'', when:'เมื่อวาน', likes:'188', body:'อ่านจบแล้วย้อนไปดูบทที่ 12 ใหม่ ประโยคที่อาจารย์พูดตอนนั้นมันคือคำใบ้ทั้งหมดเลย', hasReply:false }
+];
+
+const DRAFTS = [
+  { n:'90', t:'เสียงระฆังจากยอดเขา', status:'ร่าง · แก้ล่าสุดเมื่อครู่' },
+  { n:'89', t:'ผู้มาก่อนรุ่งสาง', status:'ตั้งเวลา 10 ส.ค. 20:00' },
+  { n:'88', t:'คำถามที่ไม่มีใครตอบ', status:'เผยแพร่แล้ว · 12,400 อ่าน' },
+  { n:'87', t:'ดาบแรกใต้ฟ้าหมอก', status:'เผยแพร่แล้ว · 18,240 อ่าน' },
+  { n:'86', t:'หมอกลงที่ท่าเรือใต้', status:'เผยแพร่แล้ว · 11,980 อ่าน' },
+  { n:'85', t:'สามก้าวก่อนหน้าผา', status:'เผยแพร่แล้ว · 11,410 อ่าน' }
+];
+
+const TOP_CHAPTERS = [
+  { n:'87', t:'ดาบแรกใต้ฟ้าหมอก', views:'18,240', coins:'4,120', done:'92%' },
+  { n:'64', t:'ยาชี่เม็ดสุดท้าย', views:'16,880', coins:'3,740', done:'90%' },
+  { n:'88', t:'คำถามที่ไม่มีใครตอบ', views:'12,400', coins:'2,980', done:'88%' },
+  { n:'44', t:'รอยเท้าบนน้ำ', views:'12,110', coins:'0', done:'94%' },
+  { n:'72', t:'เงาในหุบผา', views:'11,640', coins:'2,510', done:'85%' }
+];
+
+const CH_MAP = {
+  44:'รอยเท้าบนน้ำ', 64:'ยาชี่เม็ดสุดท้าย', 72:'เงาในหุบผา',
+  83:'ลมหนาวข้ามด่านเหนือ', 84:'จดหมายจากคนตาย', 85:'สามก้าวก่อนหน้าผา',
+  86:'หมอกลงที่ท่าเรือใต้', 87:'ดาบแรกใต้ฟ้าหมอก', 88:'คำถามที่ไม่มีใครตอบ',
+  89:'ผู้มาก่อนรุ่งสาง', 90:'เสียงระฆังจากยอดเขา'
+};
+const FREE_UNTIL = 48, OWNED_UNTIL = 87, PUBLISHED_UNTIL = 88;
+
+const READING_ORDER = [
+  { n:'1', t:'เซียนดาบเก้าสายธาร', note:'เรื่องหลัก เล่ม 1' },
+  { n:'2', t:'ปฐมบท: หิมะปีที่ศูนย์', note:'อ่านหลังภาคที่ 2 จะสนุกกว่า' },
+  { n:'3', t:'บันทึกข้างทางของไป๋เฉิน', note:'ภาคพิเศษ 12 ตอน' },
+  { n:'4', t:'ฟ้าเหนือเก้าภพ', note:'เรื่องหลัก เล่ม 2' },
+  { n:'5', t:'นางพญาสำนักดอกท้อ', note:'ภาคแยก อ่านแยกได้' }
+];
+
+const SERIES_BOOKS = [
+  {
+    order:'เรื่องหลัก เล่ม 1', t:'เซียนดาบเก้าสายธาร', cn:'九流剑仙', state:'กำลังแปล',
+    desc:'เรื่องหลักของชุด เริ่มจากเมืองชายแดนจนถึงนครเซียนเหนือเมฆ ครอบคลุมสี่ภาคแรกของต้นฉบับ',
+    pct:41, progress:'87 / 214 บท', cta:'อ่านต่อ',
+    arcs:[
+      { n:'1', name:'ธุลีเมืองชายแดน', range:'1–48', state:'อ่านจบแล้ว', dim:'' },
+      { n:'2', name:'สำนักเมฆาวสันต์', range:'49–120', state:'กำลังอ่าน', dim:'' },
+      { n:'3', name:'ทะเลทรายกระดูกขาว', range:'121–186', state:'แปลแล้ว', dim:'' },
+      { n:'4', name:'นครเซียนเหนือเมฆ', range:'187–214', state:'แปลถึงบท 88', dim:'' }
+    ]
+  },
+  {
+    order:'เรื่องหลัก เล่ม 2', t:'ฟ้าเหนือเก้าภพ', cn:'九霄之上', state:'ยังไม่เริ่มแปล',
+    desc:'ภาคต่อโดยตรง ต้นฉบับจบแล้ว 348 บท ทีมแปลจะเริ่มหลังเล่มแรกจบภาคที่ 4',
+    pct:0, progress:'ยังไม่เปิดอ่าน', cta:'กดติดตาม',
+    arcs:[
+      { n:'5', name:'ด่านเก้าประตู', range:'1–96', state:'รอแปล', dim:'1' },
+      { n:'6', name:'ทะเลดาวร่วง', range:'97–210', state:'รอแปล', dim:'1' },
+      { n:'7', name:'ผู้สืบทอดคนสุดท้าย', range:'211–290', state:'รอแปล', dim:'1' },
+      { n:'8', name:'ฟ้าเหนือเก้าภพ', range:'291–348', state:'รอแปล', dim:'1' }
+    ]
+  }
+];
+
+const SIDE_WORKS = [
+  { type:'ปฐมบท', t:'หิมะปีที่ศูนย์', cn:'零年雪', meta:'8 ตอน · แปลจบแล้ว' },
+  { type:'ภาคพิเศษ', t:'บันทึกข้างทางของไป๋เฉิน', cn:'白尘外记', meta:'12 ตอน · แปลจบแล้ว' },
+  { type:'ภาคแยก', t:'นางพญาสำนักดอกท้อ', cn:'桃花宗主', meta:'158 บท · กำลังแปล' }
+];
+
+const METHOD_LABEL = { card: 'บัตรเครดิต', promptpay: 'พร้อมเพย์', truemoney: 'ทรูมันนี่ วอลเล็ท' };
+const PACKS = [
+  { id:'p100', coins:'100', sub:'เหรียญ', price:'฿35' },
+  { id:'p300', coins:'300', sub:'+15 โบนัส', price:'฿99' },
+  { id:'p700', coins:'700', sub:'+70 โบนัส', price:'฿219', best:true },
+  { id:'p1500', coins:'1,500', sub:'+200 โบนัส', price:'฿449' }
+];
+
+class Component extends DCLogic {
+  state = { screen: 'home', q: '', genre: null, tab: 'reading', taste: ['เซียน','กำลังภายใน'], unlock: null, chars: 268, pack: 'p700', method: 'card', paid: false, narrow: false };
+
+  componentDidMount() {
+    if (this.props.startScreen && this.props.startScreen !== 'home') this.setState({ screen: this.props.startScreen });
+    this._onResize = () => {
+      const m = window.innerWidth < 820;
+      if (m !== this.state.narrow) this.setState({ narrow: m }); else this.syncVars();
+    };
+    window.addEventListener('resize', this._onResize);
+    this._onResize();
+    this.syncVars();
+  }
+
+  componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+
+  syncResponsive() {
+    const m = this.state.narrow;
+    const root = document.querySelector('x-dc') || document;
+    const one = (sel) => root.querySelector(sel);
+    const all = (sel) => Array.prototype.slice.call(root.querySelectorAll(sel));
+    const set = (el, o) => { if (el) Object.assign(el.style, o); };
+
+    set(one('[data-root]'), { flexDirection: m ? 'column' : 'row' });
+
+    set(one('[data-sidebar]'), m ? {
+      position: 'sticky', top: '0', zIndex: '40', width: 'auto', flex: '0 0 auto', height: 'auto',
+      flexDirection: 'row', alignItems: 'center', gap: '6px', padding: '10px 14px',
+      borderRight: 'none', borderBottom: '1px solid rgba(35,32,27,0.09)', overflowX: 'auto', background: '#F3EFE6'
+    } : {
+      position: 'sticky', top: '0', zIndex: '40', width: '244px', flex: '0 0 244px', height: '100vh',
+      flexDirection: 'column', alignItems: 'stretch', gap: '0', padding: '28px 18px',
+      borderRight: '1px solid rgba(35,32,27,0.09)', borderBottom: 'none', overflowX: 'visible', background: '#F3EFE6'
+    });
+
+    set(one('[data-brand]'), m ? { padding: '0 10px 0 2px', flex: '0 0 auto' } : { padding: '0 10px 26px', flex: '0 0 auto' });
+    set(one('[data-brandtitle]'), { fontSize: m ? '16px' : '21px', whiteSpace: 'nowrap' });
+    set(one('[data-brandsub]'), { display: m ? 'none' : 'block' });
+    set(one('[data-writerlabel]'), m ? { display: 'none' } : { display: 'block', margin: '24px 10px 10px' });
+    set(one('[data-writergroup]'), m ? { display: 'flex', alignItems: 'center', gap: '4px', flex: '0 0 auto' } : { display: 'var(--writer-d, grid)', alignItems: 'stretch', gap: '0', flex: '0 0 auto' });
+    set(one('[data-sidefoot]'), m ? {
+      marginTop: '0', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '6px', flex: '0 0 auto'
+    } : { marginTop: 'auto', display: 'grid', flexDirection: 'column', alignItems: 'stretch', gap: '8px' });
+
+    all('[data-navrow]').forEach((n) => set(n, m ? { display: 'flex', flexDirection: 'row', gap: '2px', flex: '0 0 auto' } : { display: 'grid', gap: '2px' }));
+    all('[data-navrow] button').forEach((b) => set(b, { whiteSpace: 'nowrap', padding: m ? '9px 12px' : '10px 12px' }));
+    all('[data-sidefoot] button').forEach((b) => set(b, { whiteSpace: 'nowrap', padding: m ? '9px 12px' : '8px 12px' }));
+    set(one('[data-sidefoot] a'), m ? { whiteSpace: 'nowrap', padding: '9px 14px' } : { whiteSpace: 'nowrap', padding: '12px', display: 'block', textAlign: 'center' });
+
+    set(one('[data-grid="home"]'), { gridTemplateColumns: m ? '1fr' : '1.35fr 1fr', gap: m ? '34px' : '40px', marginTop: m ? '34px' : '46px' });
+    set(one('[data-grid="kpi"]'), { gridTemplateColumns: m ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)' });
+    set(one('[data-grid="write"]'), { gridTemplateColumns: m ? '1fr' : '250px 1fr', gap: m ? '18px' : '30px' });
+    set(one('[data-flex="cont"]'), { flexDirection: m ? 'column' : 'row', gap: m ? '16px' : '22px' });
+    set(one('[data-flex="detail"]'), { flexDirection: m ? 'column' : 'row', gap: m ? '24px' : '38px' });
+    set(one('[data-detailcover]'), { flex: m ? '0 0 auto' : '0 0 200px', width: m ? '150px' : 'auto' });
+    all('[data-flex="book"]').forEach((el) => set(el, { padding: m ? '18px' : '24px', gap: m ? '18px' : '24px' }));
+  }
+  componentDidUpdate() { this.syncVars(); }
+
+  v(k, val) { document.documentElement.style.setProperty(k, val); }
+
+  syncVars() {
+    const s = this.state;
+    ['card','promptpay','truemoney'].forEach((k) => {
+      this.v('--m-' + k + '-d', s.method === k ? 'block' : 'none');
+    });
+    this.v('--pay-form-d', s.paid ? 'none' : 'block');
+    this.v('--pay-done-d', s.paid ? 'block' : 'none');
+    this.v('--pay-btn-d', s.paid ? 'none' : 'block');
+    ['home','browse','detail','series','library','coins','checkout','comments','write','stats','onboard'].forEach((k) => {
+      this.v('--s-' + k, s.screen === k ? 'block' : 'none');
+    });
+    ['home','browse','library','coins','write','stats'].forEach((k) => {
+      const on = s.screen === k || (k === 'browse' && (s.screen === 'detail' || s.screen === 'series')) || (k === 'coins' && s.screen === 'checkout');
+      this.v('--n-' + k + '-bg', on ? 'rgba(35,32,27,0.06)' : 'transparent');
+      this.v('--n-' + k + '-c', on ? '#23201B' : '#6B6357');
+    });
+    ['reading','saved','done'].forEach((k) => {
+      const on = s.tab === k;
+      this.v('--t-' + k + '-c', on ? '#23201B' : '#6B6357');
+      this.v('--t-' + k + '-b', on ? '#A8382B' : 'transparent');
+    });
+    this.v('--nav-d', s.screen === 'onboard' ? 'none' : 'flex');
+    this.v('--shell-p', s.narrow ? '24px 16px 72px' : (s.screen === 'onboard' ? '64px 56px 96px' : '44px 56px 96px'));
+    this.syncResponsive();
+    this.v('--u-op', s.unlock ? '1' : '0');
+    this.v('--u-pe', s.unlock ? 'auto' : 'none');
+    this.v('--u-y', s.unlock ? '0px' : '10px');
+
+    this.v('--writer-d', this.props.showWriterTools === false ? 'none' : 'grid');
+
+    const rt = document.querySelector('x-dc') || document;
+    rt.querySelectorAll('[data-lock]').forEach((el) => {
+      const f = el.dataset.lock;
+      el.style.color = f === 'future' ? '#9A9284' : (f ? '#6B6357' : '#23201B');
+    });
+    rt.querySelectorAll('[data-amt]').forEach((el) => {
+      el.style.color = (el.dataset.amt || '').charAt(0) === '+' ? '#3F5D52' : '#A8382B';
+    });
+    rt.querySelectorAll('[data-status]').forEach((el) => {
+      const st = el.dataset.status || '';
+      el.style.color = st.indexOf('ร่าง') === 0 ? '#A8382B' : (st.indexOf('ตั้งเวลา') === 0 ? '#A9803F' : '#6B6357');
+    });
+
+    const root = document.querySelector('x-dc') || document;
+    root.querySelectorAll('[data-g]').forEach((el) => {
+      const g = el.dataset.g;
+      const onboard = !!el.closest('[data-onboard]');
+      const on = onboard ? s.taste.indexOf(g) >= 0 : s.genre === g;
+      el.style.background = on ? 'rgba(168,56,43,0.08)' : 'transparent';
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.14)';
+      el.style.color = on ? '#A8382B' : '#23201B';
+    });
+    root.querySelectorAll('[data-bar]').forEach((el) => { el.style.width = el.dataset.bar + '%'; });
+    root.querySelectorAll('[data-state]').forEach((el) => {
+      const on = el.dataset.state === 'กำลังแปล';
+      el.style.color = on ? '#A8382B' : '#6B6357';
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.14)';
+    });
+    root.querySelectorAll('[data-p]').forEach((el) => {
+      el.style.borderColor = el.dataset.p === s.pack ? '#A8382B' : 'rgba(35,32,27,0.12)';
+    });
+    root.querySelectorAll('[data-method]').forEach((el) => {
+      el.style.borderColor = el.dataset.method === s.method ? '#A8382B' : 'rgba(35,32,27,0.12)';
+    });
+    root.querySelectorAll('[data-dot]').forEach((el) => {
+      const on = el.dataset.dot === s.method;
+      el.style.background = on ? '#A8382B' : 'transparent';
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.28)';
+      el.style.boxShadow = on ? 'inset 0 0 0 3px #FFFDF8' : 'none';
+    });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const pack = PACKS.find((p) => p.id === s.pack) || PACKS[2];
+    const q = s.q.trim();
+    const results = NOVELS.filter((n) => {
+      const okG = !s.genre || n.genre === s.genre;
+      const okQ = !q || n.t.includes(q) || n.cn.includes(q) || n.tr.includes(q) || n.desc.includes(q);
+      return okG && okQ;
+    });
+
+    const DATES = { 83:'28 ก.ค.', 84:'30 ก.ค.', 85:'1 ส.ค.', 86:'4 ส.ค.', 87:'6 ส.ค.', 88:'8 ส.ค.', 89:'ตั้งเวลา 10 ส.ค. 20:00' };
+    const detailChapters = [83, 84, 85, 86, 87, 88, 89].map((n) => {
+      const future = n > PUBLISHED_UNTIL;
+      const locked = !future && n > FREE_UNTIL && n > OWNED_UNTIL;
+      return {
+        n, title: CH_MAP[n] || ('บทที่ ' + n),
+        date: DATES[n] || '',
+        action: future ? 'แจ้งเตือน' : (locked ? '5 เหรียญ' : 'อ่าน'),
+        lockedFlag: locked ? '1' : (future ? 'future' : '')
+      };
+    });
+
+    return {
+      novels: NOVELS,
+      ranked: NOVELS.slice().sort((a, b) => Number(b.score) - Number(a.score)).slice(0, 5).map((n, i) => Object.assign({ rank: i + 1 }, n)),
+      genres: GENRES,
+      results,
+      resultLabel: results.length + ' เรื่อง' + (s.genre ? ' ในหมวด ' + s.genre : ''),
+      detailChapters,
+      shelf: (SHELF[s.tab] || SHELF.reading).map((b) => Object.assign({ barSpacer: '' }, b)),
+      ledger: LEDGER,
+      comments: COMMENTS,
+      drafts: DRAFTS,
+      topChapters: TOP_CHAPTERS,
+      wordCount: s.chars,
+      unlockN: s.unlock ? s.unlock.n : '',
+      unlockTitle: s.unlock ? s.unlock.title : '',
+      tasteLabel: 'เลือกแล้ว ' + s.taste.length + ' แนว',
+      go: (e) => { this.setState({ screen: e.currentTarget.dataset.s }, () => window.scrollTo(0, 0)); },
+      openNovel: () => { this.setState({ screen: 'detail' }, () => window.scrollTo(0, 0)); },
+      onSearch: (e) => this.setState({ q: e.target.value }),
+      pickGenre: (e) => { const g = e.currentTarget.dataset.g; this.setState({ genre: s.genre === g ? null : g }); },
+      setTab: (e) => this.setState({ tab: e.currentTarget.dataset.t }),
+      toggleTaste: (e) => {
+        const g = e.currentTarget.dataset.g;
+        const next = s.taste.indexOf(g) >= 0 ? s.taste.filter((x) => x !== g) : s.taste.concat([g]);
+        this.setState({ taste: next });
+      },
+      chapterClick: (e) => {
+        const n = Number(e.currentTarget.dataset.n);
+        if (e.currentTarget.dataset.locked) {
+          const c = detailChapters.find((x) => x.n === n);
+          this.setState({ unlock: { n, title: c ? c.title : '' } });
+        } else {
+          window.location.href = 'Xianxia%20Reader.dc.html';
+        }
+      },
+      readingOrder: READING_ORDER,
+      seriesBooks: SERIES_BOOKS,
+      sideWorks: SIDE_WORKS,
+      packs: PACKS,
+      packCoins: pack.coins,
+      packSub: pack.sub,
+      packPrice: pack.price,
+      payLabel: 'ชำระเงิน ' + pack.price,
+      paidLine: pack.coins + ' เหรียญเข้าบัญชีแล้ว · ชำระด้วย' + METHOD_LABEL[s.method],
+      buyPack: (e) => { this.setState({ pack: e.currentTarget.dataset.p, paid: false, screen: 'checkout' }, () => window.scrollTo(0, 0)); },
+      setMethod: (e) => this.setState({ method: e.currentTarget.dataset.m }),
+      payNow: () => this.setState({ paid: true }),
+      closeUnlock: () => this.setState({ unlock: null }),
+      onDraft: (e) => this.setState({ chars: e.target.value.length })
+    };
+  }
+}
+</script>
+</body>
+</html>

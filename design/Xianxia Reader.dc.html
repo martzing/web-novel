@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&family=Noto+Serif+Thai:wght@400;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Trirong:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg, #FAF8F3);
+    color: var(--ink, #23201B);
+    font-family: 'IBM Plex Sans Thai', system-ui, sans-serif;
+    transition: background 420ms ease, color 420ms ease;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--sel, rgba(168,56,43,0.16)); }
+  a { color: var(--red, #A8382B); text-decoration: none; }
+  a:hover { color: var(--gold, #A9803F); }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+
+<div data-screen-label="Reader" onClick="{{ onSurfaceTap }}" style="min-height: 100vh; position: relative;">
+
+  <div style="position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 60; pointer-events: none; opacity: var(--prog-op, 1); transition: opacity 300ms ease;">
+    <div style="height: 100%; width: var(--prog, 0%); background: var(--red, #A8382B); opacity: 0.75; transition: width 120ms linear;"></div>
+  </div>
+
+  <header style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; gap: 18px; padding: 14px 22px; background: var(--panel-blur, rgba(250,248,243,0.92)); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line, rgba(35,32,27,0.10)); opacity: var(--chrome-op, 0); transform: translateY(var(--chrome-y, -14px)); pointer-events: var(--chrome-pe, none); transition: opacity 260ms ease, transform 260ms ease;">
+    <a data-i href="Xianxia%20Platform.dc.html" style="display: flex; align-items: center; gap: 7px; padding: 7px 12px 7px 9px; margin-left: -6px; border-radius: 999px; color: var(--soft, #6B6357); font-size: 13px; white-space: nowrap;" style-hover="background: var(--hover, rgba(35,32,27,0.05)); color: var(--ink, #23201B);"><span style="font-size: 15px; line-height: 1;">‹</span><span>หน้าแรก</span></a>
+    <div style="min-width: 0; flex: 1;">
+      <div style="font-family: Trirong, serif; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; color: var(--ink, #23201B); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">เซียนดาบเก้าสายธาร</div>
+      <div style="font-size: 11.5px; color: var(--soft, #6B6357); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">ภาคที่ {{ arcNum }} · {{ arcName }} · บทที่ {{ chNum }}</div>
+    </div>
+    <nav style="display: flex; align-items: center; gap: 4px;">
+      <button data-i type="button" onClick="{{ openMarks }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--soft, #6B6357); padding: 8px 11px; border-radius: 999px;" style-hover="background: var(--hover, rgba(35,32,27,0.05)); color: var(--ink, #23201B);">ที่คั่น</button>
+      <button data-i type="button" onClick="{{ openToc }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--soft, #6B6357); padding: 8px 11px; border-radius: 999px;" style-hover="background: var(--hover, rgba(35,32,27,0.05)); color: var(--ink, #23201B);">สารบัญ</button>
+      <button data-i type="button" onClick="{{ openGlossary }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--soft, #6B6357); padding: 8px 11px; border-radius: 999px;" style-hover="background: var(--hover, rgba(35,32,27,0.05)); color: var(--ink, #23201B);">อภิธานศัพท์</button>
+      <button data-i type="button" onClick="{{ openSettings }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--soft, #6B6357); padding: 8px 11px; border-radius: 999px;" style-hover="background: var(--hover, rgba(35,32,27,0.05)); color: var(--ink, #23201B);">ตั้งค่า</button>
+    </nav>
+  </header>
+
+  <article style="max-width: var(--colw, 640px); margin: 0 auto; padding: 132px 26px 200px; font-family: var(--ff, 'Sarabun'), serif; font-size: var(--fs, 20px); line-height: var(--lh, 2); color: var(--ink, #23201B); transition: color 420ms ease;">
+
+    <div style="text-align: center; margin-bottom: 62px;">
+      <div style="font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 12px; letter-spacing: 0.22em; color: var(--gold, #A9803F); text-transform: uppercase;">บทที่ {{ chNum }}</div>
+      <h1 style="font-family: Trirong, serif; font-weight: 600; font-size: 1.65em; line-height: 1.45; margin: 14px 0 0; color: var(--ink, #23201B);">{{ chTitle }}</h1>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 22px;">
+        <div style="height: 1px; width: 40px; background: var(--line, rgba(35,32,27,0.16));"></div>
+        <div style="width: 5px; height: 5px; transform: rotate(45deg); background: var(--red, #A8382B); opacity: 0.7;"></div>
+        <div style="height: 1px; width: 40px; background: var(--line, rgba(35,32,27,0.16));"></div>
+      </div>
+      <div style="font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 12.5px; color: var(--soft, #6B6357); margin-top: 20px;">แปลโดย สำนักแปลหมอกจันทร์ · ๓,๑๘๐ คำ</div>
+    </div>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">หิมะบางโปรยลงเหนือหุบเขาเมฆาวสันต์มาตั้งแต่ยามดึก พอฟ้าสาง ลานฝึกก็ขาวจนแทบมองไม่เห็นรอยหินใต้ฝ่าเท้า มีเพียงเสียงลมกวาดยอดสนดังต่ำอยู่ไกลออกไป</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;"><span data-i data-k="ye" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px solid var(--red, #A8382B); color: var(--red, #A8382B); padding-bottom: 1px;">เยี่ยหลิงเฟิง</span>ยืนอยู่กลางลาน มือขวากุมด้ามกระบี่ไม้ที่สึกจนมันวาว เขาสูดลมเย็นเข้าเต็มปอด แล้วปล่อยให้<span data-i data-k="qi" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px dotted var(--noteline, rgba(35,32,27,0.45)); padding-bottom: 1px;">ชี่</span>ไหลออกจาก<span data-i data-k="dantian" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px dotted var(--noteline, rgba(35,32,27,0.45)); padding-bottom: 1px;">ตันเถียน</span> ขึ้นไปตาม<span data-i data-k="jingmai" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px dotted var(--noteline, rgba(35,32,27,0.45)); padding-bottom: 1px;">จิงม่าย</span>ทั้งสิบสองสาย ช้าและสม่ำเสมอเหมือนน้ำซึมผ่านหิน</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“สามปีแล้ว” เสียงแหบต่ำดังมาจากศาลาริมลาน อาจารย์ไป๋เฉินยกจอกชาขึ้นจิบ ไอน้ำลอยบังใบหน้าที่ไร้อารมณ์ “เจ้ายังค้างอยู่ปลาย<span data-i data-k="foundation" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px dotted var(--noteline, rgba(35,32,27,0.45)); padding-bottom: 1px;">ขั้นหลอมรากฐาน</span> ไม่ขยับไปไหนสักนิ้ว”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“ศิษย์รู้ครับ”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“รู้แล้วยังยืนตากหิมะทำไม” ชายชราวางจอกลงบนโต๊ะไม้ เสียงกระเบื้องกระทบกันเบา ๆ “คนอื่นเขาใช้<span data-i data-k="pill" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px dotted var(--noteline, rgba(35,32,27,0.45)); padding-bottom: 1px;">ยาชี่หมุนเวียน</span>สามเม็ดก็ทะลุขั้นได้ภายในฤดูหนาวเดียว”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">เยี่ยหลิงเฟิงไม่ตอบ เขายกกระบี่ไม้ขึ้นระดับอก ปลายกระบี่นิ่งจนหิมะที่ตกลงมาเกาะอยู่บนนั้นได้ครู่หนึ่งก่อนจะร่วงลง</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">คนใน<span data-i data-k="sect" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px solid var(--red, #A8382B); color: var(--red, #A8382B); padding-bottom: 1px;">สำนักเมฆาวสันต์</span>ต่างรู้กันดีว่าเขาเป็นศิษย์ที่ไร้พรสวรรค์ที่สุดในรุ่น รากฐานธาตุขุ่นมัว เส้นชี่แคบกว่าคนทั่วไปเกือบครึ่ง สามปีก่อนเขาแบกฟืนขึ้นเขามาสมัครด้วยเท้าเปล่า และสามปีนี้เขาก็ยังแบกฟืนอยู่เหมือนเดิม</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">แต่มีสิ่งหนึ่งที่ไม่มีใครในสำนักรู้</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">ทุกคืนหลังเสียงระฆังที่สาม เขาจะลงไปยังลำธารใต้หน้าผา นั่งจุ่มขาในน้ำที่เย็นจนกระดูกร้าว แล้วฝึกท่าเดิมซ้ำ ๆ ท่าเดียว หนึ่งพันครั้ง จนกระทั่งฟ้าสาง</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“อาจารย์ครับ” เขาเอ่ยขึ้นเบา ๆ “วันนี้ศิษย์อยากขอลองอีกครั้ง”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">ไป๋เฉินเงยหน้าขึ้น ดวงตาที่ขุ่นมัวจากวัยหรี่ลงเล็กน้อย “ท่าไหน”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“<span data-i data-k="art" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px dotted var(--noteline, rgba(35,32,27,0.45)); padding-bottom: 1px;">ดาบสายธารพลิกฟ้า</span> ท่าที่หนึ่ง”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">ศาลาเงียบไปครู่ใหญ่ ลมหอบหิมะพัดผ่านระหว่างทั้งสอง</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“ท่านั้นต้องใช้ชี่ระดับ<span data-i data-k="core" onClick="{{ openNote }}" style="cursor: pointer; border-bottom: 1px dotted var(--noteline, rgba(35,32,27,0.45)); padding-bottom: 1px;">ขั้นก่อแกนธาตุ</span>ขึ้นไป” ชายชราพูดช้า ๆ “เจ้าฝืนใช้ เส้นชี่จะแตก ต่อให้รอดก็บำเพ็ญต่อไม่ได้อีกทั้งชีวิต”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“ศิษย์ทราบครับ”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“แล้วยังจะลอง”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">เยี่ยหลิงเฟิงก้มหัวลงต่ำ หิมะเกาะบนไหล่เขาหนาขึ้นทุกที “ถ้าไม่ลองวันนี้ ศิษย์ก็จะเป็นคนแบกฟืนไปตลอด”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">ไป๋เฉินมองเขานิ่งอยู่นาน แล้วจึงหันไปเทชาที่เย็นชืดทิ้งลงบนหิมะ น้ำสีน้ำตาลอ่อนกัดพื้นขาวเป็นรอยยาว</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">“เอาสิ” เขาพูด “ข้าจะได้ดูว่าเด็กแบกฟืนของข้าจะตายสวยแค่ไหน”</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">เยี่ยหลิงเฟิงยิ้มบาง ๆ เป็นครั้งแรกในวันนั้น เขาถอยหลังสามก้าว วางเท้าซ้ายลงบนรอยหินที่เขาเหยียบมาแล้วนับไม่ถ้วน กระบี่ไม้ยกขึ้นเหนือศีรษะ</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">ในหุบเขา หิมะหยุดตกพอดี</p>
+
+    <p style="margin: 0 0 1.35em; text-wrap: pretty;">แล้วชี่ทั้งหมดในร่างของเขาก็พุ่งขึ้นพร้อมกัน</p>
+
+    <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin: 72px 0 0;">
+      <div style="height: 1px; flex: 1; background: var(--line, rgba(35,32,27,0.12));"></div>
+      <div style="font-family: Trirong, serif; font-size: 13px; color: var(--gold, #A9803F);">จบบทที่ {{ chNum }}</div>
+      <div style="height: 1px; flex: 1; background: var(--line, rgba(35,32,27,0.12));"></div>
+    </div>
+
+    <button data-i type="button" onClick="{{ nextCh }}" style="display: block; width: 100%; margin: 34px 0 0; padding: 18px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; background: none; cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 14px; color: var(--ink, #23201B); transition: background 180ms ease, border-color 180ms ease;" style-hover="background: var(--hover, rgba(35,32,27,0.04)); border-color: var(--red, #A8382B);">อ่านบทถัดไป →</button>
+  </article>
+
+  <footer style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 22px calc(14px + env(safe-area-inset-bottom)); background: var(--panel-blur, rgba(250,248,243,0.92)); backdrop-filter: blur(14px); border-top: 1px solid var(--line, rgba(35,32,27,0.10)); opacity: var(--chrome-op, 0); transform: translateY(var(--chrome-yb, 14px)); pointer-events: var(--chrome-pe, none); transition: opacity 260ms ease, transform 260ms ease;">
+    <button data-i type="button" onClick="{{ prevCh }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--soft, #6B6357); padding: 8px 12px 8px 0;" style-hover="color: var(--ink, #23201B);">← บทก่อนหน้า</button>
+    <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--soft, #6B6357);">
+      <span>{{ chNum }} / 214</span>
+      <span style="opacity: 0.4;">·</span>
+      <span>{{ pct }}%</span>
+    </div>
+    <button data-i type="button" onClick="{{ nextCh }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--soft, #6B6357); padding: 8px 0 8px 12px;" style-hover="color: var(--ink, #23201B);">บทถัดไป →</button>
+  </footer>
+
+  <div data-i onClick="{{ closeAll }}" style="position: fixed; inset: 0; z-index: 70; background: rgba(12,11,10,0.42); opacity: var(--scrim-op, 0); pointer-events: var(--scrim-pe, none); transition: opacity 300ms ease;"></div>
+
+  <aside style="position: fixed; top: 0; right: 0; bottom: 0; z-index: 80; width: min(420px, 88vw); display: flex; flex-direction: column; background: var(--panel, #FFFDF8); border-left: 1px solid var(--line, rgba(35,32,27,0.12)); box-shadow: -24px 0 60px rgba(12,11,10,0.14); transform: translateX(var(--toc-x, 104%)); transition: transform 380ms cubic-bezier(0.22,0.8,0.28,1);">
+    <div style="padding: 22px 22px 14px; border-bottom: 1px solid var(--line, rgba(35,32,27,0.10));">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+        <div style="font-family: Trirong, serif; font-size: 18px; font-weight: 600; color: var(--ink, #23201B);">สารบัญ</div>
+        <button data-i type="button" onClick="{{ closeAll }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--soft, #6B6357);">ปิด</button>
+      </div>
+      <input data-i type="text" placeholder="ค้นหาบท หรือพิมพ์เลขบท" onInput="{{ onTocSearch }}" style="width: 100%; box-sizing: border-box; margin-top: 14px; padding: 11px 13px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; background: var(--bg, #FAF8F3); color: var(--ink, #23201B); font-family: inherit; font-size: 13.5px; outline: none;" style-focus="border-color: var(--red, #A8382B);">
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 8px 0 40px;">
+      <sc-for list="{{ arcs }}" as="arc" hint-placeholder-count="3">
+        <div style="padding: 0;">
+          <div style="position: sticky; top: 0; z-index: 1; padding: 16px 22px 8px; background: var(--panel, #FFFDF8); display: flex; align-items: baseline; gap: 10px;">
+            <div style="font-family: Trirong, serif; font-size: 14px; font-weight: 600; color: var(--red, #A8382B);">ภาคที่ {{ arc.n }}</div>
+            <div style="font-size: 13px; color: var(--ink, #23201B);">{{ arc.name }}</div>
+            <div style="margin-left: auto; font-size: 11px; color: var(--soft, #6B6357);">{{ arc.range }}</div>
+          </div>
+          <sc-for list="{{ arc.items }}" as="ch" hint-placeholder-count="4">
+            <button data-i type="button" data-n="{{ ch.n }}" onClick="{{ goChapter }}" style="display: flex; align-items: baseline; gap: 12px; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; padding: 9px 22px; font-family: inherit; color: var(--ink, #23201B); border-left: 2px solid transparent;" style-hover="background: var(--hover, rgba(35,32,27,0.04));">
+              <span style="font-size: 11.5px; color: var(--soft, #6B6357); min-width: 30px; font-variant-numeric: tabular-nums;">{{ ch.n }}</span>
+              <span style="font-size: 13.5px; line-height: 1.5;">{{ ch.title }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </aside>
+
+  <aside style="position: fixed; top: 0; right: 0; bottom: 0; z-index: 80; width: min(440px, 90vw); display: flex; flex-direction: column; background: var(--panel, #FFFDF8); border-left: 1px solid var(--line, rgba(35,32,27,0.12)); box-shadow: -24px 0 60px rgba(12,11,10,0.14); transform: translateX(var(--glo-x, 104%)); transition: transform 380ms cubic-bezier(0.22,0.8,0.28,1);">
+    <div style="padding: 22px 22px 14px; border-bottom: 1px solid var(--line, rgba(35,32,27,0.10));">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+        <div style="font-family: Trirong, serif; font-size: 18px; font-weight: 600; color: var(--ink, #23201B);">อภิธานศัพท์</div>
+        <button data-i type="button" onClick="{{ closeAll }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--soft, #6B6357);">ปิด</button>
+      </div>
+      <input data-i type="text" placeholder="ค้นหาศัพท์ ลำดับขั้น สำนัก ตัวละคร" onInput="{{ onGloSearch }}" style="width: 100%; box-sizing: border-box; margin-top: 14px; padding: 11px 13px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; background: var(--bg, #FAF8F3); color: var(--ink, #23201B); font-family: inherit; font-size: 13.5px; outline: none;" style-focus="border-color: var(--red, #A8382B);">
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 4px 0 48px;">
+      <sc-for list="{{ glossary }}" as="grp" hint-placeholder-count="3">
+        <div>
+          <div style="padding: 22px 22px 10px; font-size: 11px; letter-spacing: 0.18em; color: var(--gold, #A9803F); text-transform: uppercase;">{{ grp.name }}</div>
+          <sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="4">
+            <div style="padding: 12px 22px; border-top: 1px solid var(--line, rgba(35,32,27,0.07));">
+              <div style="display: flex; align-items: baseline; gap: 10px;">
+                <div style="font-family: Trirong, serif; font-size: 15px; font-weight: 600; color: var(--ink, #23201B);">{{ it.t }}</div>
+                <div style="font-size: 11px; color: var(--soft, #6B6357);">{{ it.cn }}</div>
+              </div>
+              <div style="font-size: 13px; line-height: 1.85; color: var(--soft, #6B6357); margin-top: 5px;">{{ it.b }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </aside>
+
+  <aside style="position: fixed; top: 0; right: 0; bottom: 0; z-index: 80; width: min(400px, 88vw); display: flex; flex-direction: column; background: var(--panel, #FFFDF8); border-left: 1px solid var(--line, rgba(35,32,27,0.12)); box-shadow: -24px 0 60px rgba(12,11,10,0.14); transform: translateX(var(--bm-x, 104%)); transition: transform 380ms cubic-bezier(0.22,0.8,0.28,1);">
+    <div style="padding: 22px 22px 18px; border-bottom: 1px solid var(--line, rgba(35,32,27,0.10));">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+        <div style="font-family: Trirong, serif; font-size: 18px; font-weight: 600; color: var(--ink, #23201B);">ที่คั่นหนังสือ</div>
+        <button data-i type="button" onClick="{{ closeAll }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--soft, #6B6357);">ปิด</button>
+      </div>
+      <div style="margin-top: 16px; padding: 14px 16px; border: 1px solid var(--line, rgba(35,32,27,0.14)); border-radius: 3px; background: var(--bg, #FAF8F3);">
+        <div style="font-size: 11px; letter-spacing: 0.16em; color: var(--gold, #A9803F); text-transform: uppercase;">ตำแหน่งที่อ่านอยู่</div>
+        <div style="font-family: Sarabun, sans-serif; font-size: 13px; line-height: 1.85; color: var(--soft, #6B6357); margin-top: 7px;">{{ hereText }}</div>
+        <button data-i type="button" onClick="{{ addMark }}" style="width: 100%; margin-top: 12px; padding: 11px; border: 0; border-radius: 3px; background: var(--red, #A8382B); color: var(--bg, #FAF8F3); cursor: pointer; font-family: inherit; font-size: 13px;">คั่นหน้าไว้ตรงนี้</button>
+      </div>
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 4px 0 40px;">
+      <sc-if value="{{ noMarks }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 40px 26px; text-align: center; font-size: 12.5px; line-height: 1.95; color: var(--soft, #6B6357);">ยังไม่มีที่คั่น กดปุ่มด้านบนเพื่อคั่นตำแหน่งที่กำลังอ่าน แล้วกลับมาต่อได้จากทุกเครื่อง</div>
+      </sc-if>
+      <sc-for list="{{ marks }}" as="m" hint-placeholder-count="3">
+        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 16px 22px; border-bottom: 1px solid var(--line, rgba(35,32,27,0.07));">
+          <button data-i type="button" data-mid="{{ m.id }}" onClick="{{ goMark }}" style="flex: 1; min-width: 0; text-align: left; border: 0; background: none; cursor: pointer; padding: 0; font-family: inherit;">
+            <div style="display: flex; align-items: baseline; gap: 9px;">
+              <div style="font-family: Trirong, serif; font-size: 13.5px; font-weight: 600; color: var(--red, #A8382B);">บทที่ {{ m.ch }}</div>
+              <div style="font-size: 12px; color: var(--ink, #23201B); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.title }}</div>
+            </div>
+            <div style="font-family: Sarabun, sans-serif; font-size: 13px; line-height: 1.8; color: var(--soft, #6B6357); margin-top: 6px;">{{ m.text }}</div>
+            <div style="font-size: 10.5px; color: var(--soft, #6B6357); margin-top: 7px; opacity: 0.8;">{{ m.when }}</div>
+          </button>
+          <button data-i type="button" data-mid="{{ m.id }}" onClick="{{ delMark }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 11.5px; color: var(--soft, #6B6357); padding: 2px 0 0;">ลบ</button>
+        </div>
+      </sc-for>
+    </div>
+  </aside>
+
+  <section style="position: fixed; left: 50%; bottom: 0; z-index: 85; width: min(520px, calc(100vw - 24px)); box-sizing: border-box; background: var(--panel, #FFFDF8); border: 1px solid var(--line, rgba(35,32,27,0.12)); border-radius: 4px 4px 0 0; box-shadow: 0 -20px 60px rgba(12,11,10,0.16); padding: 22px 24px calc(26px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(var(--set-y, 110%)); transition: transform 380ms cubic-bezier(0.22,0.8,0.28,1);">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px;">
+      <div style="font-family: Trirong, serif; font-size: 17px; font-weight: 600; color: var(--ink, #23201B);">การอ่าน</div>
+      <button data-i type="button" onClick="{{ closeAll }}" style="border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--soft, #6B6357);">เสร็จสิ้น</button>
+    </div>
+
+    <div style="display: grid; gap: 18px;">
+      <div style="display: grid; gap: 8px;">
+        <div style="font-size: 11.5px; letter-spacing: 0.14em; color: var(--soft, #6B6357); text-transform: uppercase;">ธีม</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <button data-i type="button" data-v="light" onClick="{{ setTheme }}" style="padding: 13px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 13px; background: var(--o-theme-light-bg, transparent); color: var(--o-theme-light-fg, #6B6357); transition: background 180ms ease, color 180ms ease;">สว่าง</button>
+          <button data-i type="button" data-v="sepia" onClick="{{ setTheme }}" style="padding: 13px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 13px; background: var(--o-theme-sepia-bg, transparent); color: var(--o-theme-sepia-fg, #6B6357); transition: background 180ms ease, color 180ms ease;">กระดาษ</button>
+          <button data-i type="button" data-v="dark" onClick="{{ setTheme }}" style="padding: 13px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 13px; background: var(--o-theme-dark-bg, transparent); color: var(--o-theme-dark-fg, #6B6357); transition: background 180ms ease, color 180ms ease;">มืด</button>
+        </div>
+      </div>
+
+      <div style="display: grid; gap: 8px;">
+        <div style="font-size: 11.5px; letter-spacing: 0.14em; color: var(--soft, #6B6357); text-transform: uppercase;">ฟอนต์</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <button data-i type="button" data-v="loop" onClick="{{ setFont }}" style="padding: 13px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: Sarabun, sans-serif; font-size: 13px; background: var(--o-font-loop-bg, transparent); color: var(--o-font-loop-fg, #6B6357);">มีหัว</button>
+          <button data-i type="button" data-v="serif" onClick="{{ setFont }}" style="padding: 13px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: 'Noto Serif Thai', serif; font-size: 13px; background: var(--o-font-serif-bg, transparent); color: var(--o-font-serif-fg, #6B6357);">เซริฟ</button>
+          <button data-i type="button" data-v="sans" onClick="{{ setFont }}" style="padding: 13px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 13px; background: var(--o-font-sans-bg, transparent); color: var(--o-font-sans-fg, #6B6357);">ไม่มีหัว</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="display: grid; gap: 8px;">
+          <div style="font-size: 11.5px; letter-spacing: 0.14em; color: var(--soft, #6B6357); text-transform: uppercase;">ขนาด</div>
+          <div style="display: flex; align-items: center; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px;">
+            <button data-i type="button" onClick="{{ fsDown }}" style="flex: 1; padding: 12px 0; border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--ink, #23201B);">A−</button>
+            <div style="min-width: 42px; text-align: center; font-size: 12.5px; color: var(--soft, #6B6357); font-variant-numeric: tabular-nums;">{{ fsLabel }}</div>
+            <button data-i type="button" onClick="{{ fsUp }}" style="flex: 1; padding: 12px 0; border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 17px; color: var(--ink, #23201B);">A+</button>
+          </div>
+        </div>
+        <div style="display: grid; gap: 8px;">
+          <div style="font-size: 11.5px; letter-spacing: 0.14em; color: var(--soft, #6B6357); text-transform: uppercase;">ระยะบรรทัด</div>
+          <div style="display: flex; align-items: center; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px;">
+            <button data-i type="button" onClick="{{ lhDown }}" style="flex: 1; padding: 12px 0; border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 15px; color: var(--ink, #23201B);">−</button>
+            <div style="min-width: 42px; text-align: center; font-size: 12.5px; color: var(--soft, #6B6357); font-variant-numeric: tabular-nums;">{{ lhLabel }}</div>
+            <button data-i type="button" onClick="{{ lhUp }}" style="flex: 1; padding: 12px 0; border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 15px; color: var(--ink, #23201B);">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; gap: 8px;">
+        <div style="font-size: 11.5px; letter-spacing: 0.14em; color: var(--soft, #6B6357); text-transform: uppercase;">ความกว้างคอลัมน์</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <button data-i type="button" data-v="narrow" onClick="{{ setWidth }}" style="padding: 12px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 13px; background: var(--o-width-narrow-bg, transparent); color: var(--o-width-narrow-fg, #6B6357);">แคบ</button>
+          <button data-i type="button" data-v="normal" onClick="{{ setWidth }}" style="padding: 12px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 13px; background: var(--o-width-normal-bg, transparent); color: var(--o-width-normal-fg, #6B6357);">ปกติ</button>
+          <button data-i type="button" data-v="wide" onClick="{{ setWidth }}" style="padding: 12px 8px; border: 1px solid var(--line, rgba(35,32,27,0.16)); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 13px; background: var(--o-width-wide-bg, transparent); color: var(--o-width-wide-fg, #6B6357);">กว้าง</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line, rgba(35,32,27,0.10)); font-size: 11.5px; line-height: 1.9; color: var(--soft, #6B6357);">แตะกลางหน้าจอเพื่อเข้า/ออกโหมดเต็มจอ · แตะขอบบนหรือล่างเพื่อเรียกเมนู · บีบนิ้วเพื่อย่อ–ขยายตัวอักษร</div>
+  </section>
+
+  <div style="position: fixed; z-index: 95; left: var(--fn-x, 24px); top: var(--fn-y, 24px); width: min(320px, calc(100vw - 32px)); box-sizing: border-box; background: var(--panel, #FFFDF8); border: 1px solid var(--line, rgba(35,32,27,0.14)); border-radius: 3px; box-shadow: 0 18px 50px rgba(12,11,10,0.22); padding: 16px 18px; opacity: var(--fn-op, 0); transform: translateY(var(--fn-ty, 6px)); pointer-events: var(--fn-pe, none); transition: opacity 180ms ease, transform 180ms ease;">
+    <div style="font-size: 10.5px; letter-spacing: 0.18em; color: var(--gold, #A9803F); text-transform: uppercase;">{{ noteKind }}</div>
+    <div style="display: flex; align-items: baseline; gap: 9px; margin-top: 6px;">
+      <div style="font-family: Trirong, serif; font-size: 16px; font-weight: 600; color: var(--ink, #23201B);">{{ noteTitle }}</div>
+      <div style="font-size: 11px; color: var(--soft, #6B6357);">{{ noteCn }}</div>
+    </div>
+    <div style="font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 13px; line-height: 1.85; color: var(--soft, #6B6357); margin-top: 7px;">{{ noteBody }}</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--line, rgba(35,32,27,0.08));">
+      <button data-i type="button" onClick="{{ openGlossary }}" style="border: 0; background: none; padding: 0; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--red, #A8382B);">ดูในอภิธานศัพท์ →</button>
+      <button data-i type="button" onClick="{{ closeNote }}" style="border: 0; background: none; padding: 0; cursor: pointer; font-family: inherit; font-size: 12px; color: var(--soft, #6B6357);">ปิด</button>
+    </div>
+  </div>
+
+  <div style="position: fixed; z-index: 45; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(var(--toast-y, 8px)); background: var(--ink, #23201B); color: var(--bg, #FAF8F3); font-size: 12.5px; padding: 10px 18px; border-radius: 999px; opacity: var(--toast-op, 0); pointer-events: none; transition: opacity 400ms ease, transform 400ms ease; white-space: nowrap;">อ่านต่อจากตำแหน่งที่ค้างไว้</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;sepia&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'sepia'|'dark'&quot;,&quot;section&quot;:&quot;การอ่าน&quot;},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;options&quot;:[&quot;#A8382B&quot;,&quot;#8C6239&quot;,&quot;#3F5D52&quot;,&quot;#6B4A7A&quot;],&quot;default&quot;:&quot;#A8382B&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;การอ่าน&quot;},&quot;showProgress&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;การอ่าน&quot;}}">
+const THEMES = {
+  light: { bg:'#FAF8F3', ink:'#23201B', soft:'#6B6357', line:'rgba(35,32,27,0.10)', panel:'#FFFDF8', panelBlur:'rgba(250,248,243,0.93)', hover:'rgba(35,32,27,0.05)', noteline:'rgba(35,32,27,0.42)', red:'#A8382B', gold:'#A9803F', sel:'rgba(168,56,43,0.15)' },
+  sepia: { bg:'#F1E6D0', ink:'#3A3025', soft:'#7A6A52', line:'rgba(58,48,37,0.14)', panel:'#F8F0DE', panelBlur:'rgba(241,230,208,0.93)', hover:'rgba(58,48,37,0.06)', noteline:'rgba(58,48,37,0.45)', red:'#9C3A25', gold:'#96762F', sel:'rgba(156,58,37,0.16)' },
+  dark:  { bg:'#121211', ink:'#CFC8BA', soft:'#8B8478', line:'rgba(207,200,186,0.14)', panel:'#1C1B19', panelBlur:'rgba(18,18,17,0.93)', hover:'rgba(207,200,186,0.07)', noteline:'rgba(207,200,186,0.40)', red:'#C4574A', gold:'#BE9758', sel:'rgba(196,87,74,0.20)' }
+};
+const FONTS = { loop: "'Sarabun'", serif: "'Noto Serif Thai'", sans: "'IBM Plex Sans Thai'" };
+const WIDTHS = { narrow: '540px', normal: '640px', wide: '760px' };
+
+const NOTES = {
+  qi: { kind:'ศัพท์การบำเพ็ญ', t:'ชี่', cn:'气', b:'พลังชีวิตที่ไหลเวียนอยู่ในร่างและในฟ้าดิน ผู้บำเพ็ญดูดซับชี่จากภายนอกมากลั่นเป็นพลังของตนเอง คุณภาพของชี่กำหนดเพดานของผู้บำเพ็ญมากกว่าปริมาณ' },
+  dantian: { kind:'ศัพท์การบำเพ็ญ', t:'ตันเถียน', cn:'丹田', b:'แหล่งกักเก็บชี่ใต้สะดือราวสามนิ้ว เปรียบเหมือนอ่างเก็บน้ำของร่างกาย หากตันเถียนแตก ผู้บำเพ็ญจะสูญเสียพลังทั้งหมด' },
+  jingmai: { kind:'ศัพท์การบำเพ็ญ', t:'จิงม่าย', cn:'经脉', b:'เส้นทางเดินของชี่ทั่วร่าง มีสิบสองสายหลักและแปดสายพิเศษ ยิ่งกว้างและใสยิ่งเดินชี่ได้เร็ว คนที่เส้นชี่แคบมักถูกตัดสินว่าไร้พรสวรรค์' },
+  foundation: { kind:'ลำดับขั้นการบำเพ็ญ', t:'ขั้นหลอมรากฐาน', cn:'筑基', b:'ขั้นที่สองของการบำเพ็ญ ผู้บำเพ็ญหลอมชี่ให้กลายเป็นรากฐานถาวรในร่าง อายุขัยยืดออกราวห้าสิบปี ส่วนใหญ่ใช้เวลาสามถึงสิบปีจึงข้ามขั้นได้' },
+  core: { kind:'ลำดับขั้นการบำเพ็ญ', t:'ขั้นก่อแกนธาตุ', cn:'结丹', b:'ขั้นที่สาม ชี่ถูกบีบอัดจนเกิดแกนธาตุกลางตันเถียน เริ่มใช้กระบวนท่าระดับสูงและบินระยะสั้นได้ ถือเป็นเส้นแบ่งระหว่างนักบำเพ็ญกับคนธรรมดา' },
+  pill: { kind:'ยาและสมุนไพร', t:'ยาชี่หมุนเวียน', cn:'周天丹', b:'ยาเม็ดขั้นต้นที่ช่วยเร่งการดูดซับชี่ราวสามเท่าเป็นเวลาหนึ่งเดือน ใช้ติดต่อกันเกินห้าเม็ดจะทำให้รากฐานขุ่นมัวอย่างถาวร' },
+  art: { kind:'กระบวนท่า', t:'ดาบสายธารพลิกฟ้า', cn:'翻天流剑', b:'วิชาดาบประจำสำนักเมฆาวสันต์ มีเก้าท่า ท่าที่หนึ่งต้องรวมชี่ทั้งร่างไว้ในจังหวะเดียว โดยทั่วไปกำหนดให้ฝึกได้เมื่อถึงขั้นก่อแกนธาตุขึ้นไป' },
+  sect: { kind:'สำนัก', t:'สำนักเมฆาวสันต์', cn:'云春宗', b:'สำนักระดับกลางในเขตเขาตะวันตก มีศิษย์ราวสี่พันคน ขึ้นชื่อเรื่องวิชาดาบและกฎที่เข้มงวด รับศิษย์จากสามัญชนปีละครั้งในฤดูใบไม้ผลิ' },
+  ye: { kind:'ตัวละคร', t:'เยี่ยหลิงเฟิง', cn:'叶凌风', b:'ศิษย์นอกรุ่นที่สิบเก้า อายุสิบเจ็ด เส้นชี่แคบกว่าคนทั่วไปเกือบครึ่ง ทำหน้าที่แบกฟืนมาสามปี ฝึกดาบท่าเดียวซ้ำทุกคืนที่ลำธารใต้หน้าผา' }
+};
+
+const GLOSSARY = [
+  { name:'ลำดับขั้นการบำเพ็ญ', items:[
+    { t:'ขั้นปลุกชี่', cn:'练气', b:'ขั้นแรก เปิดเส้นชี่และเริ่มดูดซับชี่จากภายนอก แบ่งเป็นเก้าชั้นย่อย' },
+    { t:'ขั้นหลอมรากฐาน', cn:'筑基', b:'หลอมชี่เป็นรากฐานถาวร อายุขัยยืดราวห้าสิบปี' },
+    { t:'ขั้นก่อแกนธาตุ', cn:'结丹', b:'เกิดแกนธาตุกลางตันเถียน บินระยะสั้นได้' },
+    { t:'ขั้นทารกธาตุ', cn:'元婴', b:'แกนธาตุแตกออกเป็นทารกธาตุ ร่างสลายแล้วยังคืนได้' },
+    { t:'ขั้นแปรวิญญาณ', cn:'化神', b:'วิญญาณกลืนกับฟ้าดิน รับรู้กระแสชี่ในรัศมีหลายร้อยลี้' },
+    { t:'ขั้นข้ามภพ', cn:'渡劫', b:'เผชิญฟ้าลงทัณฑ์เก้าครั้ง ผ่านได้จึงขึ้นสู่ขั้นเซียน' },
+    { t:'ขั้นเซียนแท้', cn:'真仙', b:'พ้นวงจรอายุขัย ตำนานว่ามีไม่เกินสิบคนในสามพันปี' }
+  ]},
+  { name:'ศัพท์การบำเพ็ญ', items:[
+    { t:'ชี่', cn:'气', b:'พลังชีวิตที่ไหลเวียนในร่างและในฟ้าดิน' },
+    { t:'ตันเถียน', cn:'丹田', b:'แหล่งกักเก็บชี่ใต้สะดือราวสามนิ้ว' },
+    { t:'จิงม่าย', cn:'经脉', b:'เส้นทางเดินชี่ สิบสองสายหลัก แปดสายพิเศษ' },
+    { t:'ธาตุกาย', cn:'灵体', b:'คุณภาพร่างกายแต่กำเนิด กำหนดความเร็วในการบำเพ็ญ' },
+    { t:'ยาชี่หมุนเวียน', cn:'周天丹', b:'ยาเม็ดขั้นต้น เร่งการดูดซับชี่ราวสามเท่า' },
+    { t:'ฟ้าลงทัณฑ์', cn:'天劫', b:'สายฟ้าที่ฟ้าดินส่งลงมาทดสอบผู้ข้ามขั้นสูง' }
+  ]},
+  { name:'สำนักและตระกูล', items:[
+    { t:'สำนักเมฆาวสันต์', cn:'云春宗', b:'สำนักระดับกลางเขตเขาตะวันตก ศิษย์ราวสี่พันคน' },
+    { t:'วิหารดาบสายธาร', cn:'流剑殿', b:'วิหารกลางของสำนัก เก็บคัมภีร์ดาบเก้าท่า' },
+    { t:'ตระกูลเยี่ย', cn:'叶家', b:'ตระกูลพ่อค้าเมืองชายแดน ล่มสลายเมื่อสิบปีก่อน' },
+    { t:'พันธมิตรกระดูกขาว', cn:'白骨盟', b:'กลุ่มนักบำเพ็ญนอกรีตในทะเลทรายเหนือ' }
+  ]},
+  { name:'ตัวละคร', items:[
+    { t:'เยี่ยหลิงเฟิง', cn:'叶凌风', b:'ศิษย์นอกรุ่นสิบเก้า อายุสิบเจ็ด เส้นชี่แคบผิดปกติ' },
+    { t:'ไป๋เฉิน', cn:'白尘', b:'ผู้เฒ่าดูแลลานฝึก อดีตขั้นทารกธาตุที่บาดเจ็บจนถอยขั้น' },
+    { t:'ซูเหมยเยียน', cn:'苏眉烟', b:'ศิษย์ในรุ่นเดียวกัน ธาตุกายน้ำแข็งระดับหายาก' },
+    { t:'มารเฒ่าจิ่วโหยว', cn:'九幽老魔', b:'ผู้บำเพ็ญนอกรีตที่หายไปสามร้อยปี' }
+  ]}
+];
+
+const ARC_DEFS = [
+  { n:1, name:'ธุลีเมืองชายแดน', from:1, to:48 },
+  { n:2, name:'สำนักเมฆาวสันต์', from:49, to:120 },
+  { n:3, name:'ทะเลทรายกระดูกขาว', from:121, to:186 },
+  { n:4, name:'นครเซียนเหนือเมฆ', from:187, to:214 }
+];
+const TITLE_POOL = ['ดาบแรกใต้ฟ้าหมอก','เลือดบนหิมะ','ประตูสำนักเปิดแล้ว','ยาชี่เม็ดสุดท้าย','คำสาบานใต้ต้นท้อ','เงาในหุบผา','ลมหวนคืนสู่ตะวันตก','บทเพลงของคนตาบอด','แขกจากทะเลทราย','กระบี่ที่ไม่มีคม','เสียงระฆังจากยอดเขา','ธุลีดาวร่วง','คืนที่ไฟไม่ดับ','รอยเท้าบนน้ำ','ผู้มาเยือนสวมหมวกฟาง'];
+const TITLE_POOL_B = ['ผู้เฒ่าที่ไม่มีชื่อ','ฝนแรกของฤดูใบไม้ร่วง','คัมภีร์ที่ถูกเผา','สามก้าวก่อนหน้าผา','เจ้าของโรงเตี๊ยมเก่า','หมอกลงที่ท่าเรือใต้','ดาบสองเล่มในกล่องเดียว','คำถามที่ไม่มีใครตอบ','เด็กหญิงกับโคมกระดาษ','ทางแยกใต้ต้นสนแฝด','ผู้มาก่อนรุ่งสาง','เสียงหินร่วงในบ่อลึก','จดหมายจากคนตาย','ตลาดยาเมืองชิงเหอ','ลมหนาวข้ามด่านเหนือ','แผลเก่าที่ไหล่ซ้าย','คืนสุดท้ายในหุบเขา'];
+const chapterTitle = (n) => n === 87 ? 'ดาบแรกใต้ฟ้าหมอก'
+  : (n % 2 ? TITLE_POOL[(n * 7) % TITLE_POOL.length] : TITLE_POOL_B[(n * 5) % TITLE_POOL_B.length]);
+
+const TH_MONTH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function markWhen(ts) {
+  if (!ts) return 'คั่นไว้';
+  const d = Date.now() - ts, min = Math.floor(d / 60000);
+  if (min < 2) return 'คั่นไว้เมื่อสักครู่';
+  if (min < 60) return 'คั่นไว้ ' + min + ' นาทีที่แล้ว';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return 'คั่นไว้ ' + hr + ' ชั่วโมงที่แล้ว';
+  const day = Math.floor(hr / 24);
+  if (day < 7) return 'คั่นไว้ ' + day + ' วันที่แล้ว';
+  const dt = new Date(ts);
+  return 'คั่นไว้ ' + dt.getDate() + ' ' + TH_MONTH[dt.getMonth()];
+}
+
+class Component extends DCLogic {
+  state = {
+    theme: 'light', font: 'loop', fs: 20, lh: 2.0, width: 'normal',
+    chrome: false, immersive: false,
+    panel: null, tocQ: '', gloQ: '',
+    ch: 87, pct: 0, note: null,
+    marks: [], anchor: null
+  };
+
+  paras() { return Array.prototype.slice.call(document.querySelectorAll('article p')); }
+
+  currentPara() {
+    const ps = this.paras();
+    let best = 0, bestD = Infinity;
+    ps.forEach((p, i) => {
+      const d = Math.abs(p.getBoundingClientRect().top - 130);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    return { idx: best, text: ps[best] ? ps[best].textContent.trim().slice(0, 78) + '…' : '' };
+  }
+
+  saveMarks(marks) {
+    try { localStorage.setItem('xianxia-marks', JSON.stringify(marks)); } catch (e) {}
+  }
+
+  scrollToPara(idx) {
+    const p = this.paras()[idx];
+    if (!p) return;
+    window.scrollTo(0, window.scrollY + p.getBoundingClientRect().top - 130);
+  }
+
+  componentDidMount() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('xianxia-reader') || 'null'); } catch (e) {}
+    if (saved) {
+      this.setState({
+        theme: saved.theme || this.props.defaultTheme || 'light',
+        font: saved.font || 'loop', fs: saved.fs || 20, lh: saved.lh || 2.0,
+        width: saved.width || 'normal', ch: saved.ch || 87
+      }, () => {
+        if (saved.scroll > 0.03) {
+          window.scrollTo(0, saved.scroll * (document.body.scrollHeight - window.innerHeight));
+          this.toast();
+        }
+      });
+    } else if (this.props.defaultTheme) {
+      this.setState({ theme: this.props.defaultTheme });
+    }
+    try {
+      const m = JSON.parse(localStorage.getItem('xianxia-marks') || '[]');
+      if (Array.isArray(m) && m.length) this.setState({ marks: m });
+    } catch (e) {}
+    this.syncVars();
+    this._onScroll = () => this.onScroll();
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this._onTouchStart = (e) => { if (e.touches.length === 2) this._pinch = this.dist(e) ; };
+    this._onTouchMove = (e) => {
+      if (e.touches.length === 2 && this._pinch) {
+        e.preventDefault();
+        const d = this.dist(e), r = d / this._pinch;
+        if (Math.abs(r - 1) > 0.08) {
+          this._pinch = d;
+          this.setFs(this.state.fs + (r > 1 ? 1 : -1));
+        }
+      }
+    };
+    this._onTouchEnd = () => { this._pinch = null; };
+    window.addEventListener('touchstart', this._onTouchStart, { passive: true });
+    window.addEventListener('touchmove', this._onTouchMove, { passive: false });
+    window.addEventListener('touchend', this._onTouchEnd, { passive: true });
+    this._onKey = (e) => {
+      if (e.key === 'Escape') this.closeAll();
+      if (e.key === 'ArrowRight') this.nextCh();
+      if (e.key === 'ArrowLeft') this.prevCh();
+    };
+    window.addEventListener('keydown', this._onKey);
+    this._onMove = (e) => {
+      const y = e.clientY, h = window.innerHeight;
+      if (y < 72 || y > h - 72) this.showChrome();
+    };
+    window.addEventListener('mousemove', this._onMove);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('touchstart', this._onTouchStart);
+    window.removeEventListener('touchmove', this._onTouchMove);
+    window.removeEventListener('touchend', this._onTouchEnd);
+    window.removeEventListener('keydown', this._onKey);
+    window.removeEventListener('mousemove', this._onMove);
+    clearTimeout(this._hideT); clearTimeout(this._toastT);
+  }
+
+  componentDidUpdate() { this.syncVars(); }
+
+  dist(e) {
+    const [a, b] = [e.touches[0], e.touches[1]];
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  }
+
+  v(k, val) { document.documentElement.style.setProperty(k, val); }
+
+  syncVars() {
+    const s = this.state, t = THEMES[s.theme] || THEMES.light;
+    const accent = this.props.accentColor;
+    this.v('--bg', t.bg); this.v('--ink', t.ink); this.v('--soft', t.soft);
+    this.v('--line', t.line); this.v('--panel', t.panel); this.v('--panel-blur', t.panelBlur);
+    this.v('--hover', t.hover); this.v('--noteline', t.noteline);
+    this.v('--red', accent || t.red); this.v('--gold', t.gold); this.v('--sel', t.sel);
+    this.v('--ff', FONTS[s.font]); this.v('--fs', s.fs + 'px'); this.v('--lh', String(s.lh));
+    this.v('--colw', WIDTHS[s.width]);
+
+    const groups = { theme: s.theme, font: s.font, width: s.width };
+    const keys = { theme: ['light','sepia','dark'], font: ['loop','serif','sans'], width: ['narrow','normal','wide'] };
+    Object.keys(keys).forEach((g) => keys[g].forEach((k) => {
+      const on = groups[g] === k;
+      this.v('--o-' + g + '-' + k + '-bg', on ? t.ink : 'transparent');
+      this.v('--o-' + g + '-' + k + '-fg', on ? t.bg : t.soft);
+    }));
+
+    const show = s.chrome;
+    this.v('--chrome-op', show ? '1' : '0');
+    this.v('--chrome-y', show ? '0px' : '-14px');
+    this.v('--chrome-yb', show ? '0px' : '14px');
+    this.v('--chrome-pe', show ? 'auto' : 'none');
+    this.v('--prog-op', (s.immersive || this.props.showProgress === false) ? '0' : '1');
+    this.v('--prog', s.pct + '%');
+
+    const open = s.panel;
+    this.v('--scrim-op', open ? '1' : '0');
+    this.v('--scrim-pe', open ? 'auto' : 'none');
+    this.v('--toc-x', open === 'toc' ? '0%' : '104%');
+    this.v('--bm-x', open === 'marks' ? '0%' : '104%');
+
+    const inCh = s.marks.filter((m) => m.ch === s.ch).map((m) => m.idx);
+    this.paras().forEach((p, i) => {
+      const on = inCh.indexOf(i) >= 0;
+      p.style.borderLeft = on ? '2px solid ' + (this.props.accentColor || t.red) : '';
+      p.style.paddingLeft = on ? '16px' : '';
+      p.style.marginLeft = on ? '-18px' : '';
+    });
+    this.v('--glo-x', open === 'glossary' ? '0%' : '104%');
+    this.v('--set-y', open === 'settings' ? '0%' : '110%');
+
+    const n = s.note;
+    this.v('--fn-op', n ? '1' : '0');
+    this.v('--fn-pe', n ? 'auto' : 'none');
+    this.v('--fn-ty', n ? '0px' : '6px');
+    if (n) { this.v('--fn-x', n.x + 'px'); this.v('--fn-y', n.y + 'px'); }
+  }
+
+  save() {
+    const s = this.state;
+    const h = document.body.scrollHeight - window.innerHeight;
+    try {
+      localStorage.setItem('xianxia-reader', JSON.stringify({
+        theme: s.theme, font: s.font, fs: s.fs, lh: s.lh, width: s.width, ch: s.ch,
+        scroll: h > 0 ? window.scrollY / h : 0
+      }));
+    } catch (e) {}
+  }
+
+  toast() {
+    this.v('--toast-op', '1'); this.v('--toast-y', '0px');
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => { this.v('--toast-op', '0'); this.v('--toast-y', '8px'); }, 2600);
+  }
+
+  onScroll() {
+    const h = document.body.scrollHeight - window.innerHeight;
+    const pct = h > 0 ? Math.min(100, Math.round((window.scrollY / h) * 100)) : 0;
+    if (pct !== this.state.pct) this.setState({ pct });
+    if (this.state.note) this.setState({ note: null });
+    clearTimeout(this._saveT);
+    this._saveT = setTimeout(() => this.save(), 400);
+  }
+
+  showChrome() {
+    if (!this.state.chrome) this.setState({ chrome: true });
+    clearTimeout(this._hideT);
+    this._hideT = setTimeout(() => {
+      if (!this.state.panel) this.setState({ chrome: false });
+    }, 3400);
+  }
+
+  hideChrome() { clearTimeout(this._hideT); this.setState({ chrome: false }); }
+
+  setFs(v) { this.setState({ fs: Math.max(15, Math.min(30, v)) }, () => this.save()); }
+  setLh(v) { this.setState({ lh: Math.max(1.5, Math.min(2.8, Math.round(v * 10) / 10)) }, () => this.save()); }
+
+  closeAll = () => { this.setState({ panel: null, note: null }); this.hideChrome(); };
+
+  renderVals() {
+    const s = this.state;
+    const arc = ARC_DEFS.find((a) => s.ch >= a.from && s.ch <= a.to) || ARC_DEFS[0];
+    const q = s.tocQ.trim();
+    const arcs = ARC_DEFS.map((a) => {
+      const items = [];
+      for (let i = a.from; i <= a.to; i++) {
+        const title = chapterTitle(i);
+        if (!q || title.includes(q) || String(i).includes(q)) items.push({ n: i, title });
+      }
+      return { n: a.n, name: a.name, range: a.from + '–' + a.to, items };
+    }).filter((a) => a.items.length);
+
+    const gq = s.gloQ.trim();
+    const glossary = GLOSSARY.map((g) => ({
+      name: g.name,
+      items: gq ? g.items.filter((it) => it.t.includes(gq) || it.b.includes(gq) || it.cn.includes(gq)) : g.items
+    })).filter((g) => g.items.length);
+
+    const n = s.note;
+    return {
+      arcs, glossary,
+      chNum: s.ch, chTitle: chapterTitle(s.ch),
+      arcNum: arc.n, arcName: arc.name,
+      pct: s.pct, fsLabel: s.fs + 'px', lhLabel: s.lh.toFixed(1),
+      noteKind: n ? n.kind : '', noteTitle: n ? n.t : '', noteCn: n ? n.cn : '', noteBody: n ? n.b : '',
+      noop: (e) => e.stopPropagation(),
+      closeAll: this.closeAll,
+      onSurfaceTap: (e) => {
+        if (e.target.closest('[data-i]')) return;
+        if (String(window.getSelection())) return;
+        const y = e.clientY, h = window.innerHeight;
+        if (y < h * 0.14 || y > h * 0.86) { this.showChrome(); return; }
+        if (s.note) { this.setState({ note: null }); return; }
+        if (s.chrome) { this.hideChrome(); return; }
+        this.setState({ immersive: !s.immersive });
+      },
+      marks: s.marks.map((m) => Object.assign({}, m, { title: chapterTitle(m.ch), when: markWhen(m.ts) })),
+      noMarks: s.marks.length === 0,
+      hereText: s.anchor ? s.anchor.text : 'เปิดแผงนี้ขณะอ่านเพื่อคั่นย่อหน้าที่กำลังอ่านอยู่',
+      openMarks: (e) => {
+        e.stopPropagation();
+        this.setState({ panel: 'marks', note: null, anchor: this.currentPara() });
+      },
+      addMark: (e) => {
+        e.stopPropagation();
+        const a = s.anchor || this.currentPara();
+        const marks = [{ id: String(Date.now()), ch: s.ch, idx: a.idx, text: a.text, ts: Date.now() }]
+          .concat(s.marks.filter((m) => !(m.ch === s.ch && m.idx === a.idx)));
+        this.setState({ marks }, () => this.saveMarks(marks));
+      },
+      delMark: (e) => {
+        e.stopPropagation();
+        const id = e.currentTarget.dataset.mid;
+        const marks = s.marks.filter((m) => m.id !== id);
+        this.setState({ marks }, () => this.saveMarks(marks));
+      },
+      goMark: (e) => {
+        e.stopPropagation();
+        const m = s.marks.find((x) => x.id === e.currentTarget.dataset.mid);
+        if (!m) return;
+        this.setState({ ch: m.ch, panel: null, chrome: false }, () => {
+          setTimeout(() => this.scrollToPara(m.idx), 60);
+        });
+      },
+      openToc: (e) => { e.stopPropagation(); this.setState({ panel: 'toc', note: null }); },
+      openGlossary: (e) => { e.stopPropagation(); this.setState({ panel: 'glossary', note: null }); },
+      openSettings: (e) => { e.stopPropagation(); this.setState({ panel: 'settings', note: null }); },
+      onTocSearch: (e) => this.setState({ tocQ: e.target.value }),
+      onGloSearch: (e) => this.setState({ gloQ: e.target.value }),
+      goChapter: (e) => {
+        e.stopPropagation();
+        const n2 = Number(e.currentTarget.dataset.n);
+        this.setState({ ch: n2, panel: null, chrome: false }, () => { window.scrollTo(0, 0); this.save(); });
+      },
+      prevCh: (e) => { e.stopPropagation(); this.setState({ ch: Math.max(1, s.ch - 1) }, () => { window.scrollTo(0, 0); this.save(); this.showChrome(); }); },
+      nextCh: (e) => { e.stopPropagation(); this.setState({ ch: Math.min(214, s.ch + 1) }, () => { window.scrollTo(0, 0); this.save(); this.showChrome(); }); },
+      openNote: (e) => {
+        e.stopPropagation();
+        const k = e.currentTarget.dataset.k, d = NOTES[k];
+        if (!d) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        const w = Math.min(320, window.innerWidth - 32);
+        const x = Math.max(16, Math.min(window.innerWidth - w - 16, r.left + r.width / 2 - w / 2));
+        const below = r.bottom + 12;
+        const y = below + 220 > window.innerHeight ? Math.max(16, r.top - 232) : below;
+        this.setState({ note: Object.assign({}, d, { x, y }) });
+      },
+      closeNote: (e) => { e.stopPropagation(); this.setState({ note: null }); },
+      setTheme: (e) => { e.stopPropagation(); this.setState({ theme: e.currentTarget.dataset.v }, () => this.save()); },
+      setFont: (e) => { e.stopPropagation(); this.setState({ font: e.currentTarget.dataset.v }, () => this.save()); },
+      setWidth: (e) => { e.stopPropagation(); this.setState({ width: e.currentTarget.dataset.v }, () => this.save()); },
+      fsUp: (e) => { e.stopPropagation(); this.setFs(s.fs + 1); },
+      fsDown: (e) => { e.stopPropagation(); this.setFs(s.fs - 1); },
+      lhUp: (e) => { e.stopPropagation(); this.setLh(s.lh + 0.1); },
+      lhDown: (e) => { e.stopPropagation(); this.setLh(s.lh - 0.1); }
+    };
+  }
+}
+</script>
+</body>
+</html>
