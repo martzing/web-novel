@@ -316,6 +316,42 @@ func (s *Service) UpdateGlossaryEntry(ctx context.Context, userID, entryID int64
 	return s.repo.UpdateGlossaryEntry(ctx, entryID, e)
 }
 
+// DeleteGlossaryEntry removes a term. The same trigger that fires on insert and
+// update bumps novels.glossary_rev on delete, so the re-render worker rewrites
+// every body that bound the term; the `{{key}}` marker survives as plain text
+// because the renderer leaves keys it cannot resolve alone.
+func (s *Service) DeleteGlossaryEntry(ctx context.Context, userID, entryID int64) error {
+	novelID, err := s.repo.GlossaryEntryNovelID(ctx, entryID)
+	if err != nil {
+		return err
+	}
+	if err := s.assertOwnsNovel(ctx, userID, novelID); err != nil {
+		return err
+	}
+	return s.repo.DeleteGlossaryEntry(ctx, entryID)
+}
+
+// DeleteGlossaryGroup removes a category, and refuses while it still holds
+// terms. Cascading here would delete a translator's work behind a single click
+// on a container they may only have meant to rename.
+func (s *Service) DeleteGlossaryGroup(ctx context.Context, userID, groupID int64) error {
+	novelID, err := s.repo.GlossaryGroupNovelID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	if err := s.assertOwnsNovel(ctx, userID, novelID); err != nil {
+		return err
+	}
+	n, err := s.repo.CountGlossaryEntries(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		return domain.ErrGroupNotEmpty
+	}
+	return s.repo.DeleteGlossaryGroup(ctx, groupID)
+}
+
 // Stats returns the KPI tiles for a period, comparing against the window
 // immediately before it.
 func (s *Service) Stats(ctx context.Context, userID, novelID int64, period string) (*domain.NovelStats, error) {

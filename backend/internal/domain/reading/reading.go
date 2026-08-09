@@ -79,8 +79,13 @@ type Progress struct {
 
 // ReadEvent is a fire-and-forget record that a chapter was opened.
 type ReadEvent struct {
-	ChapterID  int64
-	UserID     *int64
-	SessionID  *string
+	ChapterID int64
+	UserID    *int64
+	SessionID *string
+	// Completed marks a read that reached the end of the chapter. It feeds the
+	// อ่านจบต่อบท writer KPI, and lives on the event rather than being derived
+	// from reading_progress, which is per novel and mutable and so cannot say
+	// how many of a given day's reads finished.
+	Completed  bool
 	OccurredAt time.Time
 }

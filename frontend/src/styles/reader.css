@@ -192,6 +192,18 @@
   margin-bottom: var(--s5);
 }
 
+.glossary-entry {
+  padding: 10px 8px;
+  border-radius: var(--r2);
+}
+
+/* Marks the term a reader arrived at from its popover, so the panel does not
+   just dump them at the top of a long list. */
+.glossary-entry.is-focused {
+  background: var(--sel);
+  box-shadow: inset 2px 0 0 var(--red);
+}
+
 .panel__group-name {
   font-size: 11px;
   letter-spacing: 0.14em;

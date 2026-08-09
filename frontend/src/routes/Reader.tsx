@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api, newIdempotencyKey, type GlossaryEntry } from "../lib/api";
@@ -16,20 +16,32 @@ interface NotePosition {
   y: number;
 }
 
+/** Only the three content panels are worth deep-linking; settings is not. */
+function initialPanel(value: string | null): Panel {
+  return value === "toc" || value === "glossary" || value === "marks" ? value : null;
+}
+
 export default function Reader() {
   const { id = "" } = useParams();
+  const [search] = useSearchParams();
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
   const [chrome, setChrome] = useState(true);
-  const [panel, setPanel] = useState<Panel>(null);
+  // The novel page links here as /read/:id?panel=glossary, so a reader tapping
+  // "อภิธานศัพท์ 27 คำ" lands with the panel already open.
+  const [panel, setPanel] = useState<Panel>(() => initialPanel(search.get("panel")));
   const [note, setNote] = useState<NotePosition | null>(null);
+  const [glossaryFocus, setGlossaryFocus] = useState<string | undefined>();
   const [pct, setPct] = useState(0);
 
   const articleRef = useRef<HTMLElement>(null);
   const hideTimer = useRef<number>();
   const saveTimer = useRef<number>();
+  // One completion per chapter view, so a reader scrolling back and forth over
+  // the end does not inflate the writer's อ่านจบต่อบท figure.
+  const completedRef = useRef(false);
 
   const { prefs, setPref } = usePrefs();
 
@@ -89,6 +101,7 @@ export default function Reader() {
   useEffect(() => {
     if (!id) return;
     api.readEvent(id).catch(() => {});
+    completedRef.current = false;
     window.scrollTo(0, 0);
     showChrome();
   }, [id, showChrome]);
@@ -100,6 +113,16 @@ export default function Reader() {
       const next = height > 0 ? Math.min(100, Math.round((window.scrollY / height) * 100)) : 0;
       setPct(next);
       setNote(null);
+
+      // อ่านจบต่อบท. Fired once per chapter view, at the point the reader has
+      // reached the end rather than on unload: an unload beacon would miss the
+      // common case of tapping straight through to the next chapter. 92% rather
+      // than 100% because the footer and the tip box sit below the last
+      // paragraph, and nobody scrolls past the text they came to read.
+      if (!completedRef.current && next >= 92) {
+        completedRef.current = true;
+        api.readEvent(id, true).catch(() => {});
+      }
 
       if (!user || !novelId || !chapter.data) return;
       window.clearTimeout(saveTimer.current);
@@ -120,7 +143,7 @@ export default function Reader() {
       window.removeEventListener("scroll", onScroll);
       window.clearTimeout(saveTimer.current);
     };
-  }, [user, novelId, chapter.data]);
+  }, [id, user, novelId, chapter.data]);
 
   /**
    * Immersive tap: the top and bottom eighths reveal the chrome, the middle
@@ -370,9 +393,24 @@ export default function Reader() {
           <div className="note__title">{note.entry.title_th}</div>
           {note.entry.title_cn && <div className="note__cn">{note.entry.title_cn}</div>}
           <div className="note__body">{note.entry.body}</div>
-          <button className="btn btn--ghost btn--sm" style={{ marginTop: 10 }} onClick={() => setNote(null)}>
-            ปิด
-          </button>
+          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+            {/* A term popover answers "what is this word"; the panel answers
+                "what else is like it". The reader needs a way from one to the
+                other without hunting for the toolbar. */}
+            <button
+              className="btn btn--ghost btn--sm"
+              onClick={() => {
+                setNote(null);
+                setPanel("glossary");
+                setGlossaryFocus(note.entry.term_key);
+              }}
+            >
+              ดูในอภิธานศัพท์ →
+            </button>
+            <button className="btn btn--ghost btn--sm" onClick={() => setNote(null)}>
+              ปิด
+            </button>
+          </div>
         </div>
       )}
 
@@ -402,7 +440,9 @@ export default function Reader() {
               />
             )}
 
-            {panel === "glossary" && <GlossaryPanel groups={glossary.data?.data ?? []} />}
+            {panel === "glossary" && (
+              <GlossaryPanel groups={glossary.data?.data ?? []} focusTermKey={glossaryFocus} />
+            )}
 
             {panel === "marks" && (
               <MarksPanel
@@ -543,8 +583,21 @@ function tipMessage(code: string | undefined, fallback: string): string {
   }
 }
 
-function GlossaryPanel({ groups }: { groups: { id: string; name: string; entries: GlossaryEntry[] }[] }) {
+function GlossaryPanel({
+  groups,
+  focusTermKey,
+}: {
+  groups: { id: string; name: string; entries: GlossaryEntry[] }[];
+  focusTermKey?: string;
+}) {
   const [query, setQuery] = useState("");
+  const focusRef = useRef<HTMLDivElement>(null);
+
+  // Arriving from a term popover, scroll the entry into view and mark it, so
+  // "ดูในอภิธานศัพท์" lands on the word rather than the top of a long list.
+  useEffect(() => {
+    if (focusTermKey) focusRef.current?.scrollIntoView({ block: "center" });
+  }, [focusTermKey, groups]);
 
   const filtered = groups
     .map((g) => ({
@@ -573,7 +626,11 @@ function GlossaryPanel({ groups }: { groups: { id: string; name: string; entries
         <div key={group.id} className="panel__group">
           <div className="panel__group-name">{group.name}</div>
           {group.entries.map((entry) => (
-            <div key={entry.id} style={{ padding: "10px 8px" }}>
+            <div
+              key={entry.id}
+              ref={entry.term_key === focusTermKey ? focusRef : undefined}
+              className={entry.term_key === focusTermKey ? "glossary-entry is-focused" : "glossary-entry"}
+            >
               <div style={{ fontSize: 14 }}>
                 {entry.title_th}
                 {entry.title_cn && <span className="muted"> {entry.title_cn}</span>}

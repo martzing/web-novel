@@ -169,7 +169,7 @@ export default function Write() {
         <div>
           <h1 className="page-title">เขียนบท</h1>
           <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-            ขั้นที่ {step} จาก 3 · {["เลือกผลงาน", "เลือกบท", "เขียนและเผยแพร่"][step - 1]}
+            ขั้นที่ {step} จาก 3 · {["เลือกเรื่อง", "เลือกบทหรือสร้างบทใหม่", "เขียน"][step - 1]}
           </div>
         </div>
         {step === 3 && (
@@ -345,7 +345,7 @@ function Breadcrumb({
   return (
     <nav className="wizard-crumbs" aria-label="ขั้นตอน">
       <button className="btn btn--ghost btn--sm" onClick={onPickWork}>
-        ← เลือกผลงาน
+        ← เลือกเรื่อง
       </button>
       {work && <span className="muted">{work.title_th}</span>}
       {step === 3 && (

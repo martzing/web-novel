@@ -280,6 +280,66 @@ func TestPublishScheduledJob_PublishesDueChapters(t *testing.T) {
 	}
 }
 
+// I-WR-08 — the rollup counts completed reads separately from opens, and
+// carries the figure up from chapter to novel.
+//
+// อ่านจบต่อบท reads off these aggregates rather than the raw event stream,
+// which is what keeps the stats page fast.
+func TestStatsRollupJob_CountsCompletionsSeparatelyFromReads(t *testing.T) {
+	m := makeme.New(t)
+	m.Reset()
+
+	novel := m.ANewNovel().Please()
+	chapter := m.ANewChapter().With(func(c *entities.Chapter) {
+		c.NovelID = novel.ID
+		c.ChapterNo = 1
+		c.Status = entities.ChapterPublished
+	}).Please()
+
+	// The job rolls up the day that just ended, so the events belong to
+	// yesterday.
+	now := time.Now().UTC()
+	yesterday := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.UTC).AddDate(0, 0, -1)
+
+	// Four opens, two of which reached the end.
+	for i, completed := range []bool{true, false, true, false} {
+		userID := int64(1000 + i)
+		m.ANewChapterReadEvent().With(func(e *entities.ChapterReadEvent) {
+			e.ChapterID = chapter.ID
+			e.UserID = &userID
+			e.Completed = completed
+			e.OccurredAt = yesterday
+		}).Please()
+	}
+
+	job := &jobs.StatsRollupJob{DB: m.DB}
+	if _, err := job.Run(testContext(t), now); err != nil {
+		t.Fatalf("run job: %v", err)
+	}
+
+	day := yesterday.Format("2006-01-02")
+
+	var chapterStat entities.ChapterDailyStat
+	err := m.DB.Where("chapter_id = ? AND day = ?", chapter.ID, day).Take(&chapterStat).Error
+	if err != nil {
+		t.Fatalf("load chapter stat: %v", err)
+	}
+	if chapterStat.Reads != 4 {
+		t.Fatalf("reads = %d, want all 4 opens", chapterStat.Reads)
+	}
+	if chapterStat.Completions != 2 {
+		t.Fatalf("completions = %d, want only the 2 that reached the end", chapterStat.Completions)
+	}
+
+	var novelStat entities.NovelDailyStat
+	if err := m.DB.Where("novel_id = ? AND day = ?", novel.ID, day).Take(&novelStat).Error; err != nil {
+		t.Fatalf("load novel stat: %v", err)
+	}
+	if novelStat.Completions != 2 {
+		t.Fatalf("novel completions = %d, want the chapter figure carried up", novelStat.Completions)
+	}
+}
+
 // The PRD's release gate: the ledger must reconcile with every cached balance.
 func TestReconcileJob_ReportsZeroDiscrepancyOnAConsistentLedger(t *testing.T) {
 	m := makeme.New(t)

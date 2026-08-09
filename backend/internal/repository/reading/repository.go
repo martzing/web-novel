@@ -175,6 +175,7 @@ func (r *GormRepository) InsertReadEvent(ctx context.Context, e domain.ReadEvent
 		ChapterID:  e.ChapterID,
 		UserID:     e.UserID,
 		SessionID:  e.SessionID,
+		Completed:  e.Completed,
 		OccurredAt: e.OccurredAt,
 	}
 	return dbctx.From(ctx, r.db).Create(&row).Error

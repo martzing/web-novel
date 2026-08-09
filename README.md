@@ -1,7 +1,6 @@
 # หมอกจันทร์ (Mokchan) · Xianxia web novel platform
 
-React (Vite + TS + TanStack Query) + Go 1.25 (Gin + GORM + pgx) + PostgreSQL 16
-+ Redis 7.
+React (Vite + TS + TanStack Query) + Go 1.25 (Gin + GORM + pgx) + PostgreSQL 16.
 
 PRD phases 1–6 are implemented end to end: catalog and reader, accounts with
 synced reader preferences, library and bookmarks, a coin economy with mock
@@ -10,8 +9,11 @@ stats, follows, notifications and weekly ranking — plus the `จัดกา�
 workspace, series and related works, and advanced monetisation (arc bundles at
 −15%, tips, and auto-unlock with a 24-hour early-access window).
 
-Every novel surface now shows two chapter counts: `บทที่แปลแล้ว` (translated)
-against `บทในต้นฉบับ` (source).
+A novel's detail page and its series page show two chapter counts side by side —
+`บทที่แปลแล้ว` (translated) against `บทในต้นฉบับ` (source) — so a reader can see
+how far a translation still has to run. The shelf reads progress against the
+translated count instead (`บทที่ 87 จาก 88 บทที่แปลแล้ว`), which is the figure
+that answers "how much is left for me to read".
 
 ## Layout
 
@@ -66,7 +68,7 @@ web-novel/
 │   └── vite.config.ts
 ├── docs/                           product and engineering docs
 ├── design/                         static design mocks and support assets
-├── docker-compose.yml              Postgres, Redis, API, and web services
+├── docker-compose.yml              Postgres, API, and web services
 ├── AGENT.md                        shared agent playbook
 ├── CLAUDE.md                       Claude-specific entrypoint
 └── README.md
@@ -80,7 +82,7 @@ Generated/local artifacts are intentionally left out of the map, including
 
 - Go 1.25+
 - Node 18+
-- Docker (for Postgres/Redis, and for the backend integration tests)
+- Docker (for Postgres, and for the backend integration tests)
 - `psql` if you want to poke the database
 
 ## Quick start (docker-compose)
@@ -102,14 +104,14 @@ The seeded translator account is `mokchan@example.com` / `mokchan-dev`.
 ## Local dev without docker
 
 ```bash
-# 1. start Postgres + Redis
-docker compose up -d postgres redis
+# 1. start Postgres
+docker compose up -d postgres
 
 # 2. backend
 cd backend
 cp .env.example .env
 go mod tidy
-go run ./cmd/migrate -cmd up      # applies 0001 … 0006
+go run ./cmd/migrate -cmd up      # applies 0001 … 0009
 go run ./cmd/api                  # listens on :8080
 
 # 3. frontend
@@ -121,9 +123,10 @@ npm run dev                       # http://localhost:5173, proxies /api → :808
 
 `JWT_SECRET` must be at least 16 characters or the API refuses to start.
 
-Background jobs (bonus expiry, glossary re-render, scheduled publishing, stats
-rollups, weekly ranking) run inside the API when `RUN_JOBS_IN_API=true`, the
-default outside production. To run them separately:
+Nine background jobs (bonus expiry, glossary re-render, scheduled publishing,
+auto-unlock fan-out, stats rollups, weekly ranking, session sweep, wallet
+reconciliation, and read-event partition creation) run inside the API when
+`RUN_JOBS_IN_API=true`, the default outside production. To run them separately:
 
 ```bash
 cd backend

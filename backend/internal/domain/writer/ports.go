@@ -55,7 +55,13 @@ type Repository interface {
 	CreateGlossaryGroup(ctx context.Context, g GlossaryGroup) (*GlossaryGroup, error)
 	CreateGlossaryEntry(ctx context.Context, e GlossaryEntry) (*GlossaryEntry, error)
 	UpdateGlossaryEntry(ctx context.Context, id int64, e GlossaryEntry) (*GlossaryEntry, error)
+	DeleteGlossaryEntry(ctx context.Context, id int64) error
+	DeleteGlossaryGroup(ctx context.Context, id int64) error
 	GlossaryEntryNovelID(ctx context.Context, entryID int64) (int64, error)
+	GlossaryGroupNovelID(ctx context.Context, groupID int64) (int64, error)
+	// CountGlossaryEntries reports how many terms a group still holds, so the
+	// service can refuse to delete a non-empty one rather than cascading.
+	CountGlossaryEntries(ctx context.Context, groupID int64) (int64, error)
 
 	DailyStats(ctx context.Context, novelID int64, from, to time.Time) ([]DailyPoint, error)
 	TopChapters(ctx context.Context, novelID int64, from, to time.Time, limit int) ([]ChapterPerformance, error)

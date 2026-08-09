@@ -121,6 +121,10 @@ h3 {
 
 .sidebar__brand {
   padding: 0 10px 26px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s2);
 }
 
 .sidebar__title {

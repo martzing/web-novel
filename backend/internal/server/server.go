@@ -146,9 +146,16 @@ func Build(cfg *config.Config, db *gorm.DB) (*gin.Engine, error) {
 	walletService := walletsvc.New(walletRepo, cfg.BonusTTL, cfg.PlatformFeePercent, deps.Now)
 	wallethandler.New(walletService, cfg.PaymentsMockEnabled).Register(v1, requireAuth)
 
+	// --- catalog repository -------------------------------------------------
+	// Built here rather than with the rest of catalog because library consumes
+	// it through the narrow library.SeriesBooks port: ติดตามทั้งชุด has to
+	// resolve a series to its books, and the library context must not import
+	// catalog to do it.
+	catalogRepo := catalogrepo.New(db)
+
 	// --- library -----------------------------------------------------------
 	libraryRepo := libraryrepo.New(db)
-	libraryService := librarysvc.New(libraryRepo, deps.Now)
+	libraryService := librarysvc.New(libraryRepo, catalogRepo, deps.Now)
 	libraryhandler.New(libraryService).Register(v1, requireAuth)
 
 	// --- notifications -----------------------------------------------------
@@ -189,7 +196,7 @@ func Build(cfg *config.Config, db *gorm.DB) (*gin.Engine, error) {
 	socialhandler.New(socialService).Register(v1, optionalAuth, requireAuth)
 
 	// --- catalog -----------------------------------------------------------
-	catalogRepo := catalogrepo.New(db)
+	// catalogRepo is built above, where library needs it.
 	catalogService := catalogsvc.New(catalogRepo, walletRepo)
 	cataloghandler.New(catalogService).Register(v1, optionalAuth)
 

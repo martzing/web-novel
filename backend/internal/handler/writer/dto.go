@@ -145,6 +145,8 @@ type StatsResponse struct {
 	PeriodTo      string                `json:"period_to"`
 	Series        []DailyPointResponse  `json:"series"`
 	TopChapters   []ChapterPerfResponse `json:"top_chapters"`
+	// CompletionRatePct is อ่านจบต่อบท over the window: completions ÷ reads.
+	CompletionRatePct float64 `json:"completion_rate_pct"`
 }
 
 // DailyPointResponse is one day on the stats chart.
@@ -153,6 +155,7 @@ type DailyPointResponse struct {
 	Reads       int    `json:"reads"`
 	CoinsEarned int    `json:"coins_earned"`
 	Followers   int    `json:"followers"`
+	Completions int    `json:"completions"`
 }
 
 // ChapterPerfResponse is one row of the best-performing table.
@@ -475,6 +478,7 @@ func toStatsResponse(s domain.NovelStats) StatsResponse {
 			Reads:       p.Reads,
 			CoinsEarned: p.CoinsEarned,
 			Followers:   p.Followers,
+			Completions: p.Completions,
 		})
 	}
 
@@ -499,5 +503,7 @@ func toStatsResponse(s domain.NovelStats) StatsResponse {
 		PeriodTo:      s.PeriodTo.UTC().Format("2006-01-02"),
 		Series:        series,
 		TopChapters:   top,
+
+		CompletionRatePct: s.AvgCompletePct,
 	}
 }

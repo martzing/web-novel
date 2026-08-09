@@ -1,9 +1,10 @@
 // Package ratelimit provides in-process abuse controls.
 //
-// Deliberately not Redis-backed: the system has no other Redis dependency, and
-// both target scenarios are single-process. With N API replicas the effective
-// limit is N times the configured rate; production should also rate-limit at
-// the edge (nginx `limit_req`).
+// Deliberately in-process rather than backed by a shared store: the system has
+// no other cross-process cache dependency, and both target scenarios are
+// single-process. With N API replicas the effective limit is N times the
+// configured rate; production should also rate-limit at the edge (nginx
+// `limit_req`).
 package ratelimit
 
 import (

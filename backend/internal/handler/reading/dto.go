@@ -55,6 +55,10 @@ type progressRequest struct {
 // readEventRequest is the POST body for /chapters/{id}/read-event.
 type readEventRequest struct {
 	SessionID string `json:"session_id"`
+	// Completed is sent when the reader reaches the end of the chapter. It is
+	// optional and defaults to false, so an older client keeps working and
+	// simply contributes nothing to the อ่านจบต่อบท figure.
+	Completed bool `json:"completed"`
 }
 
 func toChapterViewResponse(v domain.ChapterView) ChapterViewResponse {

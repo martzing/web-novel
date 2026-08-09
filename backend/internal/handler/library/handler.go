@@ -37,6 +37,15 @@ func (h *Handler) Register(r gin.IRouter, requireAuth gin.HandlerFunc) {
 	me.POST("/follows/:novel_id", h.follow)
 	me.DELETE("/follows/:novel_id", h.unfollow)
 	me.GET("/follows/:novel_id", h.isFollowing)
+
+	// ติดตามทั้งชุด lives at /series/:id/follow rather than under /me/follows/…
+	// for a structural reason: /me/follows/:novel_id already owns that segment,
+	// and a second wildcard name in it panics the router at startup. The `:id`
+	// here matches the catalog's own /series/:id, so the two coexist.
+	series := r.Group("/series/:id/follow", requireAuth)
+	series.POST("", h.followSeries)
+	series.DELETE("", h.unfollowSeries)
+	series.GET("", h.seriesFollowState)
 }
 
 func (h *Handler) listShelf(c *gin.Context) {
@@ -197,6 +206,36 @@ func (h *Handler) isFollowing(c *gin.Context) {
 		return
 	}
 	httpx.OK(c, gin.H{"following": following})
+}
+
+func (h *Handler) followSeries(c *gin.Context) {
+	p := middleware.MustPrincipal(c)
+	state, err := h.Service.FollowSeries(c.Request.Context(), p.UserID, c.Param("id"))
+	if err != nil {
+		h.writeErr(c, err)
+		return
+	}
+	httpx.OK(c, toSeriesFollowResponse(state))
+}
+
+func (h *Handler) unfollowSeries(c *gin.Context) {
+	p := middleware.MustPrincipal(c)
+	state, err := h.Service.UnfollowSeries(c.Request.Context(), p.UserID, c.Param("id"))
+	if err != nil {
+		h.writeErr(c, err)
+		return
+	}
+	httpx.OK(c, toSeriesFollowResponse(state))
+}
+
+func (h *Handler) seriesFollowState(c *gin.Context) {
+	p := middleware.MustPrincipal(c)
+	state, err := h.Service.SeriesFollowState(c.Request.Context(), p.UserID, c.Param("id"))
+	if err != nil {
+		h.writeErr(c, err)
+		return
+	}
+	httpx.OK(c, toSeriesFollowResponse(state))
 }
 
 func (h *Handler) writeErr(c *gin.Context, err error) {

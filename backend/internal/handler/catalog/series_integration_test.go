@@ -21,6 +21,13 @@ type publicNovel struct {
 	CoverText           string `json:"cover_text"`
 }
 
+type publicArc struct {
+	ArcNo         int    `json:"arc_no"`
+	Name          string `json:"name"`
+	FromChapterNo int    `json:"from_chapter_no"`
+	ToChapterNo   int    `json:"to_chapter_no"`
+}
+
 type publicSeries struct {
 	ID                  string `json:"id"`
 	Slug                string `json:"slug"`
@@ -28,10 +35,12 @@ type publicSeries struct {
 	Description         string `json:"description"`
 	ChaptersCount       int    `json:"chapters_count"`
 	SourceChaptersCount int    `json:"source_chapters_count"`
+	ArcsCount           int    `json:"arcs_count"`
 	Books               []struct {
 		publicNovel
-		Position int    `json:"position"`
-		Note     string `json:"note"`
+		Position int         `json:"position"`
+		Note     string      `json:"note"`
+		Arcs     []publicArc `json:"arcs"`
 	} `json:"books"`
 }
 
@@ -210,6 +219,68 @@ func TestPublicSeries_ReturnsBooksInReadingOrderWithSummedCounts(t *testing.T) {
 	if got.ChaptersCount != 117 || got.SourceChaptersCount != 612 {
 		t.Fatalf("counts = %d/%d, want 117 of 612 across the two visible books",
 			got.ChaptersCount, got.SourceChaptersCount)
+	}
+}
+
+// I-PUB-02 — each book carries its own arcs, and the header counts them.
+//
+// The series page draws an arc list per book. Loading them per book would make
+// the page cost grow with the size of the series, so they arrive with the
+// series itself.
+func TestPublicSeries_CarriesEachBooksArcsAndTheTotalCount(t *testing.T) {
+	env := apitest.New(t)
+	writer := env.AUser(entities.RoleTranslator)
+
+	series := env.MakeMe.ANewSeries().With(func(s *entities.Series) {
+		s.OwnerUserID = &writer.ID
+	}).Please()
+
+	book := func(position int) *entities.Novel {
+		pos := int16(position)
+		return env.MakeMe.ANewNovel().With(func(v *entities.Novel) {
+			v.PrimaryTranslatorID = &writer.ID
+			v.SeriesID = &series.ID
+			v.SeriesPosition = &pos
+		}).Please()
+	}
+
+	first := book(1)
+	second := book(2)
+
+	arc := func(n *entities.Novel, no int, name string, from, to int) {
+		env.MakeMe.ANewArc().With(func(a *entities.Arc) {
+			a.NovelID = n.ID
+			a.ArcNo = int16(no)
+			a.Name = name
+			a.FromChapterNo = from
+			a.ToChapterNo = to
+		}).Please()
+	}
+
+	// Deliberately out of order, to prove the response sorts by arc_no.
+	arc(first, 2, "สำนักเมฆาวสันต์", 49, 120)
+	arc(first, 1, "ธุลีเมืองชายแดน", 1, 48)
+	arc(second, 1, "ทะเลทรายกระดูกขาว", 1, 66)
+
+	rec := env.GET(fmt.Sprintf("/api/v1/series/%d", series.ID))
+	apitest.AssertStatus(t, rec, http.StatusOK)
+	got := apitest.DecodeJSON[publicSeries](t, rec)
+
+	if got.ArcsCount != 3 {
+		t.Fatalf("arcs_count = %d, want 3 summed across the books", got.ArcsCount)
+	}
+	if len(got.Books) != 2 {
+		t.Fatalf("books = %d, want 2", len(got.Books))
+	}
+	if len(got.Books[0].Arcs) != 2 || len(got.Books[1].Arcs) != 1 {
+		t.Fatalf("arcs per book = %d/%d, want 2 then 1",
+			len(got.Books[0].Arcs), len(got.Books[1].Arcs))
+	}
+	if got.Books[0].Arcs[0].ArcNo != 1 || got.Books[0].Arcs[1].ArcNo != 2 {
+		t.Fatalf("arcs = %+v, want arc_no order regardless of insertion order", got.Books[0].Arcs)
+	}
+	if got.Books[0].Arcs[0].Name != "ธุลีเมืองชายแดน" || got.Books[0].Arcs[0].ToChapterNo != 48 {
+		t.Fatalf("first arc = %+v, want its name and range intact", got.Books[0].Arcs[0])
 	}
 }
 

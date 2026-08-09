@@ -36,7 +36,7 @@ Cursor-based: `?limit=<int>&cursor=<opaque>`. Responses shape:
 | ---------- | ----------------------- |
 | GET, PATCH | `/users/me`             |
 | GET, PUT   | `/users/me/prefs`       |
-| PUT        | `/users/me/genre-prefs` |
+| GET, PUT   | `/users/me/genre-prefs` |
 
 ## Catalog
 
@@ -54,12 +54,19 @@ Cursor-based: `?limit=<int>&cursor=<opaque>`. Responses shape:
 Every novel payload carries **both** chapter counts — `chapters_count`
 (บทที่แปลแล้ว) and `source_chapters_count` (บทในต้นฉบับ) — plus the cover
 template fields `cover_style`, `cover_color`, `cover_text`. `GET /novels/{id}`
-additionally returns `sell_by_arc`, `tips_enabled`, `early_access_hours` and
-`release_schedule`.
+additionally returns `sell_by_arc`, `tips_enabled`, `early_access_hours`,
+`release_schedule`, and the novel's default pricing `price_per_chapter` /
+`free_until_chapter` — the latter two so the detail page can state the deal in
+one line ("บทที่ 1–48 อ่านฟรี · บทหลังจากนั้น 5 เหรียญต่อบท") rather than
+making the reader infer it from the per-row tags in the table of contents. An
+individual chapter can still override the price, which is why the ToC rows keep
+carrying their own.
 
 `GET /series/{id}` returns the series with `books[]` in `position` order, each
-book a novel payload plus `position` and `note`, and the header totals
-`chapters_count` / `source_chapters_count` summed across the visible books.
+book a novel payload plus `position`, `note` and its own `arcs[]`, and the
+header totals `chapters_count` / `source_chapters_count` / `arcs_count` summed
+across the visible books. Every book's arcs load in **one** query for the whole
+series, so the page cost does not grow with the number of books.
 
 ## Reading
 
@@ -67,7 +74,7 @@ book a novel payload plus `position` and `note`, and the header totals
 | -------- | ----------------------------- | ---------------------------------------------------------------- |
 | GET      | `/chapters/{id}`              | Returns `{ ..., locked: true, body_html: null }` if not entitled |
 | GET      | `/chapters/{id}/next` `/prev` |                                                                  |
-| POST     | `/chapters/{id}/read-event`   | Fire-and-forget, `202`                                           |
+| POST     | `/chapters/{id}/read-event`   | Fire-and-forget, `202`. Body `{session_id?, completed?}` — `completed: true` when the reader reached the end, feeding the อ่านจบต่อบท KPI. Both fields optional, so an older client keeps working |
 | GET, PUT | `/me/progress/{novel_id}`     |                                                                  |
 
 ### Chapter response shape
@@ -106,9 +113,42 @@ with its metadata and a null body. Buying it is refused with
 | DELETE       | `/me/bookmarks/{id}`                   |
 | GET          | `/me/library?tab=reading\|saved\|done` |
 | PUT, DELETE  | `/me/library/{novel_id}`               |
-| POST, DELETE | `/me/follows/{novel_id}`               |
+| GET, POST, DELETE | `/me/follows/{novel_id}`          |
+| GET, POST, DELETE | `/series/{id}/follow` (ติดตามทั้งชุด) |
 | POST         | `/novels/{id}/reviews`                 |
 | GET          | `/novels/{id}/reviews`                 |
+
+### Following a whole series
+
+`ติดตามทั้งชุด` is a **fan-out over the existing per-novel follows**, not a
+subscription row of its own: a `series_follows` table would need a second
+notification fan-out path and would have to decide what happens when a book
+joins later. Following the books directly reuses the machinery that already
+delivers new-chapter notifications.
+
+All three verbs return the same body:
+
+```json
+{ "state": "all", "total": 5, "following": 5 }
+```
+
+`state` is three-valued because the fan-out makes "following a series" a
+summary rather than a fact:
+
+| State | Meaning |
+| --- | --- |
+| `none` | The reader follows none of the books |
+| `partial` | Some are followed — reached by following one book directly, or by a book joining a series the reader had already followed. **Joining does not follow it for them** |
+| `all` | Every book is followed |
+
+`DELETE` removes follows on the books currently in the series and only those, so
+a novel that has since left keeps its own follow. Hidden novels are excluded
+throughout: following a series must not subscribe a reader to a work they cannot
+open.
+
+The route is `/series/{id}/follow` rather than something under `/me/follows/…`
+for a structural reason — `/me/follows/:novel_id` already owns that segment, and
+a second wildcard name in it panics the router at startup.
 
 ## Comments
 
@@ -168,6 +208,7 @@ Tip codes: `INSUFFICIENT_PAID_COINS` (402 — **distinct** from
 
 | Method      | Path                                             |
 | ----------- | ------------------------------------------------ |
+| GET         | `/writer/novels`                                 |
 | POST, PATCH | `/writer/novels`, `/writer/novels/{id}`          |
 | POST        | `/writer/novels/{id}/cover` (multipart)          |
 | GET, POST   | `/writer/series`                                 |
@@ -177,14 +218,16 @@ Tip codes: `INSUFFICIENT_PAID_COINS` (402 — **distinct** from
 | PUT         | `/writer/novels/{id}/series-note` (`{note}`)     |
 | GET, POST   | `/writer/novels/{id}/relations`                  |
 | DELETE      | `/writer/novels/{id}/relations/{related_id}`     |
-| POST, PATCH | `/writer/novels/{id}/arcs`, `/writer/arcs/{id}`  |
+| GET, POST   | `/writer/novels/{id}/arcs`                       |
+| PATCH       | `/writer/arcs/{id}`                              |
 | GET, POST   | `/writer/novels/{id}/chapters`                   |
 | GET, PUT    | `/writer/chapters/{id}` (autosave)               |
 | POST        | `/writer/chapters/{id}/publish`                  |
 | POST        | `/writer/chapters/{id}/unpublish`                |
 | GET, POST   | `/writer/novels/{id}/glossary`                   |
-| PATCH       | `/writer/glossary-entries/{id}`                  |
-| GET         | `/writer/stats/novels/{id}?period=14d\|30d\|all` |
+| PATCH, DELETE | `/writer/glossary-entries/{id}`                |
+| DELETE      | `/writer/glossary-groups/{id}`                   |
+| GET         | `/writer/stats/novels/{id}?period=14d\|30d\|all` (KPI tiles + `completion_rate_pct`) |
 | GET         | `/writer/earnings`                               |
 | POST        | `/writer/payouts`                                |
 
@@ -209,6 +252,19 @@ Settings fields: `source_chapters_count`, `price_per_chapter` (0–999),
 `price_per_chapter`, and forces 0 at or below `free_until_chapter` even when the
 request supplies a price.
 
+### Deleting glossary terms
+
+`DELETE /writer/glossary-entries/{id}` returns `204`. The same trigger that
+fires on insert and update bumps `novels.glossary_rev` on delete, so the
+re-render worker rewrites every body that bound the term; the `{{key}}` marker
+survives as plain text because the renderer leaves keys it cannot resolve alone.
+`chapter_glossary_refs.entry_id` is `ON DELETE CASCADE`, so bindings go with the
+entry.
+
+`DELETE /writer/glossary-groups/{id}` refuses a group that still holds terms
+with `409 GROUP_NOT_EMPTY`. Cascading would delete a translator's work behind
+one click on a container they may only have meant to rename.
+
 Relation kinds: `sequel`, `prequel`, `spinoff`, `side_story`, `same_world`. A
 link is stored once and listed from both novels; the far side is returned with
 the inverse kind and `mirrored: true`, and can only be unlinked from the novel
@@ -226,10 +282,10 @@ that declared it.
 
 ## Discovery utility
 
-| Method | Path                                        |
-| ------ | ------------------------------------------- |
-| GET    | `/search?q=&type=novel\|chapter\|character` |
-| GET    | `/ranking/weekly?limit=`                    |
+| Method | Path                     | Notes                                                                       |
+| ------ | ------------------------ | --------------------------------------------------------------------------- |
+| GET    | `/search?q=`             | Alias of `GET /novels` with the same blended ranking. One query already searches Thai title, Chinese title, translator and character terms, so there is no `type` facet to select |
+| GET    | `/ranking/weekly?limit=` |                                                                             |
 
 ## Notifications (Phase 4)
 
@@ -282,8 +338,6 @@ All of the above are implemented except where noted below.
 
 ### Not implemented
 
-- `GET /novels/{id}/glossary` is implemented; `GET /search` is an alias of
-  `GET /novels` with the same blended ranking.
 - Most of **Admin**. Only `POST /admin/wallet-adjust` exists, because the coin
   test matrix requires it. `/admin/reports`, comment moderation, coin-pack CRUD
   and payout approval are not built, and no tables back the report queue.
@@ -300,6 +354,7 @@ Beyond the unlock codes above: `INVALID_CREDENTIALS`, `EMAIL_TAKEN`,
 `COMMENT_TOO_LONG`, `REPLY_TOO_DEEP`, `INVALID_RATING`, `SLUG_TAKEN`,
 `CHAPTER_NO_TAKEN`, `INVALID_PRICE`, `UNSUPPORTED_FILE`, `FILE_TOO_LARGE`,
 `RATE_LIMITED`, `FORBIDDEN`, `NOT_FOUND`, `INTERNAL`, `INVALID_BODY`,
+`GROUP_NOT_EMPTY`,
 `INVALID_AMOUNT`, `INSUFFICIENT_PAID_COINS`, `TIPS_DISABLED`, `CANNOT_TIP_SELF`,
 `ARC_NOT_FOR_SALE`, `ARC_ALREADY_OWNED`, `ARC_BUNDLE_STALE`,
 `EARLY_ACCESS_ONLY`.

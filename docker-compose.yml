@@ -15,16 +15,6 @@ services:
       timeout: 3s
       retries: 20
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 3s
-      timeout: 3s
-      retries: 20
-
   api:
     build:
       context: ./backend
@@ -33,7 +23,6 @@ services:
       PORT: "8080"
       ENV: development
       DATABASE_URL: postgres://mokchan:mokchan@postgres:5432/mokchan?sslmode=disable
-      REDIS_URL: redis://redis:6379/0
       # Must be at least 16 characters or the API refuses to start.
       JWT_SECRET: dev-secret-change-me-please
       CORS_ORIGINS: http://localhost:5173,http://localhost:8081
@@ -45,8 +34,6 @@ services:
       RUN_JOBS_IN_API: "true"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     volumes:
       - uploads:/app/uploads

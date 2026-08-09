@@ -122,3 +122,18 @@ func toBookmarkResponses(bookmarks []domain.Bookmark) []BookmarkResponse {
 	}
 	return out
 }
+
+// SeriesFollowResponse reports how much of a series the caller follows.
+//
+// `state` is three-valued rather than a boolean because ติดตามทั้งชุด fans out
+// over per-novel follows: a reader can legitimately follow some books and not
+// others, and the button has to say so.
+type SeriesFollowResponse struct {
+	State     string `json:"state"`
+	Total     int    `json:"total"`
+	Following int    `json:"following"`
+}
+
+func toSeriesFollowResponse(s domain.SeriesFollow) SeriesFollowResponse {
+	return SeriesFollowResponse{State: s.State, Total: s.Total, Following: s.Following}
+}

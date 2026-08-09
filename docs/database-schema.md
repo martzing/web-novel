@@ -1,6 +1,6 @@
 # Database Schema — หมอกจันทร์ (Mokchan)
 
-PostgreSQL 15+. Conventions: PKs are `BIGINT GENERATED ALWAYS AS IDENTITY`; timestamps are `TIMESTAMPTZ NOT NULL DEFAULT now()`; enums are text with `CHECK`.
+PostgreSQL 16 (`postgres:16-alpine` in `docker-compose.yml`). Conventions: PKs are `BIGINT GENERATED ALWAYS AS IDENTITY`; timestamps are `TIMESTAMPTZ NOT NULL DEFAULT now()`; enums are text with `CHECK`.
 
 The authoritative DDL lives in [backend/migrations/0001_init.sql](../backend/migrations/0001_init.sql) and seed data in [backend/migrations/0002_seed.sql](../backend/migrations/0002_seed.sql). This document is the human-readable reference; keep the two in sync when things change.
 
@@ -20,6 +20,7 @@ users ─┬─ writer_profiles
        └─ user_genre_prefs ─ genres
 
 series ─ novels ─┬─ novel_genres ─ genres
+                 ├─ novel_relations ─ novels        (ภาคต่อ / ภาคแยก / โลกเดียวกัน)
                  ├─ arcs
                  ├─ chapters ─┬─ chapter_bodies
                  │            ├─ chapter_drafts
@@ -35,6 +36,8 @@ users ─┬─ wallet_balances
        ├─ coin_ledger ─┬─ chapter_unlocks ─ chapters
        │               ├─ purchases ─ coin_packs
        │               └─ writer_earnings ─ chapters
+       ├─ auto_unlock_subscriptions ─ novels
+       ├─ auto_unlock_attempts ─ chapters
        └─ payouts
 
 users ─┬─ comments ─ chapters
@@ -223,7 +226,7 @@ Composite PK `(user_id, comment_id)`. `comments.likes_count` denormalised via tr
 
 ### `ranking_snapshots`
 
-Weekly leaderboard snapshot (`novel_id`, `period`, `rank`, `score`). Live ranking is computed in Redis (`ZSET`) and snapshotted here for history.
+Weekly leaderboard snapshot (`novel_id`, `period`, `rank`, `score`). `jobs.RankingJob` writes a snapshot every Monday at 04:00 Asia/Bangkok; the read path falls back to live popularity while no snapshot exists yet. There is no separate cache tier — see "Open items" below.
 
 ### `chapter_read_events` (partitioned)
 
@@ -237,7 +240,14 @@ Monthly partitions created by a job.
 
 ### `chapter_daily_stats`, `novel_daily_stats`
 
-Aggregates powering the writer stats page (ยอดอ่าน, ผู้ติดตามใหม่, เหรียญที่ได้รับ) with `+X.X%` trend calculated at read time.
+Aggregates powering the writer stats page (ยอดอ่าน, ผู้ติดตามใหม่, เหรียญที่ได้รับ, อ่านจบต่อบท) with `+X.X%` trend calculated at read time.
+
+`completions` counts reads that reached the end of a chapter, and rolls up
+chapter → novel like `reads` does. The signal is `chapter_read_events.completed`
+rather than something derived from `reading_progress`, which is per novel and
+mutable and so cannot say how many of a given day's reads finished. The KPI is
+`completions ÷ reads` over the whole window, not an average of per-chapter
+rates, so a chapter with a single read cannot swing it.
 
 ## Notifications
 
@@ -252,11 +262,14 @@ Aggregates powering the writer stats page (ยอดอ่าน, ผู้ต�
 | File                                                                                                        | Purpose                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | [`0001_init.sql`](../backend/migrations/0001_init.sql)                                                       | All tables above, plus the glossary trigger and the wallet expiry partial index.                                                   |
-| [`0002_seed.sql`](../backend/migrations/0002_seed.sql)                                                       | Genres, translator account, the featured novel `เซียนดาบเก้าสายธาร`, its arcs, chapters 86–88, glossary entries, and 4 coin packs. |
+| [`0002_seed.sql`](../backend/migrations/0002_seed.sql)                                                       | Genres, the translator account, **two** novels (`เซียนดาบเก้าสายธาร` and `คืนกลับสู่ปีที่สิบเก้า`), the first one's 4 arcs, chapters 86–88, glossary entries, and 4 coin packs. |
 | [`0003_auth.sql`](../backend/migrations/0003_auth.sql)                                                       | `refresh_tokens` and its indexes; replaces the seeded placeholder password hash with a real argon2id hash.                         |
 | [`0004_search.sql`](../backend/migrations/0004_search.sql)                                                   | `search_tsv` refresh trigger and backfill, plus trigram indexes for the blended search ranking.                                    |
 | [`0005_purchases_idempotency.sql`](../backend/migrations/0005_purchases_idempotency.sql)                     | `purchases.idempotency_key` + unique index; `chapter_unlocks (user_id)` index.                                                     |
 | [`0006_notifications.sql`](../backend/migrations/0006_notifications.sql)                                     | Notification dedupe indexes, `comments (parent_id)`, `chapter_read_events (chapter_id, occurred_at)`.                              |
+| [`0007_monetization.sql`](../backend/migrations/0007_monetization.sql)                                       | Twelve new `novels` columns, `novels.status='hidden'`, the partial unique `novels_series_position`, `chapters.public_at`, the `tip` ledger kind, `writer_earnings.kind`, `series.owner_user_id`/`slug`, and three new tables. |
+| [`0008_seed_fixes.sql`](../backend/migrations/0008_seed_fixes.sql)                                           | Seed corrections: the featured novel's `chapters_count` becomes 88 against its 214 source chapters, and the coin packs match the design.                                    |
+| [`0009_read_completion.sql`](../backend/migrations/0009_read_completion.sql)                                 | `chapter_read_events.completed` and `chapter_daily_stats.completions`, backing the `อ่านจบต่อบท` writer KPI.                       |
 
 ### `refresh_tokens` (0003)
 

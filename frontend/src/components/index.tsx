@@ -69,10 +69,10 @@ export const COVER_COLORS = [
 
 export const COVER_STYLES: { key: CoverStyle; label: string }[] = [
   { key: "image", label: "ใช้ภาพที่อัปโหลด" },
-  { key: "ink", label: "ลายทแยง" },
+  { key: "ink", label: "หมึกจีนแนวตั้ง" },
   { key: "seal", label: "ตราประทับ" },
-  { key: "brush", label: "ไล่สี" },
-  { key: "plain", label: "สีพื้น" },
+  { key: "brush", label: "ลายพู่กัน" },
+  { key: "plain", label: "เรียบ ตัวอักษรอย่างเดียว" },
 ];
 
 export interface CoverProps {

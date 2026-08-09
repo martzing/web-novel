@@ -8,6 +8,15 @@ import { Empty, ErrorNote, Loading } from "../components";
 
 type Length = "short" | "medium" | "long";
 
+/**
+ * How many genres onboarding asks for.
+ *
+ * Three is the design's number, and it is the point at which the home ranking
+ * has enough to personalise with: one pick produces a page that looks like a
+ * genre filter rather than a home page.
+ */
+const MIN_GENRES = 3;
+
 /** R-18 — favourite genres feed the home ranking personalisation. */
 export default function Onboarding() {
   const { user } = useAuth();
@@ -52,8 +61,9 @@ export default function Onboarding() {
           <h1 className="page-title" style={{ marginTop: 8 }}>
             ชอบอ่านแนวไหน
           </h1>
-          <div className="muted" style={{ fontSize: 13, marginTop: 8 }}>
-            เลือกได้มากกว่าหนึ่งแนว ใช้จัดอันดับหน้าแรกให้ตรงใจคุณ
+          <div className="muted" style={{ fontSize: 13, marginTop: 8, lineHeight: 1.9 }}>
+            เลือกอย่างน้อย {MIN_GENRES} แนว เราจะใช้จัดหน้าแรกให้ตรงกับที่คุณอ่านจริง
+            ปรับเปลี่ยนภายหลังได้ตลอด
           </div>
 
           {genres.isLoading ? (
@@ -78,10 +88,10 @@ export default function Onboarding() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 10, marginTop: 30 }}>
+          <div style={{ display: "flex", gap: 10, marginTop: 30, alignItems: "center" }}>
             <button
               className="btn btn--primary"
-              disabled={picked.length === 0}
+              disabled={picked.length < MIN_GENRES}
               onClick={() => setStep(2)}
             >
               ถัดไป
@@ -89,6 +99,11 @@ export default function Onboarding() {
             <Link to="/" className="btn btn--ghost">
               ข้ามไปก่อน
             </Link>
+            {/* A disabled button with no explanation reads as broken. The
+                counter says what is missing. */}
+            <span className="muted" style={{ fontSize: 12.5 }}>
+              เลือกแล้ว {picked.length} / {MIN_GENRES}
+            </span>
           </div>
         </>
       ) : (

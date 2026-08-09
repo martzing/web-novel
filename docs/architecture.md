@@ -85,10 +85,15 @@ is adapters plugged into ports the domain defines.
 `internal/server/server.go` wires the layers, top-down:
 
 ```go
-catalogRepo    := catalogrepo.New(db)         // adapter
-catalogService := catalogsvc.New(catalogRepo) // uses the port
-cataloghandler.New(catalogService).Register(v1)
+catalogRepo    := catalogrepo.New(db)                     // adapter
+catalogService := catalogsvc.New(catalogRepo, walletRepo) // uses the ports
+cataloghandler.New(catalogService).Register(v1, optionalAuth)
 ```
+
+The second argument is the wallet repository, passed here as
+`catalog.Entitlements` — the narrow port the catalog declares so a table of
+contents can mark which chapters the viewer already owns. Only the composition
+root knows the two are the same object.
 
 Only this file knows about all three layers of a bounded context. Every other
 package sees at most one direction of the dependency arrow.
@@ -103,7 +108,7 @@ architecture is broken.
 | `domain/...`     | standard library only                     |
 | `service/...`    | `domain/...`                              |
 | `repository/...` | `domain/...`, `entities`, `gorm.io/...`   |
-| `handler/...`    | `service/...`, `domain/...`, `httpx`, Gin |
+| `handler/...`    | `service/...`, `domain/...`, `httpx`, `middleware`, Gin |
 | `server`         | everything above                          |
 
 ## Testing pyramid

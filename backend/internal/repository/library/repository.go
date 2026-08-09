@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -332,6 +333,97 @@ func (r *GormRepository) IsFollowing(ctx context.Context, userID, novelID int64)
 		Where("user_id = ? AND novel_id = ?", userID, novelID).
 		Count(&count).Error
 	return count > 0, err
+}
+
+// FollowMany follows every novel in one statement and returns how many rows it
+// actually created.
+//
+// `ON CONFLICT ... RETURNING novel_id` is what keeps followers_count exact:
+// Postgres reports only the rows it really inserted, so two readers racing on
+// the same series increment each counter once between them rather than twice.
+// Counting the request instead would drift the moment a book was already
+// followed.
+func (r *GormRepository) FollowMany(ctx context.Context, userID int64, novelIDs []int64) (int, error) {
+	if len(novelIDs) == 0 {
+		return 0, nil
+	}
+	var inserted int
+	err := dbctx.From(ctx, r.db).Transaction(func(tx *gorm.DB) error {
+		values, args := followValues(userID, novelIDs)
+		var ids []int64
+		sql := `INSERT INTO follows (user_id, novel_id) VALUES ` + values +
+			` ON CONFLICT (user_id, novel_id) DO NOTHING RETURNING novel_id`
+		if err := tx.Raw(sql, args...).Scan(&ids).Error; err != nil {
+			return err
+		}
+		inserted = len(ids)
+		if inserted == 0 {
+			return nil
+		}
+		return tx.Model(&entities.Novel{}).
+			Where("id IN ?", ids).
+			UpdateColumn("followers_count", gorm.Expr("followers_count + 1")).Error
+	})
+	return inserted, err
+}
+
+// UnfollowMany drops the caller's follows on these novels, returning how many
+// rows it removed. Same reasoning as FollowMany: the counter follows the rows
+// Postgres deleted, never the size of the request.
+func (r *GormRepository) UnfollowMany(ctx context.Context, userID int64, novelIDs []int64) (int, error) {
+	if len(novelIDs) == 0 {
+		return 0, nil
+	}
+	var removed int
+	err := dbctx.From(ctx, r.db).Transaction(func(tx *gorm.DB) error {
+		var ids []int64
+		err := tx.Raw(
+			`DELETE FROM follows WHERE user_id = ? AND novel_id IN ? RETURNING novel_id`,
+			userID, novelIDs,
+		).Scan(&ids).Error
+		if err != nil {
+			return err
+		}
+		removed = len(ids)
+		if removed == 0 {
+			return nil
+		}
+		// GREATEST guards the counter against drifting negative if it was ever
+		// seeded out of step with the follows table.
+		return tx.Model(&entities.Novel{}).
+			Where("id IN ?", ids).
+			UpdateColumn("followers_count", gorm.Expr("GREATEST(followers_count - 1, 0)")).Error
+	})
+	return removed, err
+}
+
+// CountFollowing reports how many of these novels the reader already follows,
+// which is what turns a series into none / partial / all.
+func (r *GormRepository) CountFollowing(ctx context.Context, userID int64, novelIDs []int64) (int, error) {
+	if len(novelIDs) == 0 {
+		return 0, nil
+	}
+	var n int64
+	err := dbctx.From(ctx, r.db).Model(&entities.Follow{}).
+		Where("user_id = ? AND novel_id IN ?", userID, novelIDs).
+		Count(&n).Error
+	return int(n), err
+}
+
+// followValues builds the VALUES list for FollowMany. A series holds a handful
+// of books, so an inline list is cheaper to read than array marshalling and
+// stays driver-agnostic.
+func followValues(userID int64, novelIDs []int64) (string, []any) {
+	var sb strings.Builder
+	args := make([]any, 0, len(novelIDs)*2)
+	for i, id := range novelIDs {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString("(?, ?)")
+		args = append(args, userID, id)
+	}
+	return sb.String(), args
 }
 
 func (r *GormRepository) ListFollowerIDs(ctx context.Context, novelID, afterID int64, limit int) ([]int64, error) {

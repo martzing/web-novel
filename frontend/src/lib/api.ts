@@ -223,6 +223,13 @@ export interface NovelDetail extends NovelListItem {
   /** รอบปล่อยบทใหม่ — informational only. */
   release_schedule?: ReleaseSchedule;
   early_access_hours: number;
+  /**
+   * The novel's default pricing, so the detail page can state the deal in one
+   * line. An individual chapter may still override it, which is why the ToC
+   * rows carry their own price tags too.
+   */
+  price_per_chapter: number;
+  free_until_chapter: number;
 }
 
 export interface ChapterListItem {
@@ -502,8 +509,34 @@ export interface Stats {
   coins_trend_pct: number;
   period_from: string;
   period_to: string;
-  series: { day: string; reads: number; coins_earned: number; followers: number }[];
+  series: { day: string; reads: number; coins_earned: number; followers: number; completions: number }[];
   top_chapters: { chapter_id: string; chapter_no: number; title: string; reads: number; coins_earned: number }[];
+  /** อ่านจบต่อบท — completions ÷ reads over the window. */
+  completion_rate_pct: number;
+}
+
+/** One credited unlock or tip in the translator's earnings ledger. */
+export interface Earning {
+  id: string;
+  chapter_id: string;
+  gross_coins: number;
+  /** Gross minus the platform fee — what the translator actually keeps. */
+  net_coins: number;
+  created_at: string;
+}
+
+export interface EarningsPage {
+  data: Earning[];
+  next_cursor?: string;
+  /** What is still withdrawable once pending payouts are subtracted. */
+  available_satang: number;
+}
+
+export interface Payout {
+  id: string;
+  amount_satang: number;
+  status: "requested" | "approved" | "paid" | "rejected";
+  requested_at: string;
 }
 
 export interface Notification {
@@ -518,6 +551,8 @@ export interface Notification {
 export interface SeriesBook extends NovelListItem {
   position: number;
   note?: string;
+  /** The book's ภาค, loaded with the series rather than per book. */
+  arcs: Arc[];
 }
 
 export interface SeriesDetail {
@@ -530,6 +565,20 @@ export interface SeriesDetail {
   /** Summed across the visible books. */
   chapters_count: number;
   source_chapters_count: number;
+  arcs_count: number;
+}
+
+/**
+ * How much of a series the reader follows.
+ *
+ * Three-valued rather than a boolean because ติดตามทั้งชุด fans out over
+ * per-novel follows: a reader can follow some books and not others, and a book
+ * joining later does not follow itself.
+ */
+export interface SeriesFollow {
+  state: "none" | "partial" | "all";
+  total: number;
+  following: number;
 }
 
 /** The five kinds of เรื่องเกี่ยวเนื่อง. */
@@ -664,7 +713,10 @@ export const api = {
 
   // Reading
   getChapter: (id: string) => request<ChapterView>(`/chapters/${id}`),
-  readEvent: (id: string) => request<void>(`/chapters/${id}/read-event`, { method: "POST", body: {} }),
+  // `completed` marks a read that reached the end of the chapter; it is what
+  // the writer's อ่านจบต่อบท KPI counts.
+  readEvent: (id: string, completed = false) =>
+    request<void>(`/chapters/${id}/read-event`, { method: "POST", body: { completed } }),
   getProgress: (novelId: string) => request<Progress>(`/me/progress/${novelId}`),
   saveProgress: (novelId: string, body: Partial<Progress>) =>
     request<Progress>(`/me/progress/${novelId}`, { method: "PUT", body }),
@@ -695,6 +747,15 @@ export const api = {
     request<{ following: boolean }>(`/me/follows/${novelId}`, { method: "POST" }),
   unfollow: (novelId: string) =>
     request<{ following: boolean }>(`/me/follows/${novelId}`, { method: "DELETE" }),
+
+  // ติดตามทั้งชุด — a fan-out over the per-novel follows above, which is why
+  // the state is none / partial / all rather than a boolean.
+  seriesFollowState: (seriesId: string) =>
+    request<SeriesFollow>(`/series/${encodeURIComponent(seriesId)}/follow`),
+  followSeries: (seriesId: string) =>
+    request<SeriesFollow>(`/series/${encodeURIComponent(seriesId)}/follow`, { method: "POST" }),
+  unfollowSeries: (seriesId: string) =>
+    request<SeriesFollow>(`/series/${encodeURIComponent(seriesId)}/follow`, { method: "DELETE" }),
 
   // Coins
   getWallet: () => request<Wallet>("/me/wallet"),
@@ -811,8 +872,34 @@ export const api = {
     request<WriterChapter>(`/writer/chapters/${id}/unpublish`, { method: "POST" }),
   listWriterGlossary: (novelId: string) =>
     request<Paged<GlossaryGroup>>(`/writer/novels/${novelId}/glossary`),
+  createGlossaryGroup: (novelId: string, name: string, sortNo = 0) =>
+    request<GlossaryGroup>(`/writer/novels/${novelId}/glossary`, {
+      method: "POST",
+      body: { name, sort_no: sortNo },
+    }),
+  createGlossaryEntry: (
+    novelId: string,
+    body: { group_id: string; term_key: string; title_th: string; title_cn?: string; body: string; kind?: string },
+  ) => request<GlossaryEntry>(`/writer/novels/${novelId}/glossary`, { method: "POST", body }),
+  updateGlossaryEntry: (
+    id: string,
+    body: { term_key?: string; title_th?: string; title_cn?: string; body?: string; kind?: string },
+  ) => request<GlossaryEntry>(`/writer/glossary-entries/${id}`, { method: "PATCH", body }),
+  // Deleting a term bumps the novel's glossary_rev, so the re-render worker
+  // rewrites every chapter that bound it; the marker survives as plain text.
+  deleteGlossaryEntry: (id: string) =>
+    request<void>(`/writer/glossary-entries/${id}`, { method: "DELETE" }),
+  // Refused with 409 GROUP_NOT_EMPTY while the group still holds terms.
+  deleteGlossaryGroup: (id: string) =>
+    request<void>(`/writer/glossary-groups/${id}`, { method: "DELETE" }),
+
   getStats: (novelId: string, period = "14d") =>
     request<Stats>(`/writer/stats/novels/${novelId}${qs({ period })}`),
+
+  // Earnings and payouts
+  listEarnings: (cursor?: string) => request<EarningsPage>(`/writer/earnings${qs({ cursor })}`),
+  requestPayout: (amountSatang: number) =>
+    request<Payout>("/writer/payouts", { method: "POST", body: { amount_satang: amountSatang } }),
 
   // Notifications
   listNotifications: () => request<Paged<Notification>>("/me/notifications"),

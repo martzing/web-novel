@@ -12,7 +12,7 @@ import {
   type RelatedNovel,
 } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { numberTH, relativeTime, thaiDate } from "../lib/format";
+import { numberTH, releaseScheduleLabel, relativeTime, thaiDate } from "../lib/format";
 import {
   Empty,
   ErrorNote,
@@ -93,6 +93,10 @@ export default function Novel() {
   const resumeChapterId = progress.data?.last_chapter_id;
   const resumeChapterNo = progress.data?.last_chapter_no;
   const firstUnread = rows.find((c) => c.unlocked) ?? rows[0];
+  // Comments are chapter-scoped, so "the novel's comments" has to point
+  // somewhere concrete — the newest published chapter is where the
+  // conversation actually is.
+  const latestChapter = rows.length > 0 ? rows[rows.length - 1] : undefined;
 
   return (
     <section>
@@ -115,13 +119,7 @@ export default function Novel() {
             {n.author_name ? `ผู้แต่ง ${n.author_name}` : "ไม่ระบุผู้แต่ง"}
           </div>
 
-          {n.series_id && (
-            <div style={{ marginTop: 10 }}>
-              <Link to={`/series/${n.series_id}`} className="pill pill--gold">
-                อยู่ในชุดหนังสือ →
-              </Link>
-            </div>
-          )}
+          {n.series_id && <SeriesLink seriesId={n.series_id} />}
 
           <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
             {firstUnread && !resumeChapterId && (
@@ -159,13 +157,32 @@ export default function Novel() {
               value={n.source_chapters_count > 0 ? numberTH(n.source_chapters_count) : "—"}
               label="บทในต้นฉบับ"
             />
+            <Stat value={numberTH(n.arcs.length)} label="ภาค" />
             <Stat value={numberTH(n.followers_count)} label="ผู้ติดตาม" />
           </div>
 
-          <div className="muted" style={{ fontSize: 12.5, marginTop: 18, display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <span>อภิธานศัพท์ {numberTH(n.glossary_count)} คำ</span>
-            <span>ความเห็น {numberTH(n.comments_count)}</span>
-            <span>{n.arcs.length} ภาค</span>
+          {/* These three are destinations, not decoration: each one is the
+              answer to a question a reader asks on this page. */}
+          <div className="meta-links">
+            {n.glossary_count > 0 && firstUnread ? (
+              <Link to={`/read/${firstUnread.id}?panel=glossary`}>
+                อภิธานศัพท์ {numberTH(n.glossary_count)} คำ
+              </Link>
+            ) : (
+              <span className="muted">อภิธานศัพท์ {numberTH(n.glossary_count)} คำ</span>
+            )}
+            {latestChapter ? (
+              <Link to={`/chapters/${latestChapter.id}/comments`}>
+                ความเห็น {numberTH(n.comments_count)}
+              </Link>
+            ) : (
+              <span className="muted">ความเห็น {numberTH(n.comments_count)}</span>
+            )}
+            {n.release_schedule && (
+              <span className="muted">
+                รอบปล่อยบทใหม่ · {releaseScheduleLabel(n.release_schedule)}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -192,6 +209,10 @@ export default function Novel() {
         </span>
       </div>
 
+      {pricingSummary(n) && (
+        <div className="muted price-summary">{pricingSummary(n)}</div>
+      )}
+
       {chapters.isLoading ? (
         <Loading />
       ) : rows.length === 0 ? (
@@ -206,6 +227,48 @@ export default function Novel() {
 
       <Reviews novelId={n.id} />
     </section>
+  );
+}
+
+/**
+ * The deal, in one line: "บทที่ 1–48 อ่านฟรี · บทหลังจากนั้น 5 เหรียญต่อบท".
+ *
+ * Without it a reader has to scroll the table of contents and infer the rule
+ * from the per-row tags. Returns "" for a wholly free novel, where there is no
+ * deal to explain.
+ */
+function pricingSummary(n: NovelDetail): string {
+  if (n.price_per_chapter <= 0) return "";
+
+  const price = `${numberTH(n.price_per_chapter)} เหรียญต่อบท`;
+  if (n.free_until_chapter > 0) {
+    return `บทที่ 1–${numberTH(n.free_until_chapter)} อ่านฟรี · บทหลังจากนั้น ${price}`;
+  }
+  return `บทที่ยังไม่ปลดล็อก ${price}`;
+}
+
+/**
+ * The series link, carrying the numbers the design puts on it.
+ *
+ * It loads the series to say "5 เรื่อง 8 ภาค" rather than a bare arrow: the
+ * size of a series is exactly what decides whether a reader clicks through.
+ */
+function SeriesLink({ seriesId }: { seriesId: string }) {
+  const series = useQuery({
+    queryKey: ["series", seriesId],
+    queryFn: () => api.getSeries(seriesId),
+  });
+
+  const label = series.data
+    ? `ดูทั้งชุด · ${numberTH(series.data.books.length)} เรื่อง ${numberTH(series.data.arcs_count)} ภาค`
+    : "ดูทั้งชุด →";
+
+  return (
+    <div style={{ marginTop: 10 }}>
+      <Link to={`/series/${seriesId}`} className="pill pill--gold">
+        {label}
+      </Link>
+    </div>
   );
 }
 

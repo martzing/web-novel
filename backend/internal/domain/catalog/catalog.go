@@ -80,6 +80,14 @@ type NovelDetail struct {
 	// return. It is metadata, not a schedule the platform acts on.
 	ReleaseSchedule  string
 	EarlyAccessHours int
+
+	// PricePerChapter and FreeUntilChapter let the detail page state the deal
+	// once — "บทที่ 1–48 อ่านฟรี · บทหลังจากนั้น 5 เหรียญต่อบท" — instead of
+	// leaving a reader to infer it from per-row tags scattered down the ToC.
+	// They describe the novel's default; an individual chapter may still carry
+	// its own price, which is why the ToC keeps its per-row tags.
+	PricePerChapter  int
+	FreeUntilChapter int
 }
 
 // SeriesDetail is the public ชุดหนังสือ page: a collection with its books in
@@ -97,6 +105,9 @@ type SeriesDetail struct {
 type SeriesEntry struct {
 	Novel
 	Position int
+	// Arcs are the book's ภาค, so the series page can show the shape of each
+	// book without a request per book.
+	Arcs []Arc
 	// Note is the translator's line about where this book sits — "อ่านเล่มนี้
 	// ก่อนได้ ไม่สปอยล์" and the like.
 	Note string

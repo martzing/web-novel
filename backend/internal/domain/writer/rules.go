@@ -139,11 +139,12 @@ func Aggregate(current, previous []DailyPoint, from, to time.Time) NovelStats {
 		stats.Series = []DailyPoint{}
 	}
 
-	var prevReads, prevCoins int
+	var prevReads, prevCoins, completions int
 	for _, p := range current {
 		stats.Reads += p.Reads
 		stats.CoinsEarned += p.CoinsEarned
 		stats.Followers += p.Followers
+		completions += p.Completions
 	}
 	for _, p := range previous {
 		prevReads += p.Reads
@@ -152,5 +153,11 @@ func Aggregate(current, previous []DailyPoint, from, to time.Time) NovelStats {
 
 	stats.ReadsTrendPct = TrendPct(stats.Reads, prevReads)
 	stats.CoinsTrendPct = TrendPct(stats.CoinsEarned, prevCoins)
+	// อ่านจบต่อบท. Zero reads yields 0 rather than a division by zero — a
+	// window with no traffic has no completion rate to report, and 0% is the
+	// honest answer for an empty tile.
+	if stats.Reads > 0 {
+		stats.AvgCompletePct = float64(completions) / float64(stats.Reads) * 100
+	}
 	return stats
 }

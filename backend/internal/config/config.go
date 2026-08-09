@@ -16,7 +16,6 @@ type Config struct {
 	Env         string
 	Port        int
 	DatabaseURL string
-	RedisURL    string
 	CORSOrigins []string
 
 	// Auth
@@ -102,7 +101,6 @@ func Load() (*Config, error) {
 		Env:         env,
 		Port:        port,
 		DatabaseURL: mustEnv("DATABASE_URL"),
-		RedisURL:    getenv("REDIS_URL", ""),
 		CORSOrigins: splitCSV(getenv("CORS_ORIGINS", "http://localhost:5173")),
 
 		JWTSecret:       mustEnv("JWT_SECRET"),

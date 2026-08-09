@@ -84,6 +84,30 @@ export function chapterStatusLabel(status: string): string {
   }
 }
 
+/**
+ * รอบปล่อยบทใหม่, as a reader-facing label.
+ *
+ * Shared rather than duplicated: the translator picks the cadence in
+ * จัดการผลงาน and the reader sees it on the novel's detail page, and the two
+ * must never disagree about what `weekly` reads as.
+ */
+export function releaseScheduleLabel(schedule?: string): string {
+  switch (schedule) {
+    case "daily":
+      return "ทุกวัน";
+    case "weekly":
+      return "สัปดาห์ละ 1 บท";
+    case "biweekly":
+      return "สัปดาห์ละ 2 บท";
+    case "monthly":
+      return "เดือนละครั้ง";
+    case "irregular":
+      return "ไม่กำหนด";
+    default:
+      return "";
+  }
+}
+
 export function greeting(now = new Date()): string {
   const hour = now.getHours();
   if (hour < 12) return "สวัสดียามเช้า";

@@ -1,7 +1,8 @@
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api, type SeriesBook } from "../lib/api";
+import { api, type RelatedNovel, type SeriesBook } from "../lib/api";
+import { useAuth } from "../lib/auth";
 import { numberTH } from "../lib/format";
 import { Empty, ErrorNote, Loading, NovelCover } from "../components";
 
@@ -36,6 +37,7 @@ export default function Series() {
             {s.title}
           </h1>
         </div>
+        <FollowSeries seriesId={id} />
       </div>
 
       {s.description && (
@@ -44,6 +46,7 @@ export default function Series() {
 
       <div className="grid grid--kpi" style={{ marginTop: 24 }}>
         <SeriesStat value={numberTH(s.books.length)} label="เล่มในชุด" />
+        <SeriesStat value={numberTH(s.arcs_count)} label="ภาค" />
         <SeriesStat value={numberTH(s.chapters_count)} label="บทที่แปลแล้ว" />
         {s.source_chapters_count > 0 && (
           <SeriesStat value={numberTH(s.source_chapters_count)} label="บทในต้นฉบับ" />
@@ -66,7 +69,114 @@ export default function Series() {
           ))}
         </ol>
       )}
+
+      {s.books.length > 0 && <SeriesRelated novelId={s.books[0].id} />}
     </section>
+  );
+}
+
+/**
+ * ติดตามทั้งชุด.
+ *
+ * The state is three-valued because following a series is a fan-out over the
+ * per-novel follows, not a row of its own: a reader can hold some books and not
+ * others, and a book that joins later does not follow itself. "ติดตามบางเล่ม"
+ * is therefore a real state the button has to be able to say.
+ */
+function FollowSeries({ seriesId }: { seriesId: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const state = useQuery({
+    queryKey: ["series-follow", seriesId],
+    queryFn: () => api.seriesFollowState(seriesId),
+    enabled: Boolean(user),
+  });
+
+  const toggle = useMutation({
+    mutationFn: () =>
+      state.data?.state === "all" ? api.unfollowSeries(seriesId) : api.followSeries(seriesId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["series-follow", seriesId] });
+      // Per-novel follow badges elsewhere are now stale.
+      qc.invalidateQueries({ queryKey: ["following"] });
+    },
+  });
+
+  if (!user) return null;
+
+  const current = state.data?.state ?? "none";
+  const label =
+    current === "all"
+      ? "ติดตามอยู่ทั้งชุด"
+      : current === "partial"
+        ? `ติดตามที่เหลือ (${numberTH(state.data?.following ?? 0)}/${numberTH(state.data?.total ?? 0)})`
+        : "ติดตามทั้งชุด";
+
+  return (
+    <div>
+      <button
+        className={`btn${current === "all" ? "" : " btn--primary"}`}
+        onClick={() => toggle.mutate()}
+        disabled={toggle.isPending || state.isLoading}
+      >
+        {label}
+      </button>
+      {toggle.isError && <ErrorNote message={(toggle.error as Error).message} />}
+    </div>
+  );
+}
+
+/** เรื่องเกี่ยวเนื่อง, read from the series' first book and grouped by kind. */
+function SeriesRelated({ novelId }: { novelId: string }) {
+  const related = useQuery({
+    queryKey: ["related", novelId],
+    queryFn: () => api.listRelated(novelId),
+  });
+
+  const items = related.data?.data ?? [];
+  if (items.length === 0) return null;
+
+  const groups = new Map<string, RelatedNovel[]>();
+  for (const item of items) {
+    const bucket = groups.get(item.kind_label) ?? [];
+    bucket.push(item);
+    groups.set(item.kind_label, bucket);
+  }
+
+  return (
+    <>
+      <div className="section-head">
+        <div className="eyebrow">เรื่องเกี่ยวเนื่อง</div>
+      </div>
+      {[...groups.entries()].map(([label, novels]) => (
+        <div key={label} style={{ marginTop: 14 }}>
+          <div className="muted" style={{ fontSize: 12 }}>
+            {label}
+          </div>
+          <div className="grid grid--cards" style={{ marginTop: 8 }}>
+            {novels.map((novel) => (
+              <Link
+                key={novel.id}
+                to={`/novels/${novel.slug}`}
+                className="card"
+                style={{ display: "flex", gap: 14, color: "inherit" }}
+              >
+                <NovelCover novel={novel} width={54} height={76} />
+                <div style={{ minWidth: 0 }}>
+                  <div className="serif" style={{ fontSize: 15, fontWeight: 600 }}>
+                    {novel.title_th}
+                  </div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                    {numberTH(novel.chapters_count)} บทที่แปลแล้ว
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -105,7 +215,25 @@ function SeriesBookCard({ book, order }: { book: SeriesBook; order: number }) {
           {chapterProgress(book)}
         </div>
         {book.note && <p className="reading-order__note">{book.note}</p>}
+
+        {book.arcs.length > 0 && (
+          <ul className="arc-list">
+            {book.arcs.map((arc) => (
+              <li key={arc.id} className="arc-list__row">
+                <span className="mono muted">ภาคที่ {arc.arc_no}</span>
+                <span className="arc-list__name">{arc.name}</span>
+                <span className="mono muted">
+                  {numberTH(arc.from_chapter_no)}–{numberTH(arc.to_chapter_no)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
+
+      <Link to={`/novels/${book.slug}`} className="btn btn--accent reading-order__cta">
+        รายละเอียดและสารบัญ
+      </Link>
     </li>
   );
 }

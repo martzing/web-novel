@@ -23,4 +23,21 @@ type Repository interface {
 	Unfollow(ctx context.Context, userID, novelID int64) error
 	IsFollowing(ctx context.Context, userID, novelID int64) (bool, error)
 	ListFollowerIDs(ctx context.Context, novelID, afterID int64, limit int) ([]int64, error)
+
+	// FollowMany and UnfollowMany back ติดตามทั้งชุด. They return how many rows
+	// actually changed so followers_count stays exact under concurrent calls:
+	// the count comes from the rows Postgres really inserted or deleted, not
+	// from the size of the request.
+	FollowMany(ctx context.Context, userID int64, novelIDs []int64) (int, error)
+	UnfollowMany(ctx context.Context, userID int64, novelIDs []int64) (int, error)
+	CountFollowing(ctx context.Context, userID int64, novelIDs []int64) (int, error)
+}
+
+// SeriesBooks resolves a series to the novels it holds.
+//
+// Declared here rather than imported, so the library context never depends on
+// catalog. The catalog repository satisfies it and the composition root wires
+// the two together — the same shape as reading.Entitlements over wallet.
+type SeriesBooks interface {
+	NovelIDsInSeries(ctx context.Context, idOrSlug string) ([]int64, error)
 }

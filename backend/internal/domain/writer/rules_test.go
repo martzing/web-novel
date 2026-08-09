@@ -275,6 +275,29 @@ func TestAggregate_EmptyWindows(t *testing.T) {
 	if stats.Series == nil {
 		t.Fatal("series must be an empty slice, not nil")
 	}
+	// No reads means no completion rate to report, and 0% beats NaN in a tile.
+	if stats.AvgCompletePct != 0 {
+		t.Fatalf("completion = %v, want 0 rather than a division by zero", stats.AvgCompletePct)
+	}
+}
+
+// U-WR-01 — อ่านจบต่อบท is completions over the window's own reads.
+//
+// A ratio of the totals rather than an average of per-day rates: a quiet day
+// with one read and one completion would otherwise count as 100% and drag the
+// whole figure with it.
+func TestAggregate_CompletionRateIsTotalsNotAnAverageOfDays(t *testing.T) {
+	current := []DailyPoint{
+		{Day: base, Reads: 100, Completions: 80},
+		{Day: base.AddDate(0, 0, 1), Reads: 1, Completions: 1},
+	}
+
+	stats := Aggregate(current, nil, base, base.AddDate(0, 0, 1))
+
+	// 81 of 101, not the 90% an average of 80% and 100% would give.
+	if math.Abs(stats.AvgCompletePct-80.198) > 0.01 {
+		t.Fatalf("completion = %v, want ~80.2%% (81 of 101)", stats.AvgCompletePct)
+	}
 }
 
 func ptr[T any](v T) *T { return &v }

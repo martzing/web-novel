@@ -148,6 +148,8 @@ func (r *GormRepository) novelDetail(ctx context.Context, where string, arg any)
 		TipsEnabled:      n.TipsEnabled,
 		ReleaseSchedule:  n.ReleaseSchedule,
 		EarlyAccessHours: int(n.EarlyAccessHours),
+		PricePerChapter:  int(n.PricePerChapter),
+		FreeUntilChapter: n.FreeUntilChapter,
 	}
 
 	genres, err := r.genresForNovels(ctx, []int64{n.ID})

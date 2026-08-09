@@ -1,10 +1,43 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { api, type LedgerEntry } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { baht, ledgerLabel, numberTH, relativeTime, thaiDate } from "../lib/format";
 import { Empty, ErrorNote, Loading } from "../components";
+
+/**
+ * The going rate for a paid chapter, used only to turn a balance into
+ * "ปลดล็อกได้อีกราว N บท".
+ *
+ * Deliberately a constant and deliberately labelled ราว: chapter prices differ
+ * per novel, so any exact figure would be wrong for most of what the reader is
+ * about to open. The estimate answers "roughly how far does this go", which is
+ * the question a balance actually raises.
+ */
+const TYPICAL_CHAPTER_PRICE = 5;
+
+function estimateUnlockableChapters(total?: number): number | null {
+  if (!total || total < TYPICAL_CHAPTER_PRICE) return null;
+  return Math.floor(total / TYPICAL_CHAPTER_PRICE);
+}
+
+/**
+ * Coins spent since the first of this month, from the ledger page already on
+ * screen. Only debits count, so a top-up does not read as spending.
+ */
+function coinsSpentThisMonth(entries?: LedgerEntry[]): number {
+  if (!entries) return 0;
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  return entries.reduce((sum, entry) => {
+    const amount = entry.delta + entry.bonus_delta;
+    if (amount >= 0) return sum;
+    return new Date(entry.created_at) >= monthStart ? sum + Math.abs(amount) : sum;
+  }, 0);
+}
 
 export default function Coins() {
   const { user } = useAuth();
@@ -17,6 +50,9 @@ export default function Coins() {
     queryFn: () => api.getLedger(),
     enabled: Boolean(user),
   });
+
+  const unlockable = estimateUnlockableChapters(wallet.data?.total);
+  const spentThisMonth = coinsSpentThisMonth(ledger.data?.data);
 
   return (
     <section>
@@ -33,6 +69,18 @@ export default function Coins() {
           <div className="muted" style={{ fontSize: 12.5, marginTop: 8, lineHeight: 1.9 }}>
             เหรียญที่ซื้อ {numberTH(wallet.data?.balance ?? 0)} · โบนัส{" "}
             {numberTH(wallet.data?.bonus_balance ?? 0)}
+            {unlockable !== null && (
+              <>
+                <br />
+                ปลดล็อกได้อีกราว {numberTH(unlockable)} บท
+              </>
+            )}
+            {spentThisMonth > 0 && (
+              <>
+                <br />
+                ใช้ไปเดือนนี้ {numberTH(spentThisMonth)} เหรียญ
+              </>
+            )}
             {wallet.data?.bonus_expires_at && (
               <>
                 <br />

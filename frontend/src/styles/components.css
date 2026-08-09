@@ -568,10 +568,46 @@
   color: var(--soft);
 }
 
+.reading-order__cta {
+  flex: 0 0 auto;
+  align-self: center;
+  white-space: nowrap;
+}
+
+/* Each book's ภาค, so the series page shows the shape of a work and not only
+   its length. Muted on purpose: the translator's note above still leads. */
+.arc-list {
+  list-style: none;
+  margin: var(--s3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.arc-list__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: 5px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.arc-list__name {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+}
+
 @media (max-width: 620px) {
   .reading-order__item {
     flex-wrap: wrap;
     gap: var(--s3);
+  }
+
+  .reading-order__cta {
+    width: 100%;
+    text-align: center;
   }
 }
 
@@ -583,6 +619,167 @@
   align-items: center;
   gap: var(--s4);
   flex-wrap: wrap;
+}
+
+.payout-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin-top: var(--s4);
+}
+
+/* ── Notification bell ──────────────────────────────────────────────────── */
+
+.bell {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.bell__button {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--r2);
+  background: transparent;
+  color: var(--soft);
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.bell__button:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.bell__badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.bell__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  width: min(320px, calc(100vw - 32px));
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r3);
+  box-shadow: 0 12px 32px rgba(35, 32, 27, 0.14);
+}
+
+.bell__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--line);
+}
+
+.bell__markall {
+  border: 0;
+  background: transparent;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 11.5px;
+}
+
+.bell__empty {
+  padding: var(--s5) var(--s4);
+  color: var(--soft);
+  font-size: 12.5px;
+  line-height: 1.9;
+  text-align: center;
+}
+
+.bell__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bell__item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: var(--s3) var(--s4);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.bell__item:hover {
+  background: var(--hover);
+}
+
+/* Unread rows carry a spine rather than a bolder weight: the list is Thai, and
+   a synthetic bold on Thai script closes the counters. */
+.bell__item.is-unread {
+  box-shadow: inset 2px 0 0 var(--red);
+}
+
+.bell__when {
+  color: var(--soft);
+  font-size: 11px;
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+/* Glossary / comments / release cadence under the novel's KPI tiles. */
+.meta-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s4);
+  margin-top: var(--s4);
+  font-size: 12.5px;
+}
+
+.meta-links a {
+  color: var(--red);
+}
+
+.meta-links a:hover {
+  color: var(--gold);
+}
+
+/* "บทที่ 1–48 อ่านฟรี · บทหลังจากนั้น 5 เหรียญต่อบท" above the table of
+   contents. */
+.price-summary {
+  margin-top: var(--s3);
+  font-size: 12.5px;
+  line-height: 1.9;
 }
 
 .auto-unlock {

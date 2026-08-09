@@ -11,4 +11,5 @@ var (
 	ErrSlugTaken       = errors.New("writer: slug already used")
 	ErrUnsupportedFile = errors.New("writer: unsupported file type")
 	ErrFileTooLarge    = errors.New("writer: file is too large")
+	ErrGroupNotEmpty   = errors.New("writer: glossary group still holds terms")
 )

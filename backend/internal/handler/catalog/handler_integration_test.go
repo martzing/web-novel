@@ -298,6 +298,34 @@ func TestNovelDetailEndpoint(t *testing.T) {
 	})
 }
 
+// I-CAT-04 — the detail payload carries the novel's default pricing.
+//
+// Without these the detail page cannot state the deal in one line, and a reader
+// has to infer the rule by scrolling the whole table of contents.
+func TestNovelDetailEndpoint_CarriesDefaultPricingAndReleaseSchedule(t *testing.T) {
+	env := apitest.New(t)
+
+	novel := env.MakeMe.ANewNovel().With(func(row *entities.Novel) {
+		row.Slug = "pricing-summary-novel"
+		row.PricePerChapter = 5
+		row.FreeUntilChapter = 48
+		row.ReleaseSchedule = "biweekly"
+	}).Please()
+
+	rec := env.GET("/api/v1/novels/" + novel.Slug)
+	apitest.AssertStatus(t, rec, http.StatusOK)
+	got := apitest.DecodeJSON[novelDetailResponse](t, rec)
+
+	if got.PricePerChapter != 5 || got.FreeUntilChapter != 48 {
+		t.Fatalf("pricing = %d/%d, want 5 per chapter free until 48",
+			got.PricePerChapter, got.FreeUntilChapter)
+	}
+	if got.ReleaseSchedule != "biweekly" {
+		t.Fatalf("release_schedule = %q, want biweekly so the detail page can show it",
+			got.ReleaseSchedule)
+	}
+}
+
 func TestNovelDetailEndpoint_NotFound(t *testing.T) {
 	env := apitest.New(t)
 
@@ -519,10 +547,13 @@ type novelResponse struct {
 
 type novelDetailResponse struct {
 	novelResponse
-	Description   string        `json:"description"`
-	Arcs          []arcResponse `json:"arcs"`
-	GlossaryCount int           `json:"glossary_count"`
-	CommentsCount int           `json:"comments_count"`
+	Description      string        `json:"description"`
+	Arcs             []arcResponse `json:"arcs"`
+	GlossaryCount    int           `json:"glossary_count"`
+	CommentsCount    int           `json:"comments_count"`
+	PricePerChapter  int           `json:"price_per_chapter"`
+	FreeUntilChapter int           `json:"free_until_chapter"`
+	ReleaseSchedule  string        `json:"release_schedule"`
 }
 
 type rankedNovelResponse struct {

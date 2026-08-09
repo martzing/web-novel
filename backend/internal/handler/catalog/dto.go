@@ -48,6 +48,11 @@ type NovelDetailResponse struct {
 	TipsEnabled      bool   `json:"tips_enabled"`
 	ReleaseSchedule  string `json:"release_schedule,omitempty"`
 	EarlyAccessHours int    `json:"early_access_hours"`
+
+	// The novel's default pricing, so the detail page can summarise the deal in
+	// one line rather than making the reader read it off the ToC rows.
+	PricePerChapter  int `json:"price_per_chapter"`
+	FreeUntilChapter int `json:"free_until_chapter"`
 }
 
 // SeriesResponse is the public ชุดหนังสือ page.
@@ -62,6 +67,7 @@ type SeriesResponse struct {
 	// to.
 	ChaptersCount       int `json:"chapters_count"`
 	SourceChaptersCount int `json:"source_chapters_count"`
+	ArcsCount           int `json:"arcs_count"`
 }
 
 // SeriesBookResponse is one novel in the reading order.
@@ -69,6 +75,9 @@ type SeriesBookResponse struct {
 	NovelResponse
 	Position int    `json:"position"`
 	Note     string `json:"note,omitempty"`
+	// Arcs let the page show the shape of each book inline; loading them costs
+	// one extra query for the whole series, not one per book.
+	Arcs []ArcResponse `json:"arcs"`
 }
 
 // RelatedNovelResponse is one เรื่องเกี่ยวเนื่อง card.
@@ -187,10 +196,12 @@ func toSeriesResponse(s domain.SeriesDetail) SeriesResponse {
 		SourceChaptersCount: source,
 	}
 	for _, b := range s.Books {
+		out.ArcsCount += len(b.Arcs)
 		out.Books = append(out.Books, SeriesBookResponse{
 			NovelResponse: toNovelResponse(b.Novel),
 			Position:      b.Position,
 			Note:          b.Note,
+			Arcs:          toArcResponses(b.Arcs),
 		})
 	}
 	return out
@@ -221,6 +232,8 @@ func toNovelDetailResponse(d domain.NovelDetail) NovelDetailResponse {
 		TipsEnabled:      d.TipsEnabled,
 		ReleaseSchedule:  d.ReleaseSchedule,
 		EarlyAccessHours: d.EarlyAccessHours,
+		PricePerChapter:  d.PricePerChapter,
+		FreeUntilChapter: d.FreeUntilChapter,
 	}
 }
 

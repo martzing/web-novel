@@ -116,12 +116,42 @@ translator, who can still open and edit it.
 - Editor: title, arc pill, body, toolbar (footnote / glossary bind / scene break), price picker, save-draft / schedule-publish.
 - A new chapter inherits `price_per_chapter` from its novel, and is forced free
   below `free_until_chapter`.
-- Stats page: KPI tiles (reads, followers, coins, THB) with 14-day trend indicator.
-  Coin earnings include tips as well as unlocks.
+- Stats page: KPI tiles (reads, followers, coins, `อ่านจบต่อบท`) with a 14-day
+  trend indicator. Coin earnings include tips as well as unlocks.
+  - `อ่านจบต่อบท` is completions ÷ reads over the window, from a `completed`
+    flag on the read event. It is a ratio of the window's own totals rather
+    than an average of per-chapter rates, so a chapter with a single read
+    cannot swing it.
+  - The tiles count **coins, not baht**. A coin has no single baht value: the
+    rate depends on which pack the reader bought, so any THB figure beside a
+    coin total would be a guess presented as a fact. Fiat appears only where it
+    is real — the `รายได้` tab, where `available_satang` is what a translator
+    can actually withdraw.
+- `รายได้` is a second tab beside the stats, not a fourth item in the writer
+  navigation: the design fixes that rail at three entries, and money is
+  something a translator checks while looking at performance anyway. It shows
+  net earnings, the withdrawable balance, and the payout request form.
+- Glossary management (`อภิธานศัพท์`) is a sixth tab in `จัดการผลงาน`. Deleting
+  a term bumps the novel's `glossary_rev`, so every chapter that bound it is
+  re-rendered and the marker degrades to plain text; deleting a group that
+  still holds terms is refused rather than cascading.
 
 ### Onboarding
 
-- Pick favorite genres → feeds home ranking personalization.
+- Two steps. First pick favourite genres — **at least three**, because one pick
+  produces a home page that looks like a genre filter rather than a
+  personalised feed. Then pick a preferred length (สั้น / กลาง / ยาว).
+- Both feed the home ranking through one column: the length becomes a weight on
+  the chosen genres in `user_genre_prefs` (สั้น=1, กลาง=2, ยาว=3) rather than a
+  field of its own. It is therefore not separately recoverable — if the length
+  ever needs to drive anything by itself, it needs its own column first.
+
+### Reader-facing follow
+
+- `ติดตามทั้งชุด` follows every visible book in a series in one action. It is a
+  fan-out over the existing per-novel follows rather than a subscription row of
+  its own, so the button reports `none` / `partial` / `all`, and a book that
+  joins the series later leaves it `partial` rather than following itself.
 
 ## 6. Success metrics
 
@@ -165,6 +195,25 @@ none of them is blocked on a gateway integration.
 Phase 7 keeps its original shape: the `purchases` table, the idempotent
 `(provider, provider_ref)` webhook key, and the `PAYMENTS_MOCK_ENABLED` flag are
 already in place, so the work is a provider adapter rather than a schema change.
+
+The checkout screen the design mocks up in full — accordion payment methods, a
+saved-card checkbox, a PromptPay QR countdown, a discount code and VAT lines —
+lands with Phase 7 rather than before it. Building those against a mock would
+put a convincing payment form in front of readers that cannot take a payment;
+the current screen says so plainly instead.
+
+## 8a. Deferred
+
+Drawn in the design mocks, deliberately not built, and not lost:
+
+| Item | Why it is deferred |
+| --- | --- |
+| `อ่านสะสมสัปดาห์นี้ N ชั่วโมง` on the home page | Needs per-session read duration — a schema column, a client heartbeat and a rollup job — for one line of copy. Revisit if retention work needs a time-spent metric anyway. |
+| `ค่าเฉลี่ยหมวด 71%` beside `อ่านจบต่อบท` | The per-novel rate ships; the genre benchmark needs an aggregate across every novel in a genre, which is a different query shape and a different cache story. |
+| `ดูรายได้ที่คาดการณ์` in the pricing tab | A forecast multiplies price × subscribers × an assumed conversion rate; each assumption compounds, and the `รายได้` tab already shows what actually happened. |
+| Pinch-to-zoom in the reader | Collides with browser zoom on the platforms that matter, and the settings panel already has A− / A+ bound to the same preference. |
+| Chinese characters on the onboarding genre chips | Would need `genres` to carry a Chinese name for decoration alone. |
+| The design's four `รอบปล่อยบทใหม่` options | The implementation offers five, including `เดือนละครั้ง`, and drops the day names the design bakes into the label — a cadence and a schedule are different promises. |
 
 ## 9. Locked design decisions
 

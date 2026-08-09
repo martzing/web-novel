@@ -60,6 +60,8 @@ func (h *Handler) Register(r gin.IRouter, requireAuth gin.HandlerFunc) {
 	w.GET("/novels/:id/glossary", h.listGlossary)
 	w.POST("/novels/:id/glossary", h.createGlossary)
 	w.PATCH("/glossary-entries/:id", h.updateGlossaryEntry)
+	w.DELETE("/glossary-entries/:id", h.deleteGlossaryEntry)
+	w.DELETE("/glossary-groups/:id", h.deleteGlossaryGroup)
 
 	w.GET("/stats/novels/:id", h.stats)
 }
@@ -419,6 +421,34 @@ func (h *Handler) updateGlossaryEntry(c *gin.Context) {
 	httpx.OK(c, toGlossaryEntryResponse(*entry))
 }
 
+func (h *Handler) deleteGlossaryEntry(c *gin.Context) {
+	entryID, ok := httpx.IDParam(c, "id", "รหัสศัพท์ไม่ถูกต้อง")
+	if !ok {
+		return
+	}
+
+	p := middleware.MustPrincipal(c)
+	if err := h.Service.DeleteGlossaryEntry(c.Request.Context(), p.UserID, entryID); err != nil {
+		h.writeErr(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) deleteGlossaryGroup(c *gin.Context) {
+	groupID, ok := httpx.IDParam(c, "id", "รหัสหมวดศัพท์ไม่ถูกต้อง")
+	if !ok {
+		return
+	}
+
+	p := middleware.MustPrincipal(c)
+	if err := h.Service.DeleteGlossaryGroup(c.Request.Context(), p.UserID, groupID); err != nil {
+		h.writeErr(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 func (h *Handler) stats(c *gin.Context) {
 	novelID, ok := httpx.IDParam(c, "id", "รหัสนิยายไม่ถูกต้อง")
 	if !ok {
@@ -511,6 +541,9 @@ func (h *Handler) writeErr(c *gin.Context, err error) {
 		httpx.BadRequest(c, "UNSUPPORTED_FILE", "รองรับเฉพาะไฟล์ภาพ JPEG, PNG, WebP หรือ GIF")
 	case errors.Is(err, domain.ErrFileTooLarge):
 		httpx.BadRequest(c, "FILE_TOO_LARGE", "ไฟล์ภาพต้องไม่เกิน 2 MB")
+	case errors.Is(err, domain.ErrGroupNotEmpty):
+		httpx.Error(c, http.StatusConflict, "GROUP_NOT_EMPTY",
+			"หมวดนี้ยังมีศัพท์อยู่ ย้ายหรือลบศัพท์ออกก่อน")
 	case errors.Is(err, domain.ErrInvalidInput):
 		httpx.BadRequest(c, "INVALID_BODY", "ข้อมูลไม่ถูกต้อง")
 	case errors.Is(err, httpx.ErrBadCursor):

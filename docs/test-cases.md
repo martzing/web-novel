@@ -3,7 +3,7 @@
 Tiers:
 
 - **U** — unit, no external deps.
-- **I** — integration, real Postgres/Redis.
+- **I** — integration, real Postgres.
 - **E** — end-to-end, browser + API.
 - **L** — load / non-functional.
 
@@ -13,7 +13,7 @@ Every **U** and **I** case below is implemented; the mapping table at the end of
 this document names the file and function for each. **E** and **L** remain out
 of scope — see "Out of scope" at the end.
 
-The suite is 575 passing tests with 0 skips. A skip is not a pass here: without
+The suite is 587 passing tests with 0 skips. A skip is not a pass here: without
 a reachable Docker socket testcontainers skips silently, so always confirm with
 `go test -count=1 -v ./... | grep -c -- '--- SKIP'`.
 
@@ -224,6 +224,25 @@ Paths are relative to `backend/`.
 | I-HID-01 | `internal/handler/catalog/series_integration_test.go` · `TestHidden_IsExcludedFromBrowseSearchAndRanking` |
 | I-HID-02 | `internal/handler/catalog/series_integration_test.go` · `TestHidden_DetailIs404ForReadersButOpenToItsTranslator` |
 | I-PUB-01 | `internal/handler/catalog/series_integration_test.go` · `TestPublicSeries_ReturnsBooksInReadingOrderWithSummedCounts` |
+
+### Alignment round — glossary deletion, series follow, completion rate
+
+Added while reconciling the design mocks, the docs and the code (`Check-diff.md`).
+
+| ID | File · function |
+| --- | --- |
+| I-CAT-04 | `internal/handler/catalog/handler_integration_test.go` · `TestNovelDetailEndpoint_CarriesDefaultPricingAndReleaseSchedule` |
+| I-PUB-02 | `internal/handler/catalog/series_integration_test.go` · `TestPublicSeries_CarriesEachBooksArcsAndTheTotalCount` |
+| I-SER-05 | `internal/handler/library/seriesfollow_integration_test.go` · `TestFollowSeries_FollowsEveryVisibleBookAndSkipsHiddenOnes` |
+| I-SER-06 | same · `TestFollowSeries_RepeatingDoesNotDoubleCountFollowers` |
+| I-SER-07 | same · `TestFollowSeries_StateIsPartialWhenOnlySomeBooksAreFollowed` |
+| I-SER-08 | same · `TestUnfollowSeries_LeavesFollowsOnNovelsOutsideTheSeries` |
+| I-SEC-06 | same · `TestSeriesFollow_RequiresAuthentication` |
+| I-WR-05 | `internal/handler/writer/glossary_integration_test.go` · `TestDeleteGlossaryEntry_BumpsGlossaryRevAndClearsBindings` |
+| I-WR-06 | same · `TestDeleteGlossaryEntry_ForbiddenForAnotherTranslator` |
+| I-WR-07 | same · `TestDeleteGlossaryGroup_RefusesWhileItStillHoldsTerms` |
+| I-WR-08 | `internal/jobs/jobs_integration_test.go` · `TestStatsRollupJob_CountsCompletionsSeparatelyFromReads` |
+| U-WR-01 | `internal/domain/writer/rules_test.go` · `TestAggregate_CompletionRateIsTotalsNotAnAverageOfDays` |
 
 ### Supporting unit tests
 

@@ -445,8 +445,11 @@ func TestCoinPacks_AreListedPublicly(t *testing.T) {
 		BonusCoins  int    `json:"bonus_coins"`
 		PriceSatang int    `json:"price_satang"`
 	}]](t, rec)
+	// The pack comes from the fixture, not from 0002's seed — the harness runs
+	// against an empty schema — so migration-level pack changes never move this
+	// assertion.
 	if len(body.Data) != 1 || body.Data[0].Coins != 240 {
-		t.Fatalf("packs = %+v, want the seeded 240-coin pack", body.Data)
+		t.Fatalf("packs = %+v, want the fixture's 240-coin pack", body.Data)
 	}
 }
 

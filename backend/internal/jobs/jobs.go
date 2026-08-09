@@ -224,11 +224,13 @@ func (j *StatsRollupJob) Run(ctx context.Context, now time.Time) (Report, error)
 	processed := 0
 	acquired, err := withJobLock(ctx, j.DB, j.Name(), func(_ context.Context, tx *gorm.DB) error {
 		err := tx.Exec(`
-			INSERT INTO chapter_daily_stats (chapter_id, day, reads, unique_readers, coins_earned)
+			INSERT INTO chapter_daily_stats (chapter_id, day, reads, unique_readers, completions, coins_earned)
 			SELECT e.chapter_id,
 			       ?::date,
 			       COUNT(*),
 			       COUNT(DISTINCT e.user_id),
+			       -- อ่านจบต่อบท: reads that reached the end of the chapter.
+			       COUNT(*) FILTER (WHERE e.completed),
 			       -- Unlocks plus tips. A tip writes no chapter_unlocks row, so
 			       -- without the second term it would silently vanish from the
 			       -- writer's revenue tile.
@@ -246,6 +248,7 @@ func (j *StatsRollupJob) Run(ctx context.Context, now time.Time) (Report, error)
 			ON CONFLICT (chapter_id, day) DO UPDATE
 			   SET reads = EXCLUDED.reads,
 			       unique_readers = EXCLUDED.unique_readers,
+			       completions = EXCLUDED.completions,
 			       coins_earned = EXCLUDED.coins_earned`,
 			day, day, day, day, day, day, day).Error
 		if err != nil {
@@ -253,13 +256,14 @@ func (j *StatsRollupJob) Run(ctx context.Context, now time.Time) (Report, error)
 		}
 
 		res := tx.Exec(`
-			INSERT INTO novel_daily_stats (novel_id, day, reads, followers_gained, coins_earned)
+			INSERT INTO novel_daily_stats (novel_id, day, reads, followers_gained, completions, coins_earned)
 			SELECT c.novel_id,
 			       ?::date,
 			       SUM(s.reads),
 			       COALESCE((SELECT COUNT(*) FROM follows f
 			                  WHERE f.novel_id = c.novel_id
 			                    AND f.since >= ?::date AND f.since < ?::date + 1), 0),
+			       SUM(s.completions),
 			       SUM(s.coins_earned)
 			  FROM chapter_daily_stats s
 			  JOIN chapters c ON c.id = s.chapter_id
@@ -268,6 +272,7 @@ func (j *StatsRollupJob) Run(ctx context.Context, now time.Time) (Report, error)
 			ON CONFLICT (novel_id, day) DO UPDATE
 			   SET reads = EXCLUDED.reads,
 			       followers_gained = EXCLUDED.followers_gained,
+			       completions = EXCLUDED.completions,
 			       coins_earned = EXCLUDED.coins_earned`,
 			day, day, day, day)
 		if res.Error != nil {

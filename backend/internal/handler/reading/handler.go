@@ -78,7 +78,7 @@ func (h *Handler) readEvent(c *gin.Context) {
 	var body readEventRequest
 	_ = c.ShouldBindJSON(&body)
 
-	if err := h.Service.RecordRead(c.Request.Context(), id, middleware.ViewerID(c), body.SessionID); err != nil {
+	if err := h.Service.RecordRead(c.Request.Context(), id, middleware.ViewerID(c), body.SessionID, body.Completed); err != nil {
 		httpx.Internal(c, err)
 		return
 	}

@@ -1,7 +1,7 @@
 # AGENT.md
 
 Project guidance for AI coding agents working on Mokchan, a xianxia web novel
-platform with a Go backend, React frontend, PostgreSQL, and Redis.
+platform with a Go backend, React frontend, and PostgreSQL.
 
 ## Project Snapshot
 
@@ -9,7 +9,7 @@ platform with a Go backend, React frontend, PostgreSQL, and Redis.
   PostgreSQL, argon2id password hashing, and `golang-jwt` access tokens.
 - Frontend: Vite, React 18, TypeScript, React Router, and TanStack Query in
   `frontend/`.
-- Runtime: `docker-compose.yml` starts Postgres, Redis, API, and web services.
+- Runtime: `docker-compose.yml` starts Postgres, API, and web services.
 - Current product phase: PRD phases 1–6 are implemented — catalog and reader,
   accounts and preferences, library and bookmarks, coins with mock purchases
   and chapter unlock, comments and reviews, writer workspace with stats,

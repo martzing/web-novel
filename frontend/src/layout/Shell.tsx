@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import NotificationBell from "./NotificationBell";
 
 interface NavEntry {
   to: string;
@@ -74,8 +75,14 @@ export default function Shell() {
     <div className="shell">
       <aside className="sidebar">
         <div className="sidebar__brand">
-          <div className="sidebar__title">หมอกจันทร์</div>
-          <div className="sidebar__sub">หอนิยายจีนแปล</div>
+          <div style={{ minWidth: 0 }}>
+            <div className="sidebar__title">หมอกจันทร์</div>
+            <div className="sidebar__sub">หอนิยายจีนแปล</div>
+          </div>
+          {/* The topbar is hidden on desktop, so the bell needs a home here
+              too. It is icon-only, which is what lets it survive the sidebar
+              collapsing to an icon rail on tablets. */}
+          {user && <NotificationBell />}
         </div>
 
         <nav className="sidebar__nav">
@@ -125,9 +132,12 @@ export default function Shell() {
         <header className="topbar">
           <div className="topbar__title">หมอกจันทร์</div>
           {user ? (
-            <span className="mono muted" style={{ fontSize: 12 }}>
-              ◎ {wallet.data?.total ?? 0}
-            </span>
+            <div className="topbar__actions">
+              <NotificationBell />
+              <span className="mono muted" style={{ fontSize: 12 }}>
+                ◎ {wallet.data?.total ?? 0}
+              </span>
+            </div>
           ) : (
             <NavLink to="/login" className="btn btn--sm">
               เข้าสู่ระบบ

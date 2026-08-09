@@ -146,8 +146,9 @@ func (s *Service) SaveProgress(ctx context.Context, p domain.Progress) (*domain.
 }
 
 // RecordRead stores a fire-and-forget read event used by the stats rollup.
-func (s *Service) RecordRead(ctx context.Context, chapterID int64, userID int64, sessionID string) error {
-	event := domain.ReadEvent{ChapterID: chapterID, OccurredAt: s.now()}
+// completed marks a read that reached the end of the chapter.
+func (s *Service) RecordRead(ctx context.Context, chapterID int64, userID int64, sessionID string, completed bool) error {
+	event := domain.ReadEvent{ChapterID: chapterID, Completed: completed, OccurredAt: s.now()}
 	if userID != 0 {
 		event.UserID = &userID
 	}

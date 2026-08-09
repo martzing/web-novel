@@ -140,6 +140,57 @@ func (r *GormRepository) UpdateGlossaryEntry(ctx context.Context, id int64, e do
 	return &out, nil
 }
 
+// DeleteGlossaryEntry removes a term. The same AFTER DELETE trigger that fires
+// on insert and update bumps novels.glossary_rev, so the re-render worker
+// rewrites every body that bound the term — the marker survives as plain text
+// because the renderer leaves unknown keys alone.
+func (r *GormRepository) DeleteGlossaryEntry(ctx context.Context, id int64) error {
+	// chapter_glossary_refs.entry_id is ON DELETE CASCADE, so the bindings go
+	// with the entry and no manual cleanup is needed.
+	res := dbctx.From(ctx, r.db).Where("id = ?", id).Delete(&entities.GlossaryEntry{})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+// DeleteGlossaryGroup removes an empty category. The service checks emptiness
+// first; this method assumes that check has passed.
+func (r *GormRepository) DeleteGlossaryGroup(ctx context.Context, id int64) error {
+	res := dbctx.From(ctx, r.db).Where("id = ?", id).Delete(&entities.GlossaryGroup{})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *GormRepository) GlossaryGroupNovelID(ctx context.Context, groupID int64) (int64, error) {
+	var row entities.GlossaryGroup
+	err := dbctx.From(ctx, r.db).Where("id = ?", groupID).Take(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, domain.ErrNotFound
+		}
+		return 0, err
+	}
+	return row.NovelID, nil
+}
+
+func (r *GormRepository) CountGlossaryEntries(ctx context.Context, groupID int64) (int64, error) {
+	var n int64
+	err := dbctx.From(ctx, r.db).
+		Model(&entities.GlossaryEntry{}).
+		Where("group_id = ?", groupID).
+		Count(&n).Error
+	return n, err
+}
+
 func (r *GormRepository) GlossaryEntryNovelID(ctx context.Context, entryID int64) (int64, error) {
 	var row struct{ NovelID int64 }
 	err := dbctx.From(ctx, r.db).
@@ -165,11 +216,12 @@ func (r *GormRepository) DailyStats(ctx context.Context, novelID int64, from, to
 		Reads           int
 		CoinsEarned     int
 		FollowersGained int
+		Completions     int
 	}
 	var rows []row
 	err := dbctx.From(ctx, r.db).
 		Table("novel_daily_stats").
-		Select("day, reads, coins_earned, followers_gained").
+		Select("day, reads, coins_earned, followers_gained, completions").
 		Where("novel_id = ? AND day >= ? AND day < ?", novelID, from, to).
 		Order("day").
 		Scan(&rows).Error
@@ -184,6 +236,7 @@ func (r *GormRepository) DailyStats(ctx context.Context, novelID int64, from, to
 			Reads:       r.Reads,
 			CoinsEarned: r.CoinsEarned,
 			Followers:   r.FollowersGained,
+			Completions: r.Completions,
 		})
 	}
 	return out, nil

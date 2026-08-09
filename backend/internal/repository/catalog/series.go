@@ -57,11 +57,16 @@ func (r *GormRepository) GetSeries(ctx context.Context, idOrSlug string) (*domai
 	if err != nil {
 		return nil, err
 	}
+	arcs, err := r.arcsForNovels(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, n := range novels {
 		book := domain.SeriesEntry{
 			Novel: toDomainNovel(n),
 			Note:  derefString(n.SeriesNote),
+			Arcs:  arcs[n.ID],
 		}
 		if n.SeriesPosition != nil {
 			book.Position = int(*n.SeriesPosition)
@@ -69,7 +74,64 @@ func (r *GormRepository) GetSeries(ctx context.Context, idOrSlug string) (*domai
 		if g := genres[n.ID]; g != nil {
 			book.Genres = g
 		}
+		if book.Arcs == nil {
+			book.Arcs = []domain.Arc{}
+		}
 		out.Books = append(out.Books, book)
+	}
+	return out, nil
+}
+
+// NovelIDsInSeries resolves a series to the ids of its visible books, in
+// reading order. It satisfies library.SeriesBooks, which is how ติดตามทั้งชุด
+// fans out over per-novel follows without the library context importing
+// catalog.
+//
+// Hidden novels are excluded here as everywhere else: following a series must
+// not quietly subscribe a reader to a work they cannot open.
+func (r *GormRepository) NovelIDsInSeries(ctx context.Context, idOrSlug string) ([]int64, error) {
+	db := dbctx.From(ctx, r.db)
+
+	var series entities.Series
+	query := db.Model(&entities.Series{})
+	if id, err := strconv.ParseInt(idOrSlug, 10, 64); err == nil && id > 0 {
+		query = query.Where("id = ?", id)
+	} else {
+		query = query.Where("slug = ?", idOrSlug)
+	}
+	if err := query.Take(&series).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+
+	var ids []int64
+	err := db.Model(&entities.Novel{}).
+		Where("series_id = ? AND status <> ?", series.ID, entities.NovelHidden).
+		Order("series_position, id").
+		Pluck("id", &ids).Error
+	return ids, err
+}
+
+// arcsForNovels loads every book's arcs in one query. A series page renders one
+// arc list per book, and a query per book would make the page cost grow with
+// the size of the series.
+func (r *GormRepository) arcsForNovels(ctx context.Context, novelIDs []int64) (map[int64][]domain.Arc, error) {
+	if len(novelIDs) == 0 {
+		return map[int64][]domain.Arc{}, nil
+	}
+	var rows []entities.Arc
+	err := dbctx.From(ctx, r.db).
+		Where("novel_id IN ?", novelIDs).
+		Order("novel_id, arc_no").
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[int64][]domain.Arc, len(novelIDs))
+	for _, a := range rows {
+		out[a.NovelID] = append(out[a.NovelID], toDomainArc(a))
 	}
 	return out, nil
 }

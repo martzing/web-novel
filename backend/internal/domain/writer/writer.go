@@ -224,6 +224,8 @@ type DailyPoint struct {
 	Reads       int
 	CoinsEarned int
 	Followers   int
+	// Completions counts reads that reached the end of a chapter that day.
+	Completions int
 }
 
 // ChapterPerformance is one row of the best-performing-chapters table.
@@ -237,14 +239,17 @@ type ChapterPerformance struct {
 
 // NovelStats powers the writer's KPI tiles.
 type NovelStats struct {
-	Reads          int
-	Followers      int
-	CoinsEarned    int
-	ReadsTrendPct  float64
-	CoinsTrendPct  float64
-	Series         []DailyPoint
-	TopChapters    []ChapterPerformance
-	PeriodFrom     time.Time
-	PeriodTo       time.Time
+	Reads         int
+	Followers     int
+	CoinsEarned   int
+	ReadsTrendPct float64
+	CoinsTrendPct float64
+	Series        []DailyPoint
+	TopChapters   []ChapterPerformance
+	PeriodFrom    time.Time
+	PeriodTo      time.Time
+	// AvgCompletePct is อ่านจบต่อบท over the window: completions ÷ reads. It is
+	// a ratio of the same window's own numbers, not a per-chapter average, so a
+	// chapter with one read cannot swing it.
 	AvgCompletePct float64
 }

@@ -37,6 +37,9 @@ type ChapterReadEvent struct {
 	UserID     *int64    `gorm:"column:user_id"`
 	SessionID  *string   `gorm:"column:session_id;type:uuid"`
 	OccurredAt time.Time `gorm:"primaryKey;column:occurred_at;autoCreateTime"`
+	// Completed marks a read that reached the end of the chapter, which is what
+	// the อ่านจบต่อบท KPI counts.
+	Completed bool `gorm:"column:completed;not null;default:false"`
 }
 
 func (ChapterReadEvent) TableName() string { return "chapter_read_events" }
@@ -48,6 +51,7 @@ type ChapterDailyStat struct {
 	Reads         int       `gorm:"column:reads;not null;default:0"`
 	UniqueReaders int       `gorm:"column:unique_readers;not null;default:0"`
 	CoinsEarned   int       `gorm:"column:coins_earned;not null;default:0"`
+	Completions   int       `gorm:"column:completions;not null;default:0"`
 }
 
 func (ChapterDailyStat) TableName() string { return "chapter_daily_stats" }
@@ -59,6 +63,7 @@ type NovelDailyStat struct {
 	Reads           int       `gorm:"column:reads;not null;default:0"`
 	FollowersGained int       `gorm:"column:followers_gained;not null;default:0"`
 	CoinsEarned     int       `gorm:"column:coins_earned;not null;default:0"`
+	Completions     int       `gorm:"column:completions;not null;default:0"`
 }
 
 func (NovelDailyStat) TableName() string { return "novel_daily_stats" }
