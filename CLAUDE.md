@@ -7,13 +7,15 @@ editing guardrails.
 ## Quick Context
 
 Mokchan (หมอกจันทร์) is a Thai-first web novel platform for translated Chinese
-xianxia and wuxia works. PRD phases 1–4 are implemented: catalog and reader,
+xianxia and wuxia works. PRD phases 1–6 are implemented: catalog and reader,
 accounts and synced preferences, library and bookmarks, a coin economy with
 mock purchases and chapter unlock, comments and reviews, the writer workspace
-with stats, plus follows, notifications and weekly ranking.
+with stats, follows, notifications and weekly ranking, the `จัดการผลงาน` works
+workspace, series and related works, and advanced monetisation — arc bundles,
+tips, and auto-unlock with 24-hour early access.
 
-Phase 5 (real payment providers), `GET /series/{id}`, and most `/admin/*`
-endpoints are deliberately not implemented.
+Phase 7 (real payment providers) and most `/admin/*` endpoints are deliberately
+not implemented. Phase 7 is intentionally the **last** phase.
 
 ## Before Editing
 
@@ -56,8 +58,10 @@ Backend integration tests need a reachable Docker socket, or testcontainers
 **skips** them silently:
 
 ```bash
-export DOCKER_HOST=unix://$HOME/.rd/docker.sock   # Rancher Desktop
+export DOCKER_HOST=unix://$HOME/.rd/docker.sock    # Rancher Desktop
+export TESTCONTAINERS_RYUK_DISABLED=true           # Ryuk cannot mount it
 cd backend && go test -count=1 ./...
+docker rm -f $(docker ps -aq)                      # nothing reaps them otherwise
 ```
 
 Frontend:

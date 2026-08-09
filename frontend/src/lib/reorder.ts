@@ -27,7 +27,7 @@ export interface DragHandlers {
  * though — it is unusable with a keyboard and awkward on touch — so every
  * caller pairs it with the move up/down buttons this hook also serves.
  */
-export function useReorder<T>(onReorder: (from: number, to: number) => void) {
+export function useReorder(onReorder: (from: number, to: number) => void) {
   const [dragging, setDragging] = useState<number | null>(null);
   const [over, setOver] = useState<number | null>(null);
 
@@ -71,6 +71,3 @@ export function useReorder<T>(onReorder: (from: number, to: number) => void) {
 
   return { handlersFor, classFor };
 }
-
-/** Unused-generic guard: keeps the hook's signature honest for callers. */
-export type Reorderable<T> = T[];

@@ -367,3 +367,14 @@
     padding-bottom: calc(40px + env(safe-area-inset-bottom));
   }
 }
+
+/* ── Tip control ────────────────────────────────────────────────────────── */
+
+.tip-box {
+  margin-top: 26px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r3);
+  background: var(--panel);
+  text-align: center;
+}

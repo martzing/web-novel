@@ -40,6 +40,33 @@ Personas: **R** = Reader, **W** = Translator/Writer, **A** = Admin.
 | W-08 | View stats: reads, followers, coins, over 14 / 30 days.                       | KPI matches sum from `chapter_daily_stats`.                  |
 | W-09 | Reply to comments on my chapters.                                             | Reply flagged `is_translator=true`.                          |
 | W-10 | Request payout of coins to fiat.                                              | Creates `payouts` row in `requested` state.                  |
+| W-11 | Manage all my works from one screen, grouped by series.                       | จัดการผลงาน lists every owned novel under its series; selecting one loads its five tabs. |
+| W-12 | Record how many chapters exist in the original.                               | `source_chapters_count` is writer-entered and feeds every `บทในต้นฉบับ` figure. |
+| W-13 | Build a cover from a template when I have no artwork.                         | Style + colour + text render in CSS; an uploaded image always wins over a template. |
+| W-14 | Create a series and drag its books into reading order.                        | Order is 1..n with no gaps after any permutation; readers see the same order on the series page. |
+| W-15 | Add a note to each book explaining where it sits in the series.               | Note is stored per novel and shown on the public series page. |
+| W-16 | Link a work to its sequel, prequel, spin-off, side story, or shared world.    | Stored once; the far novel shows the inverse kind and cannot unlink it. |
+| W-17 | Set a price once for the whole novel rather than per chapter.                 | New chapters inherit `price_per_chapter`; chapters at or below `free_until_chapter` are forced free. |
+| W-18 | Sell a whole arc at a discount.                                               | With `sell_by_arc` on, readers see a buy-arc control priced at 85% of the sum. |
+| W-19 | Accept tips from readers at the end of a chapter.                             | With `tips_enabled` on, a tip credits `writer_earnings` net of the platform fee. |
+| W-20 | Give my auto-unlock subscribers a 24-hour head start.                         | New chapters carry a `public_at` snapshot; non-subscribers see a teaser until it passes. |
+| W-21 | Hide a work from the storefront without deleting it.                          | `hidden` removes it from browse, search, ranking and its detail page for everyone but me. |
+| W-22 | Tell readers how often new chapters land.                                     | `รอบปล่อยบทใหม่` is shown on the detail page; it does not schedule anything. |
+| W-23 | Jump from a chapter in จัดการผลงาน straight into the editor.                   | The link preselects both the work and the chapter rather than restarting the wizard. |
+
+## Reader — series, bundles, tips and auto-unlock
+
+| ID   | Story                                                              | Acceptance                                                                 |
+| ---- | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| R-20 | See how far a translation has to run.                              | Every novel surface shows `บทที่แปลแล้ว` beside `บทในต้นฉบับ`.               |
+| R-21 | Browse a series in the order the translator recommends.            | `/series/{id}` lists the books by position with each one's note.            |
+| R-22 | Find a work's sequels, prequels and side stories.                  | Related works are grouped by kind on the detail page.                       |
+| R-23 | Buy a whole arc in one go and pay less than chapter by chapter.    | The quote shows gross, 15% discount and total; the purchase writes one ledger row and N unlocks. |
+| R-24 | Tip a translator for a chapter I enjoyed.                          | 1–1000 coins, purchased coins only; a repeat tip needs a new idempotency key. |
+| R-25 | Have new chapters unlock automatically, up to a price I set.       | Per-novel opt-in with a per-chapter cap; running out of coins notifies once and keeps the subscription on. |
+| R-26 | Read new chapters before everyone else while subscribed.           | Subscribers read immediately; others see a teaser with metadata and no body for 24 hours. |
+| R-27 | Reach a novel's detail page and full ToC from my shelf.            | The cover and title link to the detail page; a `รายละเอียดและสารบัญ` button sits beside the continue CTA. |
+| R-28 | Filter a long table of contents.                                   | Pills for ทั้งหมด / อ่านฟรี / ปลดล็อกแล้ว / ยังไม่ปลดล็อก over an arc-grouped, expandable list. |
 
 ## Admin
 

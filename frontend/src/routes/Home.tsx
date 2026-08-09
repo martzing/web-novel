@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { greeting, numberTH, percent, relativeTime } from "../lib/format";
-import { Cover, Empty, Loading, NovelCard } from "../components";
+import { Empty, Loading, NovelCard, NovelCover } from "../components";
 
 export default function Home() {
   const { user } = useAuth();
@@ -50,13 +50,22 @@ export default function Home() {
             <Loading rows={1} />
           ) : continueReading ? (
             <Link
-              to={`/novels/${continueReading.slug}`}
+              to={
+                continueReading.last_chapter_id
+                  ? `/read/${continueReading.last_chapter_id}`
+                  : `/novels/${continueReading.slug}`
+              }
               className="card"
               style={{ display: "flex", gap: 22, marginTop: 14, color: "inherit" }}
             >
-              <Cover
-                url={continueReading.cover_url}
-                titleCN={continueReading.title_cn}
+              <NovelCover
+                novel={{
+                  cover_url: continueReading.cover_url,
+                  title_cn: continueReading.title_cn,
+                  cover_style: continueReading.cover_style,
+                  cover_color: continueReading.cover_color,
+                  cover_text: continueReading.cover_text,
+                }}
                 width={74}
                 height={104}
               />
@@ -68,9 +77,21 @@ export default function Home() {
                   {continueReading.title_th}
                 </div>
                 <div className="muted" style={{ fontSize: 12.5, marginTop: 8 }}>
-                  {continueReading.last_chapter_no
-                    ? `บทที่ ${continueReading.last_chapter_no} · อ่านไปแล้ว ${percent(continueReading.pct)}`
-                    : "ยังไม่เริ่มอ่าน"}
+                  {continueReading.last_chapter_no ? (
+                    <>
+                      บทที่ {numberTH(continueReading.last_chapter_no)} จาก{" "}
+                      {numberTH(continueReading.chapters_count)} บทที่แปลแล้ว · อ่านไปแล้ว{" "}
+                      {percent(continueReading.pct)}
+                      {continueReading.chapters_count - continueReading.last_chapter_no > 0 && (
+                        <span style={{ color: "var(--gold)" }}>
+                          {" · "}มีบทใหม่{" "}
+                          {numberTH(continueReading.chapters_count - continueReading.last_chapter_no)} บท
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    "ยังไม่เริ่มอ่าน"
+                  )}
                 </div>
               </div>
               <div style={{ alignSelf: "center", color: "var(--red)", fontSize: 13, whiteSpace: "nowrap" }}>

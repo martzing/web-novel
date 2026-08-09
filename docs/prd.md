@@ -30,6 +30,13 @@
 - Home: welcome, "continue reading", weekly featured banner, weekly Top-N, latest updates.
 - Browse: text search, genre chip filter, popularity/latest sort.
 - Novel detail: cover, synopsis, rating summary, series link, glossary count, arc-grouped ToC.
+- Every surface that shows a chapter count shows **two**: `บทที่แปลแล้ว`
+  (translated) and `บทในต้นฉบับ` (source), so a reader can see how far a work
+  still has to run. The source figure is translator-entered.
+- Novel detail rebuilt around a resume-reading card, chapter filter pills
+  (`ทั้งหมด` / `อ่านฟรี` / `ปลดล็อกแล้ว` / `ยังไม่ปลดล็อก`), and an arc-grouped
+  expandable ToC whose rows carry per-chapter tags. Chapters beyond the
+  translated count are listed dimmed as `ยังไม่แปล`.
 
 ### Reader
 
@@ -42,12 +49,58 @@
 ### Library
 
 - Tabs: reading / saved / done, with progress bars.
+- Each shelf row is two navigation targets, not one: the cover and title open
+  the novel's detail page, and a `รายละเอียดและสารบัญ` button sits beside the
+  accent-outlined continue CTA. Progress reads in translated chapters
+  (`บทที่ 87 จาก 88 บทที่แปลแล้ว · มีบทใหม่ 1 บท`) rather than a bare percentage.
 
 ### Coins & unlock
 
 - Balance card, "best value" pack badge, ledger history.
 - Chapter unlock: locked chapters show a price; unlocking spends coins atomically.
 - Bonus coins expire; spend order = bonus first.
+- **Arc bundles** — where a translator enables it, a reader buys a whole arc at
+  a platform-wide 15% discount. One ledger row, N `chapter_unlocks` rows, and
+  one `writer_earnings` row per chapter (an arc's chapters can have different
+  translators).
+- **Tips** — a reader can tip the translator at the end of a chapter, 1–1000
+  coins. Tips are a distinct ledger kind, draw on **purchased coins only**, and
+  pay the same platform fee as an unlock.
+- **Auto-unlock with 24-hour early access** — a per-novel opt-in with a
+  per-chapter coin cap. Subscribers are debited by a scanning job as chapters
+  publish, and read new chapters 24 hours before everyone else. Non-subscribers
+  see the chapter listed as a teaser during the window.
+
+### Works management
+
+`จัดการผลงาน` is the translator's setup workspace, and the first entry in the
+writer navigation. A two-pane master/detail layout: a work tree grouped by
+series on the left, and five tabs on the right — `ข้อมูลเรื่อง`, `หน้าปก`,
+`ภาคและบท`, `ชุดและเรื่องเกี่ยวเนื่อง`, `ราคาและการเผยแพร่`.
+
+- Novel metadata, genres (max 3), and the source chapter count.
+- Cover: an uploaded image **or** a generated template (style + colour + text),
+  rendered in CSS so it stays crisp at every size and costs no request.
+- Arcs, and a deep link from any chapter into the editor with both the work and
+  the chapter preselected.
+- Series membership, drag-ordered reading list, and related works.
+- Pricing and publishing: price per chapter, free-until-chapter, arc sales,
+  early access, tips, publication status, and `รอบปล่อยบทใหม่`.
+
+`ซ่อนจากหน้าร้าน` is a real publication status: a hidden novel is absent from
+browse, search, ranking and its own detail page for everyone except its
+translator, who can still open and edit it.
+
+### Series & related works
+
+- A **series** (`ชุดหนังสือ`) is a translator-owned collection with a
+  drag-ordered reading list. Each book carries a note — "อ่านเล่มนี้ก่อนได้
+  ไม่สปอยล์" — which is the reason the public series page exists rather than a
+  genre filter. A novel belongs to at most one series.
+- **Related works** (`เรื่องเกี่ยวเนื่อง`) link two novels under one of five
+  kinds: `sequel` (ภาคต่อโดยตรง), `prequel` (ปฐมบท), `spinoff` (ภาคแยก),
+  `side_story` (ภาคพิเศษ), `same_world` (เกิดในโลกเดียวกัน). Links are stored
+  once and shown from both novels, the far side carrying the inverse kind.
 
 ### Comments & reviews
 
@@ -56,9 +109,15 @@
 
 ### Writer workspace
 
+- `เขียนบท` is a three-step wizard: pick the work, pick or create the chapter,
+  then edit. The steps derive from the URL, so a deep link from `จัดการผลงาน`
+  lands straight in the editor.
 - Left rail with drafts and published chapters (with status pill).
 - Editor: title, arc pill, body, toolbar (footnote / glossary bind / scene break), price picker, save-draft / schedule-publish.
+- A new chapter inherits `price_per_chapter` from its novel, and is forced free
+  below `free_until_chapter`.
 - Stats page: KPI tiles (reads, followers, coins, THB) with 14-day trend indicator.
+  Coin earnings include tips as well as unlocks.
 
 ### Onboarding
 
@@ -71,6 +130,9 @@
 | D7 reader retention               | ≥ 25%        |
 | Median time-to-first-unlock       | ≤ 3 sessions |
 | Chapter-unlock success rate       | ≥ 99.95%     |
+| Arc-bundle purchase success rate  | ≥ 99.95%     |
+| Tip success rate                  | ≥ 99.9%      |
+| Auto-unlock fan-out lag (p95)     | ≤ 15 min     |
 | Wallet reconciliation discrepancy | 0            |
 | p95 chapter GET (warm cache)      | ≤ 400 ms     |
 | p95 chapter GET (cold)            | ≤ 900 ms     |
@@ -86,11 +148,23 @@
 
 ## 8. Rollout phases
 
-1. **Phase 1** — Reader + catalog + accounts (no coins).
-2. **Phase 2** — Coins + unlock + comments, using a **mock payment provider only** (no external gateway this phase).
-3. **Phase 3** — Writer workspace + stats + payouts.
-4. **Phase 4** — Reviews, follows, notifications, ranking.
-5. **Phase 5 (post-MVP)** — Wire real payment providers (Omise / TrueMoney / Stripe) behind the existing `purchases` table.
+Wiring real payment providers is deliberately the **last** phase: every phase
+before it delivers reader- or translator-facing value on the mock provider, and
+none of them is blocked on a gateway integration.
+
+| Phase | Content | Status |
+| --- | --- | --- |
+| 1 | Reader + catalog + accounts (no coins) | done |
+| 2 | Coins + unlock + comments, **mock payment provider only** | done |
+| 3 | Writer workspace + stats + payouts | done |
+| 4 | Reviews, follows, notifications, ranking | done |
+| 5 | Works management, series & related works, translated/source chapter split | done |
+| 6 | Advanced monetisation — arc bundles, tips, auto-unlock + 24h early access | done |
+| 7 (last, post-MVP) | Wire real payment providers (Omise / TrueMoney / Stripe) behind the existing `purchases` table | **not implemented** |
+
+Phase 7 keeps its original shape: the `purchases` table, the idempotent
+`(provider, provider_ref)` webhook key, and the `PAYMENTS_MOCK_ENABLED` flag are
+already in place, so the work is a provider adapter rather than a schema change.
 
 ## 9. Locked design decisions
 
@@ -98,3 +172,30 @@
 - **Chapter body storage**: pre-rendered `body_html` with baked `<span data-k>` spans; keep `body_source` for the editor. Track `glossary_rev` on `chapter_bodies` and re-render when the parent novel's `glossary_rev` bumps.
 - **Payment gateway**: none in this phase. Endpoints are `POST /purchases` (creates a `pending` mock purchase) and `POST /purchases/{id}/mock-complete` (dev/admin gated, credits wallet via the same ledger helper a real webhook would use). Feature flag: `PAYMENTS_MOCK_ENABLED`.
 - **Bonus expiry cadence**: nightly cron 03:00 Asia/Bangkok writes `coin_ledger(kind='bonus_expire')` and zeroes `bonus_balance`. Spend-time guard treats expired bonus as 0 defensively.
+- **Tips are paid-coin-only**: bonus coins are promotional, and letting them fund
+  a tip turns them into an unbounded, reader-chosen payout obligation with
+  nothing exchanged — sign up, collect the bonus, tip a controlled translator,
+  withdraw. A distinct `INSUFFICIENT_PAID_COINS` (402) is returned rather than a
+  generic shortfall, because "เหรียญไม่พอ" beside a visible bonus balance is a
+  guaranteed support ticket.
+- **The arc discount is a platform constant, not per-novel data**: the settings
+  panel offers a checkbox, not a percentage field, and a column today would let a
+  novel set 100%.
+- **`chapters.public_at` is snapshotted at publish, not derived at read time**:
+  deriving it would force a join to `novels` into the hottest queries in the app,
+  and would let a translator flipping the setting retroactively un-publish the
+  last day of chapters.
+- **An early-access chapter is a teaser, not a hidden one**: it stays in the ToC
+  for everyone with its metadata and no body. It is the conversion surface for
+  auto-unlock, and `novels.chapters_count` is a stored column that a
+  viewer-dependent list would contradict for 24 hours.
+- **A novel belongs to at most one series**: the design's series picker is
+  single-select, so the reading-order slot and note live on `novels` rather than
+  in a join table that would carry a uniqueness constraint and no extra data.
+- **Auto-unlock fan-out is a scanning job keyed on the missing-unlock
+  invariant**: debiting inside the publish request would make publish
+  O(subscribers) and hold its transaction across many wallet locks. Scanning for
+  *absent* `chapter_unlocks` rows is idempotent by construction, self-heals after
+  an incident, and never charges a reader who unlocked manually.
+- **`รอบปล่อยบทใหม่` is display-only metadata**: it tells readers when to come
+  back and deliberately does not drive the publishing scheduler.

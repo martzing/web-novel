@@ -195,7 +195,7 @@ plain unit tests.
 
 ## Background jobs
 
-`internal/jobs` holds a scheduler and eight jobs. Every job takes `now` as a
+`internal/jobs` holds a scheduler and nine jobs. Every job takes `now` as a
 parameter instead of calling `time.Now`, so each is deterministic under test,
 and each wraps its work in a **transaction-scoped** advisory lock
 (`pg_try_advisory_xact_lock`) so multiple runners are safe. A session-scoped
@@ -204,6 +204,70 @@ be taken and released on different ones.
 
 Jobs run inside `cmd/api` when `RUN_JOBS_IN_API=true` (the default outside
 production) and in `cmd/worker` otherwise.
+
+## Two-axis chapter visibility
+
+`reading.See` sits **beside** `Decide`, not inside it. Timing (is this chapter
+available at all, to this viewer, right now?) and entitlement (has this reader
+paid?) are orthogonal axes, and keeping them apart lets each be table-tested on
+its own — `Decide`'s existing tests were untouched by early access.
+
+`See` returns one of three states:
+
+| State | Meaning |
+| --- | --- |
+| `VisibleHidden` | Not listed; a read is a 404. Drafts and scheduled work. |
+| `VisibleTeaser` | Listed with metadata, body always withheld. An early-access chapter seen by someone with no claim to it. |
+| `VisibleFull` | Readable, subject to `Decide`. |
+
+Ownership beats subscription, so a reader who auto-unlocked and then cancelled
+keeps what they paid for.
+
+The payoff is a very small blast radius: `ListChapters`, `NeighbourIDs` and
+`GetChapter` SQL are all **unchanged** — the filter is `See`, in Go. The one
+place `public_at` must reach SQL is the *sale* path, or anyone could simply pay
+to defeat the exclusivity; `ChapterForSale` returns it and the unlock and bundle
+paths refuse a non-public chapter with `EARLY_ACCESS_ONLY`.
+
+## The coin write path, extended
+
+`wallet.Repository.Apply` is still the single coin write path, and still takes
+`wallet_balances FOR UPDATE` first — one lock-acquisition order is what makes
+deadlock structurally impossible. Two things grew:
+
+- **Multi-row child writes.** An arc bundle writes N `chapter_unlocks` rows and
+  one `writer_earnings` row *per chapter* (an arc's chapters can have different
+  translators), all referencing the one ledger row. A guard asserts the child
+  coins sum exactly to the debit, which is what keeps
+  `sum(chapter_unlocks.coins_spent)` equal to the ledger delta —
+  `chapter_daily_stats` depends on that.
+- **A paid-only planner.** `PlanSpendPaidOnly` sits beside `PlanSpend` and funds
+  tips from purchased coins alone. A tip still credits `writer_earnings`, never
+  the translator's spendable wallet: crediting a second wallet in the same
+  transaction would mean locking a second `wallet_balances` row, and two
+  opposing tips would deadlock.
+
+The idempotency replay check compares `ref_type` as well as `ref_id`. Keys are
+already namespaced per operation by the service, so this is defence in depth —
+but it is what keeps the guarantee true for callers that derive their own keys,
+as the auto-unlock job does.
+
+## The auto-unlock fan-out job
+
+Fan-out is a **scan for missing unlocks**, not a publish-time loop and not a
+queue. Debiting inside the publish request would make publish O(subscribers) and
+hold its transaction across N wallet locks — precisely the hazard the coin
+design avoids. A queue would need an outbox to avoid losing work. Making the
+candidate predicate the invariant itself (`NOT EXISTS chapter_unlocks`) means
+the job is idempotent by construction, self-heals after an incident, and never
+charges someone who unlocked manually.
+
+One structural detail must not be "simplified" later: `withJobLock` publishes its
+transaction on the context, so the lock is used **only to claim a batch**. Each
+debit then runs in its own transaction on the outer context — one broke
+subscriber must not roll back everyone else's.
+`TestAutoUnlockJob_OneBrokeSubscriberDoesNotRollBackTheOthers` exists solely to
+fail if that is ever undone.
 
 ## Known risks
 

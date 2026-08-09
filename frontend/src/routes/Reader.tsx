@@ -245,7 +245,30 @@ export default function Reader() {
           </div>
         </div>
 
-        {c.locked ? (
+        {c.locked && c.locked_reason === "early_access" ? (
+          // Early access is not a paywall: no amount of coins opens this yet,
+          // so offering a purchase button would just produce a 403.
+          <div className="paywall">
+            <div className="eyebrow">เปิดให้อ่านก่อนใคร</div>
+            <h2 style={{ fontSize: 21, marginTop: 10 }}>
+              บทที่ {c.chapter_no} — {c.title}
+            </h2>
+            <div className="muted" style={{ fontSize: 13, marginTop: 14, lineHeight: 1.9 }}>
+              บทนี้เปิดให้ผู้ที่เปิดปลดล็อกอัตโนมัติอ่านก่อน 24 ชั่วโมง
+              จากนั้นจะเปิดให้ทุกคนโดยอัตโนมัติ
+            </div>
+            <div style={{ marginTop: 18, display: "grid", gap: 10 }}>
+              <Link to={`/novels/${c.novel_slug}`} className="btn btn--primary btn--block">
+                เปิดปลดล็อกอัตโนมัติ
+              </Link>
+              {c.prev_id && (
+                <Link to={`/read/${c.prev_id}`} className="btn btn--block">
+                  ← กลับไปบทก่อนหน้า
+                </Link>
+              )}
+            </div>
+          </div>
+        ) : c.locked ? (
           <div className="paywall">
             <div className="eyebrow">บทนี้ยังไม่ปลดล็อก</div>
             <h2 style={{ fontSize: 21, marginTop: 10 }}>
@@ -311,6 +334,7 @@ export default function Reader() {
                   ความเห็นของบทนี้
                 </Link>
               </div>
+              {c.tips_enabled && user && <TipControl chapterId={c.id} />}
             </div>
           </>
         )}
@@ -325,7 +349,11 @@ export default function Reader() {
           ← บทก่อนหน้า
         </button>
         <span className="mono muted" style={{ fontSize: 12 }}>
-          {c.chapter_no} · {pct}%
+          {/* Against the translated count, not a bare number: the reader is
+              seeing how far through the Thai text they are, and the source may
+              run hundreds of chapters ahead. */}
+          {c.chapter_no} / {numberTH(chapters.data?.data.length ?? c.chapter_no)} บทที่แปลแล้ว ·{" "}
+          {pct}%
         </span>
         <button
           className="reader__tool"
@@ -428,11 +456,91 @@ function TocPanel({
         >
           <span className="panel__num">{c.chapter_no}</span>
           <span style={{ flex: 1 }}>{c.title}</span>
-          {c.price_coins > 0 && !c.unlocked && <span className="muted">◎</span>}
+          {/* A tag rather than a bare ◎: "อ่านฟรี" and "ปลดล็อกแล้ว" are as
+              worth knowing as the price when scanning a long table. */}
+          {c.price_coins === 0 ? (
+            <span className="pill">อ่านฟรี</span>
+          ) : c.unlocked ? (
+            <span className="pill pill--gold">ปลดล็อกแล้ว</span>
+          ) : (
+            <span className="pill pill--red">◎ {c.price_coins}</span>
+          )}
         </button>
       ))}
     </>
   );
+}
+
+/** ทิปท้ายบท — a direct payment to the translator, paid coins only. */
+const TIP_AMOUNTS = [5, 10, 20, 50];
+
+function TipControl({ chapterId }: { chapterId: string }) {
+  const qc = useQueryClient();
+  const [coins, setCoins] = useState(10);
+  const [done, setDone] = useState(false);
+
+  const tip = useMutation({
+    mutationFn: () => api.tipChapter(chapterId, coins, newIdempotencyKey()),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      setDone(true);
+    },
+  });
+
+  if (done) {
+    return (
+      <div className="tip-box">
+        <div className="muted" style={{ fontSize: 13 }}>
+          ขอบคุณที่สนับสนุนผู้แปล · ส่งไปแล้ว {coins} เหรียญ
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tip-box">
+      <div style={{ fontSize: 13.5 }}>ชอบบทนี้ไหม ส่งทิปให้ผู้แปลได้</div>
+      <div className="chips" style={{ marginTop: 12, justifyContent: "center" }}>
+        {TIP_AMOUNTS.map((amount) => (
+          <button
+            key={amount}
+            className={`chip${coins === amount ? " is-active" : ""}`}
+            onClick={() => setCoins(amount)}
+          >
+            ◎ {amount}
+          </button>
+        ))}
+      </div>
+      {tip.isError && (
+        <div className="form-error" style={{ marginTop: 12 }}>
+          {tipMessage((tip.error as Error & { code?: string }).code, (tip.error as Error).message)}
+        </div>
+      )}
+      <button
+        className="btn btn--accent"
+        style={{ marginTop: 14 }}
+        disabled={tip.isPending}
+        onClick={() => tip.mutate()}
+      >
+        ส่งทิป ◎ {coins}
+      </button>
+    </div>
+  );
+}
+
+function tipMessage(code: string | undefined, fallback: string): string {
+  switch (code) {
+    case "INSUFFICIENT_PAID_COINS":
+      // Distinct from a plain shortfall: bonus coins cannot fund a tip, and a
+      // reader looking at a bonus balance deserves to be told why.
+      return "ทิปใช้ได้เฉพาะเหรียญที่ซื้อเอง (ไม่รวมเหรียญโบนัส) · เติมเหรียญก่อนแล้วลองใหม่";
+    case "CANNOT_TIP_SELF":
+      return "ให้ทิปผลงานของตัวเองไม่ได้";
+    case "TIPS_DISABLED":
+      return "เรื่องนี้ปิดรับทิป";
+    default:
+      return fallback;
+  }
 }
 
 function GlossaryPanel({ groups }: { groups: { id: string; name: string; entries: GlossaryEntry[] }[] }) {

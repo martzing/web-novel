@@ -10,8 +10,12 @@ Tiers:
 ## Status
 
 Every **U** and **I** case below is implemented; the mapping table at the end of
-this document names the file and function for each. **E** and **L** are out of
-scope for phases 1–4 — see "Out of scope" at the end.
+this document names the file and function for each. **E** and **L** remain out
+of scope — see "Out of scope" at the end.
+
+The suite is 575 passing tests with 0 skips. A skip is not a pass here: without
+a reachable Docker socket testcontainers skips silently, so always confirm with
+`go test -count=1 -v ./... | grep -c -- '--- SKIP'`.
 
 Run them with:
 
@@ -183,13 +187,56 @@ Paths are relative to `backend/`.
 | I-SEC-04   | `internal/handler/library/handler_integration_test.go` · `TestLibrary_CannotSeeAnotherUsersProgressOrShelf` |
 | I-SEC-05   | `internal/handler/reading/handler_integration_test.go` · `TestGetChapter_LimitsDistinctBodiesPerUserPerMinute` |
 
+### Advanced monetisation, series and works management
+
+| ID | File · function |
+| --- | --- |
+| I-COIN-11 | `internal/handler/wallet/monetization_integration_test.go` · `TestArcBundle_ChargesFifteenPercentOffAndWritesOneLedgerRowWithNUnlocks` |
+| I-COIN-12 | `internal/handler/wallet/monetization_integration_test.go` · `TestArcBundle_ConcurrentDoubleBuyYieldsOneDebit` |
+| I-COIN-13 | `internal/handler/wallet/monetization_integration_test.go` · `TestArcBundle_RacingASingleChapterUnlockYieldsOneDebitPerChapter` |
+| I-COIN-14 | `internal/repository/wallet/apply_integration_test.go` · `TestApply_SameKeyDifferentRefTypeConflicts` |
+| I-TIP-01 | `internal/handler/wallet/tip_integration_test.go` · `TestTip_WritesTipLedgerRowAndWriterEarningNetOfPlatformFee` |
+| I-TIP-02 | `internal/handler/wallet/tip_integration_test.go` · `TestTip_RefusesToSpendBonusCoinsEvenWhenAmpleAndReports402` |
+| I-TIP-03 | `internal/handler/wallet/tip_integration_test.go` · `TestTip_RepeatsWithNewKeysAndReplaysWithTheSameKey` |
+| I-EA-01 | `internal/handler/reading/earlyaccess_integration_test.go` · `TestEarlyAccess_NonSubscriberSeesATeaserWithNoBody` |
+| I-EA-02 | `internal/handler/reading/earlyaccess_integration_test.go` · `TestEarlyAccess_SubscriberReadsInsideTheWindow` |
+| I-EA-03 | `internal/handler/reading/earlyaccess_integration_test.go` · `TestEarlyAccess_OwnershipSurvivesUnsubscribing` |
+| I-EA-04 | `internal/handler/reading/earlyaccess_integration_test.go` · `TestEarlyAccess_TranslatorReadsTheirOwnEarlyChapter` |
+| I-EA-05 | `internal/handler/reading/earlyaccess_integration_test.go` · `TestEarlyAccess_WindowExpiresAndTheChapterOpensToEveryone` |
+| I-EA-06 | `internal/handler/reading/earlyaccess_integration_test.go` · `TestEarlyAccess_BuyingAnEarlyChapterIsRefused` |
+| I-AU-01 | `internal/jobs/autounlock_integration_test.go` · `TestAutoUnlockJob_DebitsASubscriberAndWritesTheUnlock` |
+| I-AU-02 | `internal/jobs/autounlock_integration_test.go` · `TestAutoUnlockJob_RunningTwiceChargesOnce` |
+| I-AU-03 | `internal/jobs/autounlock_integration_test.go` · `TestAutoUnlockJob_OneBrokeSubscriberDoesNotRollBackTheOthers` |
+| I-AU-04 | `internal/jobs/autounlock_integration_test.go` · `TestAutoUnlockJob_InsufficientCoinsNotifiesAndKeepsTheSubscriptionActive` |
+| I-AU-05 | `internal/jobs/autounlock_integration_test.go` · `TestAutoUnlockJob_RetriesWithBackoffThenStopsAtMaxAttempts` |
+| I-AU-06 | `internal/jobs/autounlock_integration_test.go` · `TestAutoUnlockJob_SkipsChaptersOverTheReadersCap` |
+| I-AU-07 | `internal/jobs/autounlock_integration_test.go` · `TestAutoUnlockJob_NeverChargesForAManuallyUnlockedChapter` |
+| I-AU-08 | `internal/jobs/autounlock_integration_test.go` · `TestAutoUnlockJob_IgnoresInactiveSubscriptionsAndPreSubscriptionChapters` |
+| I-SER-01 | `internal/handler/writer/series_integration_test.go` · `TestSeries_ReorderRenumbersFromOneAndSurvivesAPartialList` |
+| I-SER-02 | `internal/handler/writer/series_integration_test.go` · `TestSeries_RepeatedPermutationsDoNotTripTheUniquePositionIndex` |
+| I-SER-03 | `internal/handler/writer/series_integration_test.go` · `TestSeries_DeletingLeavesTheNovelsInPlaceAndClearsTheirOrder` |
+| I-SER-04 | `internal/handler/writer/series_integration_test.go` · `TestSeries_JoiningAnotherTranslatorsSeriesIsForbidden` |
+| I-REL-01 | `internal/handler/writer/series_integration_test.go` · `TestRelations_AppearOnTheFarNovelWithTheInverseKind` |
+| I-REL-02 | `internal/handler/catalog/series_integration_test.go` · `TestPublicRelated_GroupsBothDirectionsWithLabels` |
+| I-WRK-01 | `internal/handler/writer/settings_integration_test.go` · `TestNovelSettings_ExplicitFalseAndZeroAreApplied` |
+| I-WRK-02 | `internal/handler/writer/settings_integration_test.go` · `TestNovelSettings_OmittedFieldsAreLeftAlone` |
+| I-WRK-03 | `internal/handler/writer/settings_integration_test.go` · `TestCreateChapter_DefaultsPriceFromTheNovelAndHonoursFreeUntil` |
+| I-HID-01 | `internal/handler/catalog/series_integration_test.go` · `TestHidden_IsExcludedFromBrowseSearchAndRanking` |
+| I-HID-02 | `internal/handler/catalog/series_integration_test.go` · `TestHidden_DetailIs404ForReadersButOpenToItsTranslator` |
+| I-PUB-01 | `internal/handler/catalog/series_integration_test.go` · `TestPublicSeries_ReturnsBooksInReadingOrderWithSummedCounts` |
+
 ### Supporting unit tests
 
 These have no row above but de-risk the integration tier:
 
 `internal/auth/jwt_test.go` (round trip, alg-none rejected, tampered signature,
 foreign secret, expiry) · `internal/domain/wallet/spend_test.go` (insufficient
-funds, credit expiry, adjust clamping, `NetCoins` rounding) ·
+funds, credit expiry, adjust clamping, `NetCoins` rounding, and
+`PlanSpendPaidOnly` refusing an ample bonus) ·
+`internal/domain/wallet/bundle_test.go` (`QuoteBundle` rounds the discount down;
+`AllocateProportional` sums exactly to the total and never exceeds list price) ·
+`internal/domain/reading/visibility_test.go` (`See` across every timing ×
+claim combination) ·
 `internal/glossaryrender/render_test.go` (binding, unknown markers preserved,
 escaping, dedupe) · `internal/domain/reading/entitlement_test.go` ·
 `internal/domain/social/validate_test.go` (runes not bytes, `CanDelete`) ·

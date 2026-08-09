@@ -3,10 +3,15 @@
 React (Vite + TS + TanStack Query) + Go 1.25 (Gin + GORM + pgx) + PostgreSQL 16
 + Redis 7.
 
-PRD phases 1–4 are implemented end to end: catalog and reader, accounts with
+PRD phases 1–6 are implemented end to end: catalog and reader, accounts with
 synced reader preferences, library and bookmarks, a coin economy with mock
 purchases and chapter unlock, comments and reviews, the writer workspace with
-stats, plus follows, notifications and weekly ranking.
+stats, follows, notifications and weekly ranking — plus the `จัดการผลงาน` works
+workspace, series and related works, and advanced monetisation (arc bundles at
+−15%, tips, and auto-unlock with a 24-hour early-access window).
+
+Every novel surface now shows two chapter counts: `บทที่แปลแล้ว` (translated)
+against `บทในต้นฉบับ` (source).
 
 ## Layout
 
@@ -164,8 +169,10 @@ so a green run can mean nothing ran. On Rancher Desktop:
 
 ```bash
 export DOCKER_HOST=unix://$HOME/.rd/docker.sock
+export TESTCONTAINERS_RYUK_DISABLED=true   # Ryuk cannot mount that socket
 cd backend && go test -count=1 ./...
-go test -count=1 -v ./... | grep SKIP    # should print nothing
+go test -count=1 -v ./... | grep SKIP      # should print nothing
+docker rm -f $(docker ps -aq)              # nothing reaps them with Ryuk off
 ```
 
 Frontend:
@@ -181,10 +188,10 @@ function.
 
 ## Not implemented
 
-- **Phase 5** — real payment providers (Omise / TrueMoney / Stripe). Phase 2
-  ships a mock provider behind `PAYMENTS_MOCK_ENABLED`; the checkout screen is a
-  UI shell over `POST /purchases` + `/mock-complete` and transmits no card data.
-- `GET /series/{id}` — the `series` table exists but is unused.
+- **Phase 7** — real payment providers (Omise / TrueMoney / Stripe), deliberately
+  the last phase. Phase 2 ships a mock provider behind `PAYMENTS_MOCK_ENABLED`;
+  the checkout screen is a UI shell over `POST /purchases` + `/mock-complete`
+  and transmits no card data.
 - Most `/admin/*` endpoints. Only `POST /admin/wallet-adjust` is implemented,
   because the coin test matrix requires it.
 - Browser end-to-end and load tests (tiers E and L in `docs/test-cases.md`).

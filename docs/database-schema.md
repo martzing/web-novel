@@ -294,6 +294,53 @@ republishing a chapter is a normal editorial action, so fan-out relies on these
 indexes plus `ON CONFLICT DO NOTHING` rather than on the caller remembering not
 to repeat itself.
 
+### Monetisation, series and covers (0007)
+
+The largest migration since the initial schema. It carries every schema change
+for works management and advanced monetisation.
+
+**`novels`** gains twelve columns: `source_chapters_count` (บทในต้นฉบับ),
+`price_per_chapter`, `free_until_chapter`, `sell_by_arc`, `tips_enabled`,
+`early_access_hours` (0–168), `release_schedule`, the cover template trio
+`cover_style` / `cover_color` / `cover_text`, and the series placement pair
+`series_position` / `series_note`. `novels.status` gains `'hidden'`.
+
+A **partial unique index** `novels_series_position` on
+`(series_id, series_position)` keeps two books in one series from claiming the
+same slot. Being partial, it cannot be deferred — Postgres enforces it row by
+row within a statement — so renumbering a reading order permutes through
+negatives first (see `SetSeriesOrder`); a single `UPDATE ... CASE` collides
+halfway through on any rotation.
+
+**`chapters.public_at`** is when a published chapter becomes visible to
+non-subscribers. It is **snapshotted at publish time** (`published_at +
+novels.early_access_hours`), not derived on read: deriving it would force a join
+to `novels` into the hottest queries in the app, and would let a translator
+flipping the setting retroactively un-publish the last day of chapters. Backfilled
+to `published_at` for existing rows, so nothing already public becomes private.
+
+**`coin_ledger.kind`** gains `'tip'` and **`writer_earnings.kind`** distinguishes
+`'unlock'` from `'tip'`, so a tip is not filed as a sale and unlock-derived
+statistics stay meaningful.
+
+**`series`** gains `owner_user_id` and `slug` (added → backfilled → `SET NOT
+NULL` → unique index; it cannot be one statement).
+
+Three new tables:
+
+| Table | Purpose |
+| --- | --- |
+| `auto_unlock_subscriptions` | `(user_id, novel_id)` opt-in with `active` and `max_coins_per_chapter`. A per-chapter cap only — a monthly cap would need a mutable counter locked after `wallet_balances`, doubling the lock story for a guardrail the balance already provides. |
+| `auto_unlock_attempts` | `(user_id, chapter_id)` outcome log driving retry backoff: `unlocked`, `insufficient`, `over_cap`, `skipped`. |
+| `novel_relations` | `(novel_id, related_novel_id)` with `kind`, `note`, `sort_no` and `CHECK (novel_id <> related_novel_id)`. Stored directional; read in both directions with the inverse kind applied to the mirrored side. |
+
+> **Production caveat.** Swapping the `coin_ledger` and `novels` CHECK
+> constraints validates every existing row under `ACCESS EXCLUSIVE`. That is
+> fine at pre-launch size; at scale it needs `ADD CONSTRAINT ... NOT VALID`
+> followed by a separate `VALIDATE CONSTRAINT` in a migration marked as running
+> outside a transaction. The same applies to any future index on the hot coin
+> tables, which needs `CREATE INDEX CONCURRENTLY`.
+
 Applied via `goose`:
 
 ```bash
@@ -324,3 +371,9 @@ Still open:
   reporting needs to be exact.
 - No table backs `GET /admin/reports`; add `comment_reports` when comment
   moderation is built.
+- `novels.chapters_count` is a stored counter, which is what makes an
+  early-access chapter a *teaser* rather than a hidden row: a viewer-dependent
+  table of contents would disagree with the stored count for 24 hours.
+- `auto_unlock_attempts` grows one row per subscriber per paid chapter. It is
+  small at current scale but has no retention policy; add one before the
+  subscriber count makes it interesting.

@@ -10,12 +10,14 @@ platform with a Go backend, React frontend, PostgreSQL, and Redis.
 - Frontend: Vite, React 18, TypeScript, React Router, and TanStack Query in
   `frontend/`.
 - Runtime: `docker-compose.yml` starts Postgres, Redis, API, and web services.
-- Current product phase: PRD phases 1–4 are implemented — catalog and reader,
+- Current product phase: PRD phases 1–6 are implemented — catalog and reader,
   accounts and preferences, library and bookmarks, coins with mock purchases
-  and chapter unlock, comments and reviews, writer workspace with stats, plus
-  follows, notifications and weekly ranking.
-- Not implemented: `GET /series/{id}`, most `/admin/*` endpoints (only
-  `POST /admin/wallet-adjust` exists), and real payment providers (Phase 5).
+  and chapter unlock, comments and reviews, writer workspace with stats,
+  follows, notifications and weekly ranking, the `จัดการผลงาน` works workspace,
+  series and related works, and advanced monetisation (arc bundles, tips, and
+  auto-unlock with 24-hour early access).
+- Not implemented: most `/admin/*` endpoints (only `POST /admin/wallet-adjust`
+  exists), and real payment providers — **Phase 7, deliberately the last phase**.
 
 ## Source Of Truth
 
@@ -115,6 +117,30 @@ These encode defects that have already bitten this codebase.
 - **`makeme` builders must be named `ANew<EntityStructName>`.** `Many(n)`
   resolves siblings by reflection on that name.
 - **Composite-PK entities must tag every key column** `gorm:"primaryKey"`.
+- **The idempotency replay check compares `ref_type` as well as `ref_id`.**
+  `spend_unlock` with `ref_type='arc_bundle', ref_id=42` and one with
+  `ref_type='chapter_unlock', ref_id=42` are different targets. Keys are also
+  namespaced per operation by the service; both belt and braces stay.
+- **Arc membership resolves by chapter-number range, never `chapters.arc_id`.**
+  `arc_id` is NULL for chapters created before their arc existed, so keying off
+  it silently drops chapters and undercharges the reader.
+- **The auto-unlock job applies each debit in its own transaction.**
+  `withJobLock` claims the batch and nothing more. Moving the debits inside its
+  transaction makes one broke subscriber roll back everyone else's unlock;
+  `TestAutoUnlockJob_OneBrokeSubscriberDoesNotRollBackTheOthers` exists to catch
+  exactly that.
+- **Reordering a series renumbers through negatives first.**
+  `novels_series_position` is a *partial* unique index, which Postgres cannot
+  defer and therefore enforces row by row. A single `UPDATE ... CASE` permuting
+  1,2,3 into 2,3,1 collides halfway through, so `SetSeriesOrder` negates every
+  position before writing the final order.
+- **Novel settings patch on presence, not on non-zero.** `sell_by_arc: false`
+  and `free_until_chapter: 0` are real edits. The settings fields are pointers
+  in `NovelDraft`, and the handler reads the body twice — typed and as a map —
+  because `encoding/json` cannot otherwise report which keys were present.
+- **`hidden` is enforced, not decorative.** `ListNovels`, `novelDetail`,
+  `WeeklyRanking` and search all exclude it for non-owners. A status the reader
+  paths ignore changes nothing.
 
 ## Development Commands
 
@@ -168,8 +194,12 @@ curl -s http://localhost:8080/api/v1/novels/nine-streams-sword-immortal
   which builds a real engine over a testcontainers Postgres.
 - **Integration tests need a reachable Docker socket.** Without it testcontainers
   *skips* rather than fails, so a green run can mean nothing ran. On Rancher
-  Desktop: `export DOCKER_HOST=unix://$HOME/.rd/docker.sock`. Confirm with
-  `go test -v ./... | grep SKIP`.
+  Desktop: `export DOCKER_HOST=unix://$HOME/.rd/docker.sock` and
+  `export TESTCONTAINERS_RYUK_DISABLED=true` — Ryuk's reaper cannot bind-mount
+  that socket and errors out. Confirm with `go test -v ./... | grep SKIP`, and
+  **prune afterwards** (`docker rm -f $(docker ps -aq)`): with Ryuk off nothing
+  reaps the containers, and a few sessions can fill the VM's disk, at which
+  point the suite fails with `initdb: ... No space left on device`.
 - Run `npm run typecheck` or `npm run build` after TypeScript or routing changes.
 - `docs/test-cases.md` maps every U and I case to its test file and function.
 
