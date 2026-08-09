@@ -22,6 +22,21 @@ const (
 	LedgerBonusGrant  = "bonus_grant"
 	LedgerBonusExpire = "bonus_expire"
 	LedgerAdjust      = "adjust"
+	// LedgerTip is a reader tipping a translator. It is a distinct kind rather
+	// than a spend_unlock so the reader's history does not label it
+	// "ปลดล็อกบท" and so writer-stats derivations can tell the two apart.
+	LedgerTip = "tip"
+)
+
+// Ledger ref_type values, which distinguish operations sharing a kind.
+const (
+	RefChapterUnlock = "chapter_unlock"
+	RefArcBundle     = "arc_bundle"
+	RefAutoUnlock    = "auto_unlock"
+	RefChapterTip    = "chapter_tip"
+	RefPurchase      = "purchase"
+	RefAdminAdjust   = "admin_adjust"
+	RefBonusExpire   = "bonus_expire"
 )
 
 // CoinLedgerEntry matches `coin_ledger`, an append-only audit log.
@@ -101,7 +116,18 @@ type ChapterUnlock struct {
 
 func (ChapterUnlock) TableName() string { return "chapter_unlocks" }
 
+// Earning kinds, matching the CHECK on writer_earnings.kind.
+const (
+	EarningUnlock = "unlock"
+	EarningTip    = "tip"
+)
+
 // WriterEarning matches `writer_earnings`.
+//
+// UnlockLedgerID names the coin_ledger row that produced the earning: a
+// chapter unlock, an arc bundle, or a tip. An arc bundle writes one row per
+// chapter, all sharing a single ledger id, because chapters in one arc can
+// have different translators.
 type WriterEarning struct {
 	ID             int64     `gorm:"primaryKey;column:id"`
 	WriterID       int64     `gorm:"column:writer_id;not null;index"`
@@ -109,10 +135,51 @@ type WriterEarning struct {
 	UnlockLedgerID int64     `gorm:"column:unlock_ledger_id;not null"`
 	GrossCoins     int       `gorm:"column:gross_coins;not null"`
 	NetCoins       int       `gorm:"column:net_coins;not null"`
+	Kind           string    `gorm:"column:kind;not null;default:unlock"`
 	CreatedAt      time.Time `gorm:"column:created_at;autoCreateTime"`
 }
 
 func (WriterEarning) TableName() string { return "writer_earnings" }
+
+// AutoUnlockSubscription matches `auto_unlock_subscriptions` — a reader opting
+// in to have new chapters of a novel unlocked automatically on publish, which
+// also grants them the early-access window.
+type AutoUnlockSubscription struct {
+	UserID  int64 `gorm:"primaryKey;column:user_id"`
+	NovelID int64 `gorm:"primaryKey;column:novel_id"`
+	Active  bool  `gorm:"column:active;not null;default:true"`
+	// MaxCoinsPerChapter is 0 for "no cap"; it protects a reader from a
+	// mid-series price rise.
+	MaxCoinsPerChapter int16     `gorm:"column:max_coins_per_chapter;not null;default:0"`
+	CreatedAt          time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt          time.Time `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+func (AutoUnlockSubscription) TableName() string { return "auto_unlock_subscriptions" }
+
+// Auto-unlock fan-out outcomes.
+const (
+	AutoUnlockUnlocked     = "unlocked"
+	AutoUnlockInsufficient = "insufficient"
+	AutoUnlockOverCap      = "over_cap"
+	AutoUnlockSkipped      = "skipped"
+)
+
+// AutoUnlockAttempt matches `auto_unlock_attempts`.
+//
+// It is a log and a backoff record, never the source of truth: the fan-out
+// job's candidate query keys off the *absence* of a chapter_unlocks row, so
+// deleting a row here simply lets the job retry.
+type AutoUnlockAttempt struct {
+	UserID      int64     `gorm:"primaryKey;column:user_id"`
+	ChapterID   int64     `gorm:"primaryKey;column:chapter_id"`
+	Outcome     string    `gorm:"column:outcome;not null"`
+	Attempts    int16     `gorm:"column:attempts;not null;default:1"`
+	LedgerID    *int64    `gorm:"column:ledger_id"`
+	AttemptedAt time.Time `gorm:"column:attempted_at;autoCreateTime"`
+}
+
+func (AutoUnlockAttempt) TableName() string { return "auto_unlock_attempts" }
 
 // Payout statuses.
 const (

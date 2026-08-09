@@ -224,6 +224,77 @@ func TestPlanSpend_RejectsNonPositiveAmount(t *testing.T) {
 	}
 }
 
+// Tips are paid-coin-only: bonus coins are promotional, and letting them fund
+// a tip converts free currency into a real payout obligation.
+func TestPlanSpendPaidOnly_IgnoresBonusBalance(t *testing.T) {
+	balance := Balance{UserID: 7, Balance: 100, BonusBalance: 500, BonusExpiresAt: at(time.Hour)}
+
+	plan, err := PlanSpendPaidOnly(balance, 30, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if plan.Entry.BonusDelta != 0 {
+		t.Fatalf("bonus_delta = %d, want 0: a tip must not touch bonus coins", plan.Entry.BonusDelta)
+	}
+	if plan.Entry.Delta != -30 {
+		t.Fatalf("delta = %d, want -30", plan.Entry.Delta)
+	}
+	if plan.Entry.Kind != KindTip {
+		t.Fatalf("kind = %q, want %q", plan.Entry.Kind, KindTip)
+	}
+	if plan.Result.Balance != 70 || plan.Result.BonusBalance != 500 {
+		t.Fatalf("result = %d/%d, want 70 paid and the bonus untouched at 500",
+			plan.Result.Balance, plan.Result.BonusBalance)
+	}
+}
+
+// The sharp case: plenty of coins in total, but not enough *purchased* ones.
+// It must be a distinct error so the message can say why.
+func TestPlanSpendPaidOnly_InsufficientPaidCoinsDespiteAmpleBonus(t *testing.T) {
+	balance := Balance{Balance: 5, BonusBalance: 500, BonusExpiresAt: at(time.Hour)}
+
+	_, err := PlanSpendPaidOnly(balance, 30, now)
+	if !errors.Is(err, ErrInsufficientPaidCoins) {
+		t.Fatalf("error = %v, want ErrInsufficientPaidCoins", err)
+	}
+	if errors.Is(err, ErrInsufficientCoins) {
+		t.Fatal("the paid-only shortfall must not be indistinguishable from a plain shortfall")
+	}
+}
+
+// Lapsed bonus is still written off, exactly as PlanSpend does, so the ledger
+// stays a valid running total whichever planner ran — but it still cannot be
+// spent on the tip.
+func TestPlanSpendPaidOnly_WritesOffStaleBonusButStillRefusesToSpendIt(t *testing.T) {
+	balance := Balance{Balance: 40, BonusBalance: 50, BonusExpiresAt: at(-time.Hour)}
+
+	plan, err := PlanSpendPaidOnly(balance, 30, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if plan.Expiry == nil || plan.Expiry.BonusDelta != -50 {
+		t.Fatalf("expected the stale 50-coin bonus to be written off, got %+v", plan.Expiry)
+	}
+	if plan.Entry.BonusDelta != 0 {
+		t.Fatalf("bonus_delta = %d, want 0", plan.Entry.BonusDelta)
+	}
+	if plan.Result.Balance != 10 || plan.Result.BonusBalance != 0 {
+		t.Fatalf("result = %d/%d, want 10 paid and 0 bonus",
+			plan.Result.Balance, plan.Result.BonusBalance)
+	}
+	if plan.Result.BonusExpiresAt != nil {
+		t.Fatal("a zeroed bonus must clear its expiry timestamp")
+	}
+}
+
+func TestPlanSpendPaidOnly_RejectsNonPositiveAmounts(t *testing.T) {
+	for _, amount := range []int{0, -1} {
+		if _, err := PlanSpendPaidOnly(Balance{Balance: 100}, amount, now); !errors.Is(err, ErrInvalidAmount) {
+			t.Fatalf("amount %d: error = %v, want ErrInvalidAmount", amount, err)
+		}
+	}
+}
+
 func TestPlanCredit_SetsBonusExpiry(t *testing.T) {
 	const ttl = 30 * 24 * time.Hour
 

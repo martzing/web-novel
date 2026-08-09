@@ -19,7 +19,41 @@ const (
 	KindBonusGrant  LedgerKind = "bonus_grant"
 	KindBonusExpire LedgerKind = "bonus_expire"
 	KindAdjust      LedgerKind = "adjust"
+	// KindTip is a reader tipping a translator. It is a distinct kind rather
+	// than a spend_unlock so the reader's history does not label it
+	// "ปลดล็อกบท", and so the writer-stats derivations can tell the two apart.
+	KindTip LedgerKind = "tip"
 )
+
+// Ref types, which distinguish operations that share a ledger kind. They are
+// part of the idempotency target, so an unlock and an arc bundle that happen to
+// share an id are never mistaken for each other.
+const (
+	RefChapterUnlock = "chapter_unlock"
+	RefArcBundle     = "arc_bundle"
+	RefAutoUnlock    = "auto_unlock"
+	RefChapterTip    = "chapter_tip"
+	RefPurchase      = "purchase"
+	RefAdminAdjust   = "admin_adjust"
+	RefBonusExpire   = "bonus_expire"
+)
+
+// Tip bounds. The maximum exists because the ledger is append-only and the
+// money is immediately committed to a payout: an accidental extra zero on a
+// phone keypad is unrecoverable, and a cap bounds the damage a stolen session
+// can do.
+const (
+	MinTipCoins = 1
+	MaxTipCoins = 1000
+)
+
+// ValidateTip checks a tip amount.
+func ValidateTip(coins int) error {
+	if coins < MinTipCoins || coins > MaxTipCoins {
+		return ErrInvalidAmount
+	}
+	return nil
+}
 
 // Balance is a user's wallet state.
 type Balance struct {
@@ -95,6 +129,75 @@ const (
 
 // ProviderMock is the only payment provider wired in phases 1–4.
 const ProviderMock = "mock"
+
+// ChapterSale is everything the unlock, bundle and tip paths need to know
+// about a chapter, read in one go.
+type ChapterSale struct {
+	ChapterID    int64
+	NovelID      int64
+	ChapterNo    int
+	PriceCoins   int
+	TranslatorID *int64
+	// PublicAt gates the sale: before it, only auto-unlock subscribers may buy.
+	// nil means the chapter is public immediately.
+	PublicAt    *time.Time
+	TipsEnabled bool
+	SellByArc   bool
+}
+
+// IsPublic reports whether the chapter has left its early-access window.
+func (c ChapterSale) IsPublic(now time.Time) bool {
+	return c.PublicAt == nil || !c.PublicAt.After(now)
+}
+
+// ArcSale is an arc's purchasable contents.
+type ArcSale struct {
+	ArcID     int64
+	NovelID   int64
+	ArcNo     int
+	Name      string
+	SellByArc bool
+	Chapters  []ChapterSale
+}
+
+// Subscription is a reader's auto-unlock opt-in for one novel, which also
+// grants them the early-access window.
+type Subscription struct {
+	UserID  int64
+	NovelID int64
+	Active  bool
+	// MaxCoinsPerChapter is 0 for "no cap".
+	MaxCoinsPerChapter int
+	NovelTitleTH       string
+	NovelSlug          string
+}
+
+// AutoUnlockCandidate is one subscriber/chapter pair the fan-out job may debit.
+type AutoUnlockCandidate struct {
+	UserID             int64
+	ChapterID          int64
+	NovelID            int64
+	PriceCoins         int
+	TranslatorID       *int64
+	MaxCoinsPerChapter int
+}
+
+// AutoUnlockAttempt records what the fan-out decided for one pair.
+type AutoUnlockAttempt struct {
+	UserID    int64
+	ChapterID int64
+	Outcome   string
+	LedgerID  *int64
+	Now       time.Time
+}
+
+// Auto-unlock fan-out outcomes.
+const (
+	AutoUnlockUnlocked     = "unlocked"
+	AutoUnlockInsufficient = "insufficient"
+	AutoUnlockOverCap      = "over_cap"
+	AutoUnlockSkipped      = "skipped"
+)
 
 // Unlock records that a reader owns a chapter.
 type Unlock struct {

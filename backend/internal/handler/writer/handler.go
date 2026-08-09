@@ -2,6 +2,7 @@
 package writer
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -33,6 +34,18 @@ func (h *Handler) Register(r gin.IRouter, requireAuth gin.HandlerFunc) {
 	w.PATCH("/novels/:id", h.updateNovel)
 	w.POST("/novels/:id/cover", h.uploadCover)
 
+	w.GET("/series", h.listSeries)
+	w.POST("/series", h.createSeries)
+	w.PATCH("/series/:id", h.updateSeries)
+	w.DELETE("/series/:id", h.deleteSeries)
+	w.GET("/series/:id/books", h.listSeriesBooks)
+	w.PUT("/series/:id/order", h.reorderSeriesBooks)
+
+	w.PUT("/novels/:id/series-note", h.setSeriesNote)
+	w.GET("/novels/:id/relations", h.listRelations)
+	w.POST("/novels/:id/relations", h.createRelation)
+	w.DELETE("/novels/:id/relations/:related_id", h.deleteRelation)
+
 	w.GET("/novels/:id/arcs", h.listArcs)
 	w.POST("/novels/:id/arcs", h.createArc)
 	w.PATCH("/arcs/:id", h.updateArc)
@@ -62,14 +75,13 @@ func (h *Handler) listNovels(c *gin.Context) {
 }
 
 func (h *Handler) createNovel(c *gin.Context) {
-	var body novelRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		httpx.BadRequest(c, "INVALID_BODY", "ข้อมูลนิยายไม่ถูกต้อง")
+	draft, ok := bindNovelPatch(c)
+	if !ok {
 		return
 	}
 
 	p := middleware.MustPrincipal(c)
-	novel, err := h.Service.CreateNovel(c.Request.Context(), toDomainNovel(body), p.UserID)
+	novel, err := h.Service.CreateNovel(c.Request.Context(), draft, p.UserID)
 	if err != nil {
 		h.writeErr(c, err)
 		return
@@ -82,14 +94,13 @@ func (h *Handler) updateNovel(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var body novelRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		httpx.BadRequest(c, "INVALID_BODY", "ข้อมูลนิยายไม่ถูกต้อง")
+	draft, ok := bindNovelPatch(c)
+	if !ok {
 		return
 	}
 
 	p := middleware.MustPrincipal(c)
-	novel, err := h.Service.UpdateNovel(c.Request.Context(), p.UserID, novelID, toDomainNovel(body))
+	novel, err := h.Service.UpdateNovel(c.Request.Context(), p.UserID, novelID, draft)
 	if err != nil {
 		h.writeErr(c, err)
 		return
@@ -423,7 +434,10 @@ func (h *Handler) stats(c *gin.Context) {
 	httpx.OK(c, toStatsResponse(*stats))
 }
 
-func toDomainNovel(body novelRequest) domain.NovelDraft {
+// toDomainNovel maps a patch. seriesIDSet says whether the request mentioned
+// series_id at all, which is the only way to tell "leave the series alone" from
+// "take this novel out of its series" — both arrive as a nil SeriesID.
+func toDomainNovel(body novelRequest, seriesIDSet bool) domain.NovelDraft {
 	return domain.NovelDraft{
 		Slug:        body.Slug,
 		TitleTH:     body.TitleTH,
@@ -432,9 +446,54 @@ func toDomainNovel(body novelRequest) domain.NovelDraft {
 		Description: body.Description,
 		Status:      body.Status,
 		SeriesID:    body.SeriesID,
+		SeriesIDSet: seriesIDSet,
 		GenreIDs:    body.GenreIDs,
+
+		SourceChaptersCount: body.SourceChaptersCount,
+		PricePerChapter:     body.PricePerChapter,
+		FreeUntilChapter:    body.FreeUntilChapter,
+		SellByArc:           body.SellByArc,
+		TipsEnabled:         body.TipsEnabled,
+		EarlyAccessHours:    body.EarlyAccessHours,
+
+		ReleaseSchedule: body.ReleaseSchedule,
+		CoverStyle:      body.CoverStyle,
+		CoverColor:      body.CoverColor,
+		CoverText:       body.CoverText,
+		SeriesNote:      body.SeriesNote,
+		SeriesPosition:  body.SeriesPosition,
 	}
 }
+
+// bindNovelPatch decodes the body twice: once into the typed request and once
+// into a map, because encoding/json cannot report which keys were present and
+// the series_id patch semantics depend on exactly that.
+func bindNovelPatch(c *gin.Context) (domain.NovelDraft, bool) {
+	raw, err := io.ReadAll(io.LimitReader(c.Request.Body, maxNovelPatchBytes))
+	if err != nil {
+		httpx.BadRequest(c, "INVALID_BODY", "ข้อมูลนิยายไม่ถูกต้อง")
+		return domain.NovelDraft{}, false
+	}
+
+	var body novelRequest
+	if err := json.Unmarshal(raw, &body); err != nil {
+		httpx.BadRequest(c, "INVALID_BODY", "ข้อมูลนิยายไม่ถูกต้อง")
+		return domain.NovelDraft{}, false
+	}
+
+	var keys map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &keys); err != nil {
+		httpx.BadRequest(c, "INVALID_BODY", "ข้อมูลนิยายไม่ถูกต้อง")
+		return domain.NovelDraft{}, false
+	}
+	_, seriesIDSet := keys["series_id"]
+
+	return toDomainNovel(body, seriesIDSet), true
+}
+
+// maxNovelPatchBytes bounds the patch body. Descriptions are the largest field
+// and are capped well below this.
+const maxNovelPatchBytes = 256 << 10
 
 func (h *Handler) writeErr(c *gin.Context, err error) {
 	switch {

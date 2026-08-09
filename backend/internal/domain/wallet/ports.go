@@ -15,6 +15,13 @@ type Repository interface {
 	// bonus-expiry row, updates the balance and writes the child row.
 	Apply(ctx context.Context, cmd Command) (*Receipt, error)
 
+	// ReplayByKey returns the receipt for an already-applied idempotency key,
+	// or nil when the key is unused. Apply performs this check itself inside
+	// the wallet lock; this exists for callers that must recognise a retry
+	// *before* rebuilding a request, such as an arc bundle whose quote would
+	// otherwise come back empty and look like a second purchase.
+	ReplayByKey(ctx context.Context, userID int64, idempotencyKey string) (*Receipt, error)
+
 	GetBalance(ctx context.Context, userID int64) (*Balance, error)
 	ListLedger(ctx context.Context, userID int64, p page.Page) ([]LedgerEntry, string, error)
 
@@ -30,8 +37,27 @@ type Repository interface {
 	IsChapterUnlocked(ctx context.Context, userID, chapterID int64) (bool, error)
 	ListUnlockedChapterIDs(ctx context.Context, userID int64, chapterIDs []int64) (map[int64]bool, error)
 
-	// ChapterForUnlock returns the price and the translator to credit.
-	ChapterForUnlock(ctx context.Context, chapterID int64) (price int, translatorID *int64, err error)
+	// ChapterForSale returns everything the unlock, bundle and tip paths need
+	// about a chapter, in one read.
+	ChapterForSale(ctx context.Context, chapterID int64) (*ChapterSale, error)
+	// ArcChaptersForSale lists an arc's published, paid chapters. Membership is
+	// resolved by chapter-number range, never by chapters.arc_id.
+	ArcChaptersForSale(ctx context.Context, arcID int64) (*ArcSale, error)
+
+	// Auto-unlock subscriptions live here because they are coin-spend policy;
+	// a separate bounded context for one table would add wiring and no
+	// isolation.
+	GetSubscription(ctx context.Context, userID, novelID int64) (*Subscription, error)
+	ListSubscriptions(ctx context.Context, userID int64) ([]Subscription, error)
+	UpsertSubscription(ctx context.Context, s Subscription) (*Subscription, error)
+	DeleteSubscription(ctx context.Context, userID, novelID int64) error
+	IsSubscribed(ctx context.Context, userID, novelID int64) (bool, error)
+
+	// AutoUnlockCandidates finds subscriber/chapter pairs still missing an
+	// unlock. The predicate is the invariant itself, which is what makes the
+	// fan-out job idempotent by construction.
+	AutoUnlockCandidates(ctx context.Context, before time.Time, retryBefore time.Time, maxAttempts, limit int) ([]AutoUnlockCandidate, error)
+	RecordAutoUnlockAttempt(ctx context.Context, a AutoUnlockAttempt) error
 
 	ListEarnings(ctx context.Context, writerID int64, p page.Page) ([]Earning, string, error)
 	SumUnpaidEarnings(ctx context.Context, writerID int64) (int, error)

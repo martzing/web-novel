@@ -17,6 +17,12 @@ type ShelfItemResponse struct {
 	ChaptersCount int     `json:"chapters_count"`
 	LastChapterNo *int    `json:"last_chapter_no,omitempty"`
 	Pct           float64 `json:"pct"`
+
+	SourceChaptersCount int    `json:"source_chapters_count"`
+	LastChapterID       *int64 `json:"last_chapter_id,string,omitempty"`
+	CoverStyle          string `json:"cover_style"`
+	CoverColor          string `json:"cover_color,omitempty"`
+	CoverText           string `json:"cover_text,omitempty"`
 }
 
 // CountsResponse drives the shelf tab badges.
@@ -71,9 +77,24 @@ func toShelfResponses(entries []domain.EntryWithNovel) []ShelfItemResponse {
 			ChaptersCount: e.ChaptersCount,
 			LastChapterNo: e.LastChapterNo,
 			Pct:           e.Pct,
+
+			SourceChaptersCount: e.SourceChaptersCount,
+			LastChapterID:       e.LastChapterID,
+			CoverStyle:          coverStyleOrDefault(e.CoverStyle),
+			CoverColor:          e.CoverColor,
+			CoverText:           e.CoverText,
 		})
 	}
 	return out
+}
+
+// coverStyleOrDefault keeps the field non-empty on rows written before the
+// column existed, so the client never has to guess which renderer to use.
+func coverStyleOrDefault(style string) string {
+	if style == "" {
+		return "image"
+	}
+	return style
 }
 
 func toEntryResponse(e domain.Entry) EntryResponse {

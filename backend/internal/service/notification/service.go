@@ -70,6 +70,19 @@ func (s *Service) NotifyReply(ctx context.Context, recipientID, chapterID, comme
 	return err
 }
 
+// NotifyAutoUnlockFailed tells a subscriber their wallet was short when a
+// chapter they had auto-unlock enabled for went live.
+//
+// The unique dedupe index on notifications makes a repeat a no-op, so the
+// fan-out job can retry the debit without nagging the reader again.
+func (s *Service) NotifyAutoUnlockFailed(ctx context.Context, userID, novelID, chapterID int64) error {
+	_, err := s.repo.FanOut(ctx, []int64{userID}, domain.KindAutoUnlockFailed, map[string]any{
+		"novel_id":   novelID,
+		"chapter_id": chapterID,
+	}, s.now())
+	return err
+}
+
 // List returns the caller's inbox.
 func (s *Service) List(ctx context.Context, userID int64, unreadOnly bool, p page.Page) ([]domain.Notification, string, error) {
 	return s.repo.List(ctx, userID, unreadOnly, p.Normalize(20, 100))

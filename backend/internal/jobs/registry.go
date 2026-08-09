@@ -14,7 +14,13 @@ import (
 // The cadences come from docs/prd.md: bonus expiry runs nightly at 03:00
 // Asia/Bangkok, and the rollups follow it so the stats page sees fresh numbers
 // each morning.
-func BuildScheduler(db *gorm.DB, wallet *walletsvc.Service, now func() time.Time, logger *slog.Logger) *Scheduler {
+func BuildScheduler(
+	db *gorm.DB,
+	wallet *walletsvc.Service,
+	notifier Notifier,
+	now func() time.Time,
+	logger *slog.Logger,
+) *Scheduler {
 	s := NewScheduler(now, logger)
 	bkk := Bangkok()
 
@@ -23,6 +29,11 @@ func BuildScheduler(db *gorm.DB, wallet *walletsvc.Service, now func() time.Time
 
 	s.Add(&GlossaryRerenderJob{DB: db}, Every(30*time.Second))
 	s.Add(&PublishScheduledJob{DB: db}, Every(time.Minute))
+
+	// Runs immediately after the scheduled-publish job so a chapter that goes
+	// live on a schedule reaches its subscribers within the minute.
+	s.Add(&AutoUnlockJob{DB: db, Wallet: wallet, Notifier: notifier, Logger: logger},
+		Every(time.Minute))
 
 	s.Add(&StatsRollupJob{DB: db},
 		func(after time.Time) time.Time { return NextDailyAt(after, bkk, 3, 30) })

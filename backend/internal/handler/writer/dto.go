@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"strconv"
 	"time"
 
 	domain "github.com/mokchan/webnovel-backend/internal/domain/writer"
@@ -17,6 +18,73 @@ type NovelResponse struct {
 	CoverURL    string  `json:"cover_url,omitempty"`
 	Status      string  `json:"status"`
 	GenreIDs    []int64 `json:"genre_ids"`
+
+	SeriesID       *int64 `json:"series_id,string,omitempty"`
+	SeriesPosition int    `json:"series_position"`
+	SeriesNote     string `json:"series_note,omitempty"`
+
+	// Both chapter counts travel together everywhere: the product shows
+	// "แปลแล้ว N จาก M" on almost every surface, and a response carrying only
+	// one of them forces the client to guess.
+	ChaptersCount       int `json:"chapters_count"`
+	SourceChaptersCount int `json:"source_chapters_count"`
+
+	PricePerChapter  int    `json:"price_per_chapter"`
+	FreeUntilChapter int    `json:"free_until_chapter"`
+	SellByArc        bool   `json:"sell_by_arc"`
+	TipsEnabled      bool   `json:"tips_enabled"`
+	EarlyAccessHours int    `json:"early_access_hours"`
+	ReleaseSchedule  string `json:"release_schedule,omitempty"`
+
+	CoverStyle string `json:"cover_style"`
+	CoverColor string `json:"cover_color,omitempty"`
+	CoverText  string `json:"cover_text,omitempty"`
+}
+
+// SeriesResponse is one collection in the work tree.
+type SeriesResponse struct {
+	ID          int64  `json:"id,string"`
+	Slug        string `json:"slug"`
+	Title       string `json:"title"`
+	Description string `json:"description,omitempty"`
+	CoverURL    string `json:"cover_url,omitempty"`
+	BookCount   int    `json:"book_count"`
+}
+
+// SeriesBookResponse is one novel's slot in a series' reading order.
+type SeriesBookResponse struct {
+	NovelID             int64  `json:"novel_id,string"`
+	Position            int    `json:"position"`
+	Note                string `json:"note,omitempty"`
+	Slug                string `json:"slug"`
+	TitleTH             string `json:"title_th"`
+	CoverURL            string `json:"cover_url,omitempty"`
+	CoverStyle          string `json:"cover_style"`
+	CoverColor          string `json:"cover_color,omitempty"`
+	CoverText           string `json:"cover_text,omitempty"`
+	Status              string `json:"status"`
+	ChaptersCount       int    `json:"chapters_count"`
+	SourceChaptersCount int    `json:"source_chapters_count"`
+}
+
+// RelationResponse is one เรื่องเกี่ยวเนื่อง card.
+type RelationResponse struct {
+	NovelID        int64  `json:"novel_id,string"`
+	RelatedNovelID int64  `json:"related_novel_id,string"`
+	Kind           string `json:"kind"`
+	KindLabel      string `json:"kind_label"`
+	Note           string `json:"note,omitempty"`
+	SortNo         int    `json:"sort_no"`
+	// Mirrored relations are declared on the other novel; the editor shows them
+	// but hides the unlink control, so the note stays with its author.
+	Mirrored    bool   `json:"mirrored"`
+	Slug        string `json:"slug"`
+	TitleTH     string `json:"title_th"`
+	CoverURL    string `json:"cover_url,omitempty"`
+	CoverStyle  string `json:"cover_style"`
+	CoverColor  string `json:"cover_color,omitempty"`
+	CoverText   string `json:"cover_text,omitempty"`
+	NovelStatus string `json:"novel_status"`
 }
 
 // ArcResponse is a chapter range.
@@ -96,6 +164,9 @@ type ChapterPerfResponse struct {
 	CoinsEarned int    `json:"coins_earned"`
 }
 
+// novelRequest is a patch. Every settings field is a pointer so an absent key
+// means "leave it alone" and an explicit false or 0 still applies — the plain
+// string fields keep the older "" means unchanged convention.
 type novelRequest struct {
 	Slug        string  `json:"slug"`
 	TitleTH     string  `json:"title_th"`
@@ -105,6 +176,56 @@ type novelRequest struct {
 	Status      string  `json:"status"`
 	SeriesID    *int64  `json:"series_id,string"`
 	GenreIDs    []int64 `json:"genre_ids"`
+
+	SourceChaptersCount *int  `json:"source_chapters_count"`
+	PricePerChapter     *int  `json:"price_per_chapter"`
+	FreeUntilChapter    *int  `json:"free_until_chapter"`
+	SellByArc           *bool `json:"sell_by_arc"`
+	TipsEnabled         *bool `json:"tips_enabled"`
+	EarlyAccessHours    *int  `json:"early_access_hours"`
+
+	ReleaseSchedule string `json:"release_schedule"`
+	CoverStyle      string `json:"cover_style"`
+	CoverColor      string `json:"cover_color"`
+	CoverText       string `json:"cover_text"`
+	SeriesNote      string `json:"series_note"`
+	SeriesPosition  *int   `json:"series_position"`
+}
+
+type seriesRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	CoverURL    string `json:"cover_url"`
+}
+
+// reorderRequest carries ids as strings, matching how every id leaves this API.
+// encoding/json's ",string" option does not apply to slices, so the parsing is
+// explicit.
+type reorderRequest struct {
+	NovelIDs []string `json:"novel_ids"`
+}
+
+func (r reorderRequest) ids() ([]int64, error) {
+	out := make([]int64, 0, len(r.NovelIDs))
+	for _, raw := range r.NovelIDs {
+		id, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, id)
+	}
+	return out, nil
+}
+
+type seriesNoteRequest struct {
+	Note string `json:"note"`
+}
+
+type relationRequest struct {
+	RelatedNovelID int64  `json:"related_novel_id,string"`
+	Kind           string `json:"kind"`
+	Note           string `json:"note"`
+	SortNo         int    `json:"sort_no"`
 }
 
 type arcRequest struct {
@@ -153,6 +274,105 @@ func toNovelResponse(n domain.NovelDraft) NovelResponse {
 	}
 	if out.GenreIDs == nil {
 		out.GenreIDs = []int64{}
+	}
+
+	out.SeriesID = n.SeriesID
+	out.SeriesNote = n.SeriesNote
+	out.ChaptersCount = n.ChaptersCount
+	out.ReleaseSchedule = n.ReleaseSchedule
+	out.CoverStyle = n.CoverStyle
+	out.CoverColor = n.CoverColor
+	out.CoverText = n.CoverText
+
+	// The pointers are only ever nil on a request; a read always fills them.
+	out.SourceChaptersCount = derefInt(n.SourceChaptersCount)
+	out.PricePerChapter = derefInt(n.PricePerChapter)
+	out.FreeUntilChapter = derefInt(n.FreeUntilChapter)
+	out.EarlyAccessHours = derefInt(n.EarlyAccessHours)
+	out.SeriesPosition = derefInt(n.SeriesPosition)
+	out.SellByArc = n.SellByArc != nil && *n.SellByArc
+	out.TipsEnabled = n.TipsEnabled != nil && *n.TipsEnabled
+
+	if out.CoverStyle == "" {
+		out.CoverStyle = domain.CoverImage
+	}
+	return out
+}
+
+func derefInt(v *int) int {
+	if v == nil {
+		return 0
+	}
+	return *v
+}
+
+func toSeriesResponse(s domain.Series) SeriesResponse {
+	return SeriesResponse{
+		ID:          s.ID,
+		Slug:        s.Slug,
+		Title:       s.Title,
+		Description: s.Description,
+		CoverURL:    s.CoverURL,
+		BookCount:   s.BookCount,
+	}
+}
+
+func toSeriesResponses(list []domain.Series) []SeriesResponse {
+	out := make([]SeriesResponse, 0, len(list))
+	for _, s := range list {
+		out = append(out, toSeriesResponse(s))
+	}
+	return out
+}
+
+func toSeriesBookResponses(books []domain.SeriesBook) []SeriesBookResponse {
+	out := make([]SeriesBookResponse, 0, len(books))
+	for _, b := range books {
+		style := b.CoverStyle
+		if style == "" {
+			style = domain.CoverImage
+		}
+		out = append(out, SeriesBookResponse{
+			NovelID:             b.NovelID,
+			Position:            b.Position,
+			Note:                b.Note,
+			Slug:                b.Slug,
+			TitleTH:             b.TitleTH,
+			CoverURL:            b.CoverURL,
+			CoverStyle:          style,
+			CoverColor:          b.CoverColor,
+			CoverText:           b.CoverText,
+			Status:              b.Status,
+			ChaptersCount:       b.ChaptersCount,
+			SourceChaptersCount: b.SourceChaptersCount,
+		})
+	}
+	return out
+}
+
+func toRelationResponses(relations []domain.Relation) []RelationResponse {
+	out := make([]RelationResponse, 0, len(relations))
+	for _, r := range relations {
+		style := r.RelatedCoverStyle
+		if style == "" {
+			style = domain.CoverImage
+		}
+		out = append(out, RelationResponse{
+			NovelID:        r.NovelID,
+			RelatedNovelID: r.RelatedNovelID,
+			Kind:           r.Kind,
+			KindLabel:      domain.RelationKindLabelTH(r.Kind),
+			Note:           r.Note,
+			SortNo:         r.SortNo,
+			Mirrored:       r.Mirrored,
+			Slug:           r.RelatedSlug,
+			TitleTH:        r.RelatedTitleTH,
+			CoverURL:       r.RelatedCoverURL,
+			CoverStyle:     style,
+			CoverColor:     r.RelatedCoverColor,
+			CoverText:      r.RelatedCoverText,
+			NovelStatus:    r.RelatedStatus,
+		})
 	}
 	return out
 }

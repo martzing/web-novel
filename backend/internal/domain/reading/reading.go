@@ -37,16 +37,34 @@ type Chapter struct {
 	Status       string
 	TranslatorID *int64
 	PublishedAt  string
+
+	// PublishedAtTime and PublicAtTime carry the raw instants the visibility
+	// rule needs; PublishedAt above is the pre-formatted wire value.
+	PublishedAtTime *time.Time
+	PublicAtTime    *time.Time
+
+	// TipsEnabled comes from the novel and rides along here so the reader can
+	// decide whether to show the tip control without a second request.
+	TipsEnabled bool
 }
 
 // ChapterView is what a reader receives: metadata plus the body when entitled.
 type ChapterView struct {
 	Chapter
-	Locked   bool
-	BodyHTML string
-	PrevID   *int64
-	NextID   *int64
+	Locked bool
+	// LockedReason distinguishes a paywall from an early-access window, so the
+	// UI can offer the right call to action: buy, or subscribe.
+	LockedReason string
+	BodyHTML     string
+	PrevID       *int64
+	NextID       *int64
 }
+
+// Locked reasons.
+const (
+	LockedReasonPaywall     = "paywall"
+	LockedReasonEarlyAccess = "early_access"
+)
 
 // Progress is a reader's position in one novel.
 type Progress struct {

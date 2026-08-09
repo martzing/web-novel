@@ -161,7 +161,9 @@ func Build(cfg *config.Config, db *gorm.DB) (*gin.Engine, error) {
 
 	// --- reading -----------------------------------------------------------
 	readingRepo := readingrepo.New(db)
-	readingService := readingsvc.New(readingRepo, walletRepo, deps.Now)
+	// The wallet repository satisfies both narrow ports, so reading still never
+	// imports the wallet package.
+	readingService := readingsvc.New(readingRepo, walletRepo, walletRepo, deps.Now)
 	readinghandler.New(readingService).Register(v1, optionalAuth, requireAuth, bodyLimit)
 
 	// --- writer ------------------------------------------------------------
@@ -203,7 +205,8 @@ func StartJobs(ctx context.Context, cfg *config.Config, db *gorm.DB) {
 		return
 	}
 	wallet := walletsvc.New(walletrepo.New(db), cfg.BonusTTL, cfg.PlatformFeePercent, time.Now)
-	scheduler := jobs.BuildScheduler(db, wallet, time.Now, slog.Default())
+	notifier := notificationsvc.New(notificationrepo.New(db), libraryrepo.New(db), time.Now)
+	scheduler := jobs.BuildScheduler(db, wallet, notifier, time.Now, slog.Default())
 
 	go func() {
 		slog.Info("background jobs started in-process")

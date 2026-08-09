@@ -23,6 +23,17 @@ type NovelResponse struct {
 	FollowersCount int             `json:"followers_count"`
 	ChaptersCount  int             `json:"chapters_count"`
 	Genres         []GenreResponse `json:"genres"`
+
+	// SourceChaptersCount is บทในต้นฉบับ. It ships alongside chapters_count
+	// because nearly every surface renders the pair "แปลแล้ว N จาก M".
+	SourceChaptersCount int `json:"source_chapters_count"`
+
+	// Cover template, used when there is no uploaded artwork.
+	CoverStyle string `json:"cover_style"`
+	CoverColor string `json:"cover_color,omitempty"`
+	CoverText  string `json:"cover_text,omitempty"`
+
+	SeriesID *int64 `json:"series_id,string,omitempty"`
 }
 
 // NovelDetailResponse extends NovelResponse with description, arcs and counts.
@@ -32,6 +43,40 @@ type NovelDetailResponse struct {
 	Arcs          []ArcResponse `json:"arcs"`
 	GlossaryCount int           `json:"glossary_count"`
 	CommentsCount int           `json:"comments_count"`
+
+	SellByArc        bool   `json:"sell_by_arc"`
+	TipsEnabled      bool   `json:"tips_enabled"`
+	ReleaseSchedule  string `json:"release_schedule,omitempty"`
+	EarlyAccessHours int    `json:"early_access_hours"`
+}
+
+// SeriesResponse is the public ชุดหนังสือ page.
+type SeriesResponse struct {
+	ID          int64                `json:"id,string"`
+	Slug        string               `json:"slug"`
+	Title       string               `json:"title"`
+	Description string               `json:"description,omitempty"`
+	CoverURL    string               `json:"cover_url,omitempty"`
+	Books       []SeriesBookResponse `json:"books"`
+	// The header stats, summed across the series so the client does not have
+	// to.
+	ChaptersCount       int `json:"chapters_count"`
+	SourceChaptersCount int `json:"source_chapters_count"`
+}
+
+// SeriesBookResponse is one novel in the reading order.
+type SeriesBookResponse struct {
+	NovelResponse
+	Position int    `json:"position"`
+	Note     string `json:"note,omitempty"`
+}
+
+// RelatedNovelResponse is one เรื่องเกี่ยวเนื่อง card.
+type RelatedNovelResponse struct {
+	NovelResponse
+	Kind      string `json:"kind"`
+	KindLabel string `json:"kind_label"`
+	Note      string `json:"note,omitempty"`
 }
 
 // RankedNovelResponse is one row of the weekly leaderboard.
@@ -111,7 +156,57 @@ func toNovelResponse(n domain.Novel) NovelResponse {
 		FollowersCount: n.FollowersCount,
 		ChaptersCount:  n.ChaptersCount,
 		Genres:         toGenreResponses(n.Genres),
+
+		SourceChaptersCount: n.SourceChaptersCount,
+		CoverStyle:          coverStyleOrDefault(n.CoverStyle),
+		CoverColor:          n.CoverColor,
+		CoverText:           n.CoverText,
+		SeriesID:            n.SeriesID,
 	}
+}
+
+// coverStyleOrDefault keeps the field non-empty on rows written before the
+// column existed, so the client never has to guess which renderer to use.
+func coverStyleOrDefault(style string) string {
+	if style == "" {
+		return "image"
+	}
+	return style
+}
+
+func toSeriesResponse(s domain.SeriesDetail) SeriesResponse {
+	translated, source := s.TranslatedOf()
+	out := SeriesResponse{
+		ID:                  s.ID,
+		Slug:                s.Slug,
+		Title:               s.Title,
+		Description:         s.Description,
+		CoverURL:            s.CoverURL,
+		Books:               make([]SeriesBookResponse, 0, len(s.Books)),
+		ChaptersCount:       translated,
+		SourceChaptersCount: source,
+	}
+	for _, b := range s.Books {
+		out.Books = append(out.Books, SeriesBookResponse{
+			NovelResponse: toNovelResponse(b.Novel),
+			Position:      b.Position,
+			Note:          b.Note,
+		})
+	}
+	return out
+}
+
+func toRelatedNovelResponses(items []domain.RelatedNovel) []RelatedNovelResponse {
+	out := make([]RelatedNovelResponse, 0, len(items))
+	for _, r := range items {
+		out = append(out, RelatedNovelResponse{
+			NovelResponse: toNovelResponse(r.Novel),
+			Kind:          r.Kind,
+			KindLabel:     r.KindLabel,
+			Note:          r.Note,
+		})
+	}
+	return out
 }
 
 func toNovelDetailResponse(d domain.NovelDetail) NovelDetailResponse {
@@ -121,6 +216,11 @@ func toNovelDetailResponse(d domain.NovelDetail) NovelDetailResponse {
 		Arcs:          toArcResponses(d.Arcs),
 		GlossaryCount: d.GlossaryCount,
 		CommentsCount: d.CommentsCount,
+
+		SellByArc:        d.SellByArc,
+		TipsEnabled:      d.TipsEnabled,
+		ReleaseSchedule:  d.ReleaseSchedule,
+		EarlyAccessHours: d.EarlyAccessHours,
 	}
 }
 

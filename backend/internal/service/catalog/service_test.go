@@ -55,6 +55,14 @@ func (f *fakeRepo) WeeklyRanking(ctx context.Context, limit int) ([]domain.Ranke
 	return f.weeklyRanking(ctx, limit)
 }
 
+func (f *fakeRepo) GetSeries(context.Context, string) (*domain.SeriesDetail, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (f *fakeRepo) RelatedNovels(context.Context, int64) ([]domain.RelatedNovel, error) {
+	return nil, nil
+}
+
 // fakeEntitlements stands in for the wallet repository.
 type fakeEntitlements struct {
 	unlocked func(ctx context.Context, userID int64, chapterIDs []int64) (map[int64]bool, error)
@@ -143,7 +151,7 @@ func TestGetNovel_ResolvesIDOrSlug(t *testing.T) {
 			}
 			svc := New(repo, nil)
 
-			if _, err := svc.GetNovel(context.Background(), tc.param); err != nil {
+			if _, err := svc.GetNovel(context.Background(), tc.param, 0); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			if gotID != tc.wantByID {
@@ -164,7 +172,7 @@ func TestGetNovel_PropagatesNotFound(t *testing.T) {
 	}
 	svc := New(repo, nil)
 
-	if _, err := svc.GetNovel(context.Background(), "missing"); !errors.Is(err, domain.ErrNotFound) {
+	if _, err := svc.GetNovel(context.Background(), "missing", 0); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
 }

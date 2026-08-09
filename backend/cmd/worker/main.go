@@ -18,7 +18,10 @@ import (
 	"github.com/mokchan/webnovel-backend/internal/config"
 	"github.com/mokchan/webnovel-backend/internal/db"
 	"github.com/mokchan/webnovel-backend/internal/jobs"
+	libraryrepo "github.com/mokchan/webnovel-backend/internal/repository/library"
+	notificationrepo "github.com/mokchan/webnovel-backend/internal/repository/notification"
 	walletrepo "github.com/mokchan/webnovel-backend/internal/repository/wallet"
+	notificationsvc "github.com/mokchan/webnovel-backend/internal/service/notification"
 	walletsvc "github.com/mokchan/webnovel-backend/internal/service/wallet"
 )
 
@@ -45,7 +48,8 @@ func main() {
 	defer db.Close(gormDB)
 
 	wallet := walletsvc.New(walletrepo.New(gormDB), cfg.BonusTTL, cfg.PlatformFeePercent, time.Now)
-	scheduler := jobs.BuildScheduler(gormDB, wallet, time.Now, slog.Default())
+	notifier := notificationsvc.New(notificationrepo.New(gormDB), libraryrepo.New(gormDB), time.Now)
+	scheduler := jobs.BuildScheduler(gormDB, wallet, notifier, time.Now, slog.Default())
 
 	if *once {
 		slog.Info("running every job once")

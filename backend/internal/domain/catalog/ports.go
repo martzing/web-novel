@@ -21,6 +21,13 @@ type Repository interface {
 	// WeeklyRanking reads the most recent ranking snapshot, falling back to
 	// live popularity when no snapshot has been taken yet.
 	WeeklyRanking(ctx context.Context, limit int) ([]RankedNovel, error)
+
+	// GetSeries resolves ชุดหนังสือ by numeric id or slug, with its books in
+	// reading order. Hidden novels are already excluded.
+	GetSeries(ctx context.Context, idOrSlug string) (*SeriesDetail, error)
+	// RelatedNovels returns เรื่องเกี่ยวเนื่อง for a novel, in both stored
+	// directions, with the mirrored side carrying its inverse kind.
+	RelatedNovels(ctx context.Context, novelID int64) ([]RelatedNovel, error)
 }
 
 // Entitlements reports which chapters a reader already owns. It is satisfied by

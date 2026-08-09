@@ -40,6 +40,8 @@ type chapterRow struct {
 	WordCount    int
 	TranslatorID *int64
 	PublishedAt  *time.Time
+	PublicAt     *time.Time
+	TipsEnabled  bool
 }
 
 func (r *GormRepository) GetChapter(ctx context.Context, id int64, includeUnpublished bool) (*domain.Chapter, error) {
@@ -49,7 +51,7 @@ func (r *GormRepository) GetChapter(ctx context.Context, id int64, includeUnpubl
 		        c.arc_id, a.arc_no, a.name AS arc_name,
 		        c.chapter_no, c.title, c.status, c.price_coins, c.word_count,
 		        COALESCE(c.translator_id, n.primary_translator_id) AS translator_id,
-		        c.published_at`).
+		        c.published_at, c.public_at, n.tips_enabled`).
 		Joins("JOIN novels n ON n.id = c.novel_id").
 		Joins("LEFT JOIN arcs a ON a.id = c.arc_id").
 		Where("c.id = ?", id)
@@ -191,6 +193,7 @@ func toDomainChapter(row chapterRow) *domain.Chapter {
 		PriceCoins:   int(row.PriceCoins),
 		WordCount:    row.WordCount,
 		TranslatorID: row.TranslatorID,
+		TipsEnabled:  row.TipsEnabled,
 	}
 	if row.ArcNo != nil {
 		out.ArcNo = int(*row.ArcNo)
@@ -201,6 +204,8 @@ func toDomainChapter(row chapterRow) *domain.Chapter {
 	if row.PublishedAt != nil {
 		out.PublishedAt = row.PublishedAt.Format(time.RFC3339)
 	}
+	out.PublishedAtTime = row.PublishedAt
+	out.PublicAtTime = row.PublicAt
 	return out
 }
 

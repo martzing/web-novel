@@ -226,32 +226,6 @@ func (r *GormRepository) ListUnlockedChapterIDs(ctx context.Context, userID int6
 	return out, nil
 }
 
-func (r *GormRepository) ChapterForUnlock(ctx context.Context, chapterID int64) (int, *int64, error) {
-	var row struct {
-		PriceCoins   int16
-		Status       string
-		TranslatorID *int64
-	}
-	err := dbctx.From(ctx, r.db).
-		Table("chapters c").
-		Select("c.price_coins, c.status, COALESCE(c.translator_id, n.primary_translator_id) AS translator_id").
-		Joins("JOIN novels n ON n.id = c.novel_id").
-		Where("c.id = ?", chapterID).
-		Take(&row).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return 0, nil, domain.ErrNotFound
-		}
-		return 0, nil, err
-	}
-	// An unpublished chapter cannot be bought, and saying so plainly would leak
-	// that a draft exists.
-	if row.Status != entities.ChapterPublished {
-		return 0, nil, domain.ErrNotFound
-	}
-	return int(row.PriceCoins), row.TranslatorID, nil
-}
-
 func (r *GormRepository) ListEarnings(ctx context.Context, writerID int64, p page.Page) ([]domain.Earning, string, error) {
 	query := dbctx.From(ctx, r.db).
 		Model(&entities.WriterEarning{}).

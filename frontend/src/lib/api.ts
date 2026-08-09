@@ -123,6 +123,37 @@ function tryRefresh(): Promise<boolean> {
   return refreshInFlight;
 }
 
+/**
+ * Cover upload is multipart, so it cannot go through `request` — but it still
+ * needs the bearer token and the same error envelope.
+ */
+async function uploadCover(novelId: string, file: File): Promise<{ cover_url: string }> {
+  const form = new FormData();
+  form.append("cover", file);
+
+  const headers: Record<string, string> = { Accept: "application/json" };
+  const token = tokenStore.access();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE}/writer/novels/${novelId}/cover`, {
+    method: "POST",
+    headers,
+    body: form,
+  });
+
+  const text = await res.text();
+  const payload = text ? safeParse(text) : null;
+  if (!res.ok) {
+    const envelope = payload as { error?: { code?: string; message?: string } } | null;
+    throw new ApiError(
+      res.status,
+      envelope?.error?.code ?? "UNKNOWN",
+      envelope?.error?.message ?? `HTTP ${res.status}`,
+    );
+  }
+  return payload as { cover_url: string };
+}
+
 /** Builds a fresh idempotency key for a coin-mutating request. */
 export function newIdempotencyKey(): string {
   return crypto.randomUUID();
@@ -141,6 +172,12 @@ export interface Genre {
   name_th: string;
 }
 
+/** Cover template styles, mirroring the CHECK on novels.cover_style. */
+export type CoverStyle = "image" | "ink" | "seal" | "brush" | "plain";
+
+/** ซ่อนจากหน้าร้าน is only ever seen by the novel's own translator. */
+export type NovelStatus = "ongoing" | "complete" | "hiatus" | "hidden";
+
 export interface NovelListItem {
   id: string;
   slug: string;
@@ -148,11 +185,18 @@ export interface NovelListItem {
   title_cn?: string;
   author_name?: string;
   cover_url?: string;
-  status: "ongoing" | "complete" | "hiatus";
+  status: NovelStatus;
   rating_avg: number;
   rating_count: number;
   followers_count: number;
+  /** บทที่แปลแล้ว. */
   chapters_count: number;
+  /** บทในต้นฉบับ; 0 when the translator has not entered one. */
+  source_chapters_count: number;
+  cover_style: CoverStyle;
+  cover_color?: string;
+  cover_text?: string;
+  series_id?: string;
   genres: Genre[];
 }
 
@@ -174,6 +218,11 @@ export interface NovelDetail extends NovelListItem {
   arcs: Arc[];
   glossary_count: number;
   comments_count: number;
+  sell_by_arc: boolean;
+  tips_enabled: boolean;
+  /** รอบปล่อยบทใหม่ — informational only. */
+  release_schedule?: ReleaseSchedule;
+  early_access_hours: number;
 }
 
 export interface ChapterListItem {
@@ -199,6 +248,12 @@ export interface ChapterView {
   price_coins: number;
   word_count: number;
   locked: boolean;
+  /**
+   * Why the body is withheld. "paywall" wants a purchase; "early_access" wants
+   * an auto-unlock subscription, and no amount of coins will open it yet.
+   */
+  locked_reason?: "paywall" | "early_access";
+  tips_enabled?: boolean;
   body_html: string | null;
   prev_id?: string;
   next_id?: string;
@@ -261,7 +316,13 @@ export interface ShelfItem {
   cover_url?: string;
   status: "reading" | "saved" | "done";
   chapters_count: number;
+  source_chapters_count: number;
   last_chapter_no?: number;
+  /** The chapter the continue button opens; absent before the first read. */
+  last_chapter_id?: string;
+  cover_style: CoverStyle;
+  cover_color?: string;
+  cover_text?: string;
   pct: number;
 }
 
@@ -364,8 +425,57 @@ export interface WriterNovel {
   author_name?: string;
   description?: string;
   cover_url?: string;
-  status: string;
+  status: NovelStatus;
   genre_ids: string[];
+
+  series_id?: string;
+  series_position: number;
+  series_note?: string;
+
+  chapters_count: number;
+  source_chapters_count: number;
+
+  price_per_chapter: number;
+  free_until_chapter: number;
+  sell_by_arc: boolean;
+  tips_enabled: boolean;
+  early_access_hours: number;
+  release_schedule?: ReleaseSchedule;
+
+  cover_style: CoverStyle;
+  cover_color?: string;
+  cover_text?: string;
+}
+
+/** รอบปล่อยบทใหม่ — display-only metadata; it does not drive the scheduler. */
+export type ReleaseSchedule = "irregular" | "daily" | "weekly" | "biweekly" | "monthly";
+
+/**
+ * A novel patch. Every settings field is optional so an omitted key means
+ * "leave it alone" — and because they are sent explicitly, `false` and `0`
+ * still apply. Sending `series_id: null` removes the novel from its series.
+ */
+export interface WriterNovelPatch {
+  slug?: string;
+  title_th?: string;
+  title_cn?: string;
+  author_name?: string;
+  description?: string;
+  status?: NovelStatus;
+  genre_ids?: string[];
+  series_id?: string | null;
+  series_position?: number;
+  series_note?: string;
+  source_chapters_count?: number;
+  price_per_chapter?: number;
+  free_until_chapter?: number;
+  sell_by_arc?: boolean;
+  tips_enabled?: boolean;
+  early_access_hours?: number;
+  release_schedule?: ReleaseSchedule;
+  cover_style?: CoverStyle;
+  cover_color?: string;
+  cover_text?: string;
 }
 
 export interface WriterChapter {
@@ -402,6 +512,108 @@ export interface Notification {
   payload: Record<string, unknown>;
   read: boolean;
   created_at: string;
+}
+
+/** One book's slot in a series' reading order. */
+export interface SeriesBook extends NovelListItem {
+  position: number;
+  note?: string;
+}
+
+export interface SeriesDetail {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  cover_url?: string;
+  books: SeriesBook[];
+  /** Summed across the visible books. */
+  chapters_count: number;
+  source_chapters_count: number;
+}
+
+/** The five kinds of เรื่องเกี่ยวเนื่อง. */
+export type RelationKind = "sequel" | "prequel" | "spinoff" | "side_story" | "same_world";
+
+export interface RelatedNovel extends NovelListItem {
+  kind: RelationKind;
+  kind_label: string;
+  note?: string;
+}
+
+/** A quote for buying a whole arc, before the reader commits. */
+export interface ArcBundle {
+  arc_id: string;
+  novel_id: string;
+  arc_no: number;
+  name: string;
+  chapter_count: number;
+  gross: number;
+  discount_percent: number;
+  discount: number;
+  total: number;
+  chapters: { chapter_id: string; chapter_no: number; list_price: number; coins: number }[];
+}
+
+/** One auto-unlock opt-in. */
+export interface AutoUnlock {
+  novel_id: string;
+  novel_title_th?: string;
+  novel_slug?: string;
+  active: boolean;
+  max_coins_per_chapter: number;
+}
+
+/** A series as its owner manages it. */
+export interface WriterSeries {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  cover_url?: string;
+  book_count: number;
+}
+
+export interface WriterSeriesBook {
+  novel_id: string;
+  position: number;
+  note?: string;
+  slug: string;
+  title_th: string;
+  cover_url?: string;
+  cover_style: CoverStyle;
+  cover_color?: string;
+  cover_text?: string;
+  status: NovelStatus;
+  chapters_count: number;
+  source_chapters_count: number;
+}
+
+export interface WriterRelation {
+  novel_id: string;
+  related_novel_id: string;
+  kind: RelationKind;
+  kind_label: string;
+  note?: string;
+  sort_no: number;
+  /** Declared on the other novel; shown here but not editable. */
+  mirrored: boolean;
+  slug: string;
+  title_th: string;
+  cover_url?: string;
+  cover_style: CoverStyle;
+  cover_color?: string;
+  cover_text?: string;
+  novel_status: NovelStatus;
+}
+
+export interface WriterArc {
+  id: string;
+  novel_id: string;
+  arc_no: number;
+  name: string;
+  from_chapter_no: number;
+  to_chapter_no: number;
 }
 
 // ── Endpoints ─────────────────────────────────────────────────────────────
@@ -447,6 +659,8 @@ export const api = {
   listArcs: (novelId: string) => request<Paged<Arc>>(`/novels/${novelId}/arcs`),
   getGlossary: (novelId: string) => request<Paged<GlossaryGroup>>(`/novels/${novelId}/glossary`),
   weeklyRanking: (limit = 5) => request<Paged<RankedNovel>>(`/ranking/weekly${qs({ limit })}`),
+  getSeries: (idOrSlug: string) => request<SeriesDetail>(`/series/${encodeURIComponent(idOrSlug)}`),
+  listRelated: (novelId: string) => request<Paged<RelatedNovel>>(`/novels/${novelId}/related`),
 
   // Reading
   getChapter: (id: string) => request<ChapterView>(`/chapters/${id}`),
@@ -501,6 +715,22 @@ export const api = {
     request<{ status: string }>(`/purchases/${purchaseId}/mock-fail`, { method: "POST" }),
   unlockChapter: (chapterId: string, key: string) =>
     request<Receipt>(`/chapters/${chapterId}/unlock`, { method: "POST", idempotencyKey: key }),
+  quoteArcBundle: (arcId: string) => request<ArcBundle>(`/arcs/${arcId}/bundle`),
+  unlockArc: (arcId: string, key: string) =>
+    request<Receipt>(`/arcs/${arcId}/unlock`, { method: "POST", idempotencyKey: key }),
+  tipChapter: (chapterId: string, coins: number, key: string) =>
+    request<Receipt>(`/chapters/${chapterId}/tip`, {
+      method: "POST",
+      body: { coins },
+      idempotencyKey: key,
+    }),
+
+  // Auto-unlock subscriptions
+  listAutoUnlock: () => request<Paged<AutoUnlock>>("/me/auto-unlock"),
+  setAutoUnlock: (novelId: string, body: { active: boolean; max_coins_per_chapter: number }) =>
+    request<AutoUnlock>(`/me/auto-unlock/${novelId}`, { method: "PUT", body }),
+  removeAutoUnlock: (novelId: string) =>
+    request<void>(`/me/auto-unlock/${novelId}`, { method: "DELETE" }),
 
   // Social
   listComments: (chapterId: string, sort = "popular") =>
@@ -520,10 +750,47 @@ export const api = {
 
   // Writer
   listWriterNovels: () => request<Paged<WriterNovel>>("/writer/novels"),
-  createWriterNovel: (body: Partial<WriterNovel>) =>
+  createWriterNovel: (body: WriterNovelPatch) =>
     request<WriterNovel>("/writer/novels", { method: "POST", body }),
-  updateWriterNovel: (id: string, body: Partial<WriterNovel>) =>
+  updateWriterNovel: (id: string, body: WriterNovelPatch) =>
     request<WriterNovel>(`/writer/novels/${id}`, { method: "PATCH", body }),
+  uploadCover: (id: string, file: File) => uploadCover(id, file),
+
+  // Series and related works
+  listWriterSeries: () => request<Paged<WriterSeries>>("/writer/series"),
+  createWriterSeries: (body: { title: string; description?: string }) =>
+    request<WriterSeries>("/writer/series", { method: "POST", body }),
+  updateWriterSeries: (id: string, body: { title?: string; description?: string }) =>
+    request<WriterSeries>(`/writer/series/${id}`, { method: "PATCH", body }),
+  deleteWriterSeries: (id: string) => request<void>(`/writer/series/${id}`, { method: "DELETE" }),
+  listWriterSeriesBooks: (id: string) =>
+    request<Paged<WriterSeriesBook>>(`/writer/series/${id}/books`),
+  reorderWriterSeries: (id: string, novelIds: string[]) =>
+    request<Paged<WriterSeriesBook>>(`/writer/series/${id}/order`, {
+      method: "PUT",
+      body: { novel_ids: novelIds },
+    }),
+  setSeriesNote: (novelId: string, note: string) =>
+    request<void>(`/writer/novels/${novelId}/series-note`, { method: "PUT", body: { note } }),
+
+  listWriterRelations: (novelId: string) =>
+    request<Paged<WriterRelation>>(`/writer/novels/${novelId}/relations`),
+  linkNovels: (
+    novelId: string,
+    body: { related_novel_id: string; kind: RelationKind; note?: string; sort_no?: number },
+  ) => request<WriterRelation>(`/writer/novels/${novelId}/relations`, { method: "POST", body }),
+  unlinkNovels: (novelId: string, relatedNovelId: string) =>
+    request<void>(`/writer/novels/${novelId}/relations/${relatedNovelId}`, { method: "DELETE" }),
+
+  listWriterArcs: (novelId: string) => request<Paged<WriterArc>>(`/writer/novels/${novelId}/arcs`),
+  createWriterArc: (
+    novelId: string,
+    body: { arc_no: number; name: string; from_chapter_no: number; to_chapter_no: number },
+  ) => request<WriterArc>(`/writer/novels/${novelId}/arcs`, { method: "POST", body }),
+  updateWriterArc: (
+    id: string,
+    body: { arc_no: number; name: string; from_chapter_no: number; to_chapter_no: number },
+  ) => request<WriterArc>(`/writer/arcs/${id}`, { method: "PATCH", body }),
   listWriterChapters: (novelId: string) =>
     request<Paged<WriterChapter>>(`/writer/novels/${novelId}/chapters`),
   getWriterChapter: (id: string) => request<WriterChapter>(`/writer/chapters/${id}`),

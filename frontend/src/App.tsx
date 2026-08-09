@@ -11,7 +11,9 @@ import Library from "./routes/Library";
 import Novel from "./routes/Novel";
 import Onboarding from "./routes/Onboarding";
 import Reader from "./routes/Reader";
+import Series from "./routes/Series";
 import Stats from "./routes/Stats";
+import Works from "./routes/Works";
 import Write from "./routes/Write";
 
 export default function App() {
@@ -24,10 +26,12 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/browse" element={<Browse />} />
         <Route path="/novels/:slug" element={<Novel />} />
+        <Route path="/series/:id" element={<Series />} />
         <Route path="/chapters/:id/comments" element={<Comments />} />
         <Route path="/library" element={<Library />} />
         <Route path="/coins" element={<Coins />} />
         <Route path="/checkout/:packId" element={<Checkout />} />
+        <Route path="/works" element={<Works />} />
         <Route path="/write" element={<Write />} />
         <Route path="/stats" element={<Stats />} />
         <Route path="/onboarding" element={<Onboarding />} />

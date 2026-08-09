@@ -40,6 +40,16 @@ func (h *Handler) Register(r gin.IRouter, requireAuth gin.HandlerFunc) {
 	authed.GET("/me/wallet/ledger", h.listLedger)
 	authed.POST("/purchases", h.createPurchase)
 	authed.POST("/chapters/:id/unlock", h.unlockChapter)
+	authed.POST("/chapters/:id/tip", h.tipChapter)
+
+	// /arcs/:id is a fresh path segment, so it cannot collide with the
+	// /novels/:id wildcard-name rule that gin enforces per segment.
+	authed.GET("/arcs/:id/bundle", h.quoteArcBundle)
+	authed.POST("/arcs/:id/unlock", h.unlockArc)
+
+	authed.GET("/me/auto-unlock", h.listSubscriptions)
+	authed.PUT("/me/auto-unlock/:novel_id", h.putSubscription)
+	authed.DELETE("/me/auto-unlock/:novel_id", h.deleteSubscription)
 
 	if h.MockPaymentsEnabled {
 		authed.POST("/purchases/:id/mock-complete", h.mockComplete)
@@ -234,6 +244,30 @@ func (h *Handler) writeErr(c *gin.Context, err error) {
 		httpx.Error(c, http.StatusConflict, "CHAPTER_ALREADY_UNLOCKED", "คุณปลดล็อกบทนี้ไว้แล้ว")
 	case errors.Is(err, domain.ErrChapterNotForSale):
 		httpx.BadRequest(c, "CHAPTER_NOT_FOR_SALE", "บทนี้อ่านฟรี ไม่ต้องปลดล็อก")
+
+	// A tip paid from bonus coins would turn promotional currency into a real
+	// payout obligation, so it is refused with its own code — "เหรียญไม่พอ"
+	// beside a healthy bonus balance would be baffling.
+	case errors.Is(err, domain.ErrInsufficientPaidCoins):
+		httpx.Error(c, http.StatusPaymentRequired, "INSUFFICIENT_PAID_COINS",
+			"ทิปใช้ได้เฉพาะเหรียญที่ซื้อ ไม่รวมเหรียญโบนัส")
+	case errors.Is(err, domain.ErrTipsDisabled):
+		httpx.BadRequest(c, "TIPS_DISABLED", "ผู้แปลยังไม่เปิดรับทิปสำหรับเรื่องนี้")
+	case errors.Is(err, domain.ErrCannotTipSelf):
+		httpx.BadRequest(c, "CANNOT_TIP_SELF", "ไม่สามารถให้ทิปกับผลงานของตัวเองได้")
+
+	case errors.Is(err, domain.ErrArcNotForSale):
+		httpx.BadRequest(c, "ARC_NOT_FOR_SALE", "ภาคนี้ยังไม่เปิดขายแบบเหมาภาค")
+	case errors.Is(err, domain.ErrArcAlreadyOwned):
+		httpx.Error(c, http.StatusConflict, "ARC_ALREADY_OWNED", "คุณเป็นเจ้าของทุกบทในภาคนี้แล้ว")
+	case errors.Is(err, domain.ErrBundleStale):
+		httpx.Error(c, http.StatusConflict, "ARC_BUNDLE_STALE", "รายการในภาคเปลี่ยนไป กรุณาลองใหม่")
+
+	case errors.Is(err, domain.ErrEarlyAccessOnly):
+		// A distinct code, not a bare FORBIDDEN: the client's response is to
+		// offer auto-unlock, which it cannot know from a generic refusal.
+		httpx.Error(c, http.StatusForbidden, "EARLY_ACCESS_ONLY",
+			"บทนี้เปิดให้ผู้ที่เปิดปลดล็อกอัตโนมัติอ่านก่อน")
 	case errors.Is(err, domain.ErrIdempotencyConflict):
 		httpx.Error(c, http.StatusConflict, "IDEMPOTENCY_KEY_CONFLICT", "Idempotency-Key นี้ถูกใช้กับคำสั่งอื่นแล้ว")
 	case errors.Is(err, domain.ErrPurchaseNotPending):

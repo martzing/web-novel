@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { api, type ShelfItem } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Empty, ErrorNote, Loading, ShelfRow, Tabs } from "../components";
+import { numberTH } from "../lib/format";
 
 type Tab = "reading" | "saved" | "done";
 
@@ -13,6 +14,28 @@ const TAB_CTA: Record<Tab, string> = {
   saved: "เริ่มอ่าน",
   done: "อ่านซ้ำ",
 };
+
+/**
+ * The shelf's progress line, in translated chapters rather than a percentage.
+ *
+ * "บทที่ 87 จาก 88 บทที่แปลแล้ว" tells a reader something a bar cannot: how
+ * much is left, and that new chapters have landed since they were last here.
+ */
+function shelfProgress(item: ShelfItem) {
+  const translated = numberTH(item.chapters_count);
+
+  if (!item.last_chapter_no) {
+    return `${translated} บทที่แปลแล้ว · ยังไม่เริ่ม`;
+  }
+
+  const unread = item.chapters_count - item.last_chapter_no;
+  return (
+    <>
+      บทที่ {numberTH(item.last_chapter_no)} จาก {translated} บทที่แปลแล้ว
+      {unread > 0 && <span style={{ color: "var(--gold)" }}> · มีบทใหม่ {numberTH(unread)} บท</span>}
+    </>
+  );
+}
 
 export default function Library() {
   const { user } = useAuth();
@@ -73,13 +96,17 @@ export default function Library() {
               titleCN={item.title_cn}
               titleTH={item.title_th}
               coverURL={item.cover_url}
-              sub={
-                item.last_chapter_no
-                  ? `บทที่ ${item.last_chapter_no} จาก ${item.chapters_count}`
-                  : `${item.chapters_count} บท · ยังไม่เริ่ม`
-              }
+              coverStyle={item.cover_style}
+              coverColor={item.cover_color}
+              coverText={item.cover_text}
+              sub={shelfProgress(item)}
               pct={item.pct}
               cta={TAB_CTA[tab]}
+              // Resume the saved chapter when there is one; otherwise the novel
+              // page, which is where "เริ่มอ่าน" belongs anyway.
+              continueTo={
+                item.last_chapter_id ? `/read/${item.last_chapter_id}` : `/novels/${item.slug}`
+              }
             />
           ))}
         </div>

@@ -53,6 +53,9 @@ func (s *Service) CreateNovel(ctx context.Context, n domain.NovelDraft, ownerID 
 	if n.Status == "" {
 		n.Status = "ongoing"
 	}
+	if err := domain.ValidateSettings(n); err != nil {
+		return nil, err
+	}
 
 	if strings.TrimSpace(n.Slug) == "" {
 		seq, err := s.repo.NextSlugSeq(ctx)
@@ -71,6 +74,16 @@ func (s *Service) CreateNovel(ctx context.Context, n domain.NovelDraft, ownerID 
 func (s *Service) UpdateNovel(ctx context.Context, userID, novelID int64, n domain.NovelDraft) (*domain.NovelDraft, error) {
 	if err := s.assertOwnsNovel(ctx, userID, novelID); err != nil {
 		return nil, err
+	}
+	if err := domain.ValidateSettings(n); err != nil {
+		return nil, err
+	}
+	// Joining a series is only legal into one the caller owns; without this a
+	// translator could file their work under someone else's collection.
+	if n.SeriesIDSet && n.SeriesID != nil {
+		if err := s.assertOwnsSeries(ctx, userID, *n.SeriesID); err != nil {
+			return nil, err
+		}
 	}
 	return s.repo.UpdateNovel(ctx, novelID, n)
 }
@@ -170,6 +183,22 @@ func (s *Service) CreateChapter(ctx context.Context, userID int64, c domain.Chap
 	}
 	if c.ChapterNo <= 0 {
 		return nil, domain.ErrInvalidInput
+	}
+
+	// The novel's pricing settings decide the default, so a translator sets the
+	// price once on the work rather than on every chapter. An explicit price on
+	// the request still wins — except below free_until_chapter, where the promise
+	// to readers is that those chapters are free, and a stray value in the form
+	// must not quietly break it.
+	novel, err := s.repo.GetNovel(ctx, c.NovelID)
+	if err != nil {
+		return nil, err
+	}
+	if c.PriceCoins == 0 && novel.PricePerChapter != nil {
+		c.PriceCoins = *novel.PricePerChapter
+	}
+	if novel.FreeUntilChapter != nil && c.ChapterNo <= *novel.FreeUntilChapter {
+		c.PriceCoins = 0
 	}
 
 	arcs, err := s.repo.ListArcs(ctx, c.NovelID)

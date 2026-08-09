@@ -11,18 +11,24 @@ import (
 
 // Service orchestrates chapter reads, entitlement and progress.
 type Service struct {
-	repo         domain.Repository
-	entitlements domain.Entitlements
-	now          func() time.Time
+	repo          domain.Repository
+	entitlements  domain.Entitlements
+	subscriptions domain.Subscriptions
+	now           func() time.Time
 }
 
-// New wires the service. entitlements may be nil, in which case no paid
-// chapter is ever considered owned.
-func New(repo domain.Repository, entitlements domain.Entitlements, now func() time.Time) *Service {
+// New wires the service. entitlements and subscriptions may be nil, in which
+// case no paid chapter is ever owned and nobody has early access.
+func New(
+	repo domain.Repository,
+	entitlements domain.Entitlements,
+	subscriptions domain.Subscriptions,
+	now func() time.Time,
+) *Service {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{repo: repo, entitlements: entitlements, now: now}
+	return &Service{repo: repo, entitlements: entitlements, subscriptions: subscriptions, now: now}
 }
 
 // GetChapter returns a chapter with its body attached when the viewer is
@@ -37,12 +43,7 @@ func (s *Service) GetChapter(ctx context.Context, id int64, v domain.Viewer) (*d
 		return nil, err
 	}
 
-	// A non-published chapter is visible only to its own translator or an admin.
-	if chapter.Status != "published" &&
-		!domain.IsTranslatorOf(*chapter, v) &&
-		!v.HasRole(roles.Admin) {
-		return nil, domain.ErrNotFound
-	}
+	isTranslator := domain.IsTranslatorOf(*chapter, v)
 
 	unlocked := false
 	if chapter.PriceCoins > 0 && !v.IsAnonymous() && s.entitlements != nil {
@@ -52,8 +53,48 @@ func (s *Service) GetChapter(ctx context.Context, id int64, v domain.Viewer) (*d
 		}
 	}
 
+	// Only ask about the subscription when it could change the answer: a
+	// chapter already past its early-access window does not need the lookup.
+	subscribed := false
+	if chapter.PublicAtTime != nil && chapter.PublicAtTime.After(s.now()) &&
+		!v.IsAnonymous() && s.subscriptions != nil {
+		subscribed, err = s.subscriptions.IsSubscribed(ctx, v.UserID, chapter.NovelID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Timing first, then entitlement. See decides whether the chapter exists
+	// for this viewer at all; Decide then decides whether they have paid.
+	visibility := domain.See(
+		domain.Availability{
+			Status:      chapter.Status,
+			PublishedAt: chapter.PublishedAtTime,
+			PublicAt:    chapter.PublicAtTime,
+		},
+		domain.Access{
+			Viewer:       v,
+			Subscribed:   subscribed,
+			Owns:         unlocked,
+			IsTranslator: isTranslator,
+		},
+		s.now(),
+	)
+	if visibility == domain.VisibleHidden {
+		return nil, domain.ErrNotFound
+	}
+
 	view := &domain.ChapterView{Chapter: *chapter}
-	view.Locked = domain.Decide(chapter.PriceCoins, v, unlocked, domain.IsTranslatorOf(*chapter, v))
+	switch {
+	case visibility == domain.VisibleTeaser:
+		view.Locked = true
+		view.LockedReason = domain.LockedReasonEarlyAccess
+	default:
+		view.Locked = domain.Decide(chapter.PriceCoins, v, unlocked, isTranslator)
+		if view.Locked {
+			view.LockedReason = domain.LockedReasonPaywall
+		}
+	}
 
 	prev, next, err := s.repo.NeighbourIDs(ctx, chapter.NovelID, chapter.ChapterNo)
 	if err != nil {

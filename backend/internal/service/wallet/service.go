@@ -114,19 +114,19 @@ func (s *Service) FailPurchase(ctx context.Context, userID, purchaseID int64) (*
 
 // UnlockChapter spends coins to grant permanent access to a chapter.
 func (s *Service) UnlockChapter(ctx context.Context, userID, chapterID int64, idempotencyKey string) (*domain.Receipt, error) {
-	price, translatorID, err := s.repo.ChapterForUnlock(ctx, chapterID)
+	sale, err := s.repo.ChapterForSale(ctx, chapterID)
 	if err != nil {
 		return nil, err
 	}
-	if price <= 0 {
+	if sale.PriceCoins <= 0 {
 		return nil, domain.ErrChapterNotForSale
 	}
 
-	child := domain.ChildWrite{Kind: domain.ChildChapterUnlock, ChapterID: chapterID}
-	// A translator unlocking their own chapter would otherwise pay themselves.
-	if translatorID != nil && *translatorID != userID {
-		child.WriterID = *translatorID
-		child.NetCoins = domain.NetCoins(price, s.feePercent)
+	// A chapter inside its early-access window is reserved for auto-unlock
+	// subscribers. Without this, anyone could simply pay to defeat the
+	// exclusivity and the perk would mean nothing.
+	if err := s.assertBuyable(ctx, userID, *sale); err != nil {
+		return nil, err
 	}
 
 	refID := chapterID
@@ -136,12 +136,211 @@ func (s *Service) UnlockChapter(ctx context.Context, userID, chapterID int64, id
 		Now:            s.now(),
 		Op: domain.Operation{
 			Kind:    domain.KindSpendUnlock,
-			Amount:  price,
-			RefType: "chapter_unlock",
+			Amount:  sale.PriceCoins,
+			RefType: domain.RefChapterUnlock,
 			RefID:   &refID,
 		},
-		Child: child,
+		Child: s.unlockChild(userID, *sale, sale.PriceCoins),
 	})
+}
+
+// QuoteArcBundle prices the chapters of an arc the reader does not yet own.
+func (s *Service) QuoteArcBundle(ctx context.Context, userID, arcID int64) (*ArcQuote, error) {
+	arc, err := s.repo.ArcChaptersForSale(ctx, arcID)
+	if err != nil {
+		return nil, err
+	}
+	if !arc.SellByArc {
+		return nil, domain.ErrArcNotForSale
+	}
+
+	ids := make([]int64, 0, len(arc.Chapters))
+	for _, c := range arc.Chapters {
+		ids = append(ids, c.ChapterID)
+	}
+	owned, err := s.repo.ListUnlockedChapterIDs(ctx, userID, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	now := s.now()
+	subscribed := false
+	if s.hasEarlyChapters(arc.Chapters, now) {
+		if subscribed, err = s.repo.IsSubscribed(ctx, userID, arc.NovelID); err != nil {
+			return nil, err
+		}
+	}
+
+	// The reader pays only for what they still need, and never for a chapter
+	// still reserved for subscribers.
+	wanted := make([]domain.ChapterSale, 0, len(arc.Chapters))
+	prices := make([]int, 0, len(arc.Chapters))
+	for _, c := range arc.Chapters {
+		if owned[c.ChapterID] {
+			continue
+		}
+		if !c.IsPublic(now) && !subscribed {
+			continue
+		}
+		wanted = append(wanted, c)
+		prices = append(prices, c.PriceCoins)
+	}
+
+	quote, err := domain.QuoteBundle(prices, domain.ArcBundleDiscountPercent)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]domain.ChildItem, 0, len(wanted))
+	for i, c := range wanted {
+		item := domain.ChildItem{
+			ChapterID: c.ChapterID,
+			ListPrice: c.PriceCoins,
+			Coins:     quote.PerChapter[i],
+		}
+		if c.TranslatorID != nil && *c.TranslatorID != userID {
+			item.WriterID = *c.TranslatorID
+			item.NetCoins = domain.NetCoins(item.Coins, s.feePercent)
+		}
+		items = append(items, item)
+	}
+
+	return &ArcQuote{
+		ArcID:    arc.ArcID,
+		NovelID:  arc.NovelID,
+		ArcNo:    arc.ArcNo,
+		Name:     arc.Name,
+		Quote:    quote,
+		Chapters: wanted,
+		Items:    items,
+	}, nil
+}
+
+// UnlockArc buys every chapter in the quote in one atomic operation.
+func (s *Service) UnlockArc(ctx context.Context, userID, arcID int64, idempotencyKey string) (*domain.Receipt, error) {
+	key := namespaced("arc_unlock", idempotencyKey)
+
+	// A bundle must recognise a retry before it quotes. Once the first attempt
+	// commits, every chapter is owned and a re-quote would raise
+	// ErrArcAlreadyOwned — so a client retrying a timed-out request would get a
+	// 409 instead of its receipt. Apply's own replay check never gets reached.
+	if replay, err := s.repo.ReplayByKey(ctx, userID, key); err != nil {
+		return nil, err
+	} else if replay != nil {
+		return replay, nil
+	}
+
+	quote, err := s.QuoteArcBundle(ctx, userID, arcID)
+	if err != nil {
+		return nil, err
+	}
+
+	refID := arcID
+	return s.repo.Apply(ctx, domain.Command{
+		UserID:         userID,
+		IdempotencyKey: key,
+		Now:            s.now(),
+		Op: domain.Operation{
+			Kind:    domain.KindSpendUnlock,
+			Amount:  quote.Quote.Total,
+			RefType: domain.RefArcBundle,
+			RefID:   &refID,
+		},
+		Child: domain.ChildWrite{Kind: domain.ChildArcBundle, Items: quote.Items},
+	})
+}
+
+// TipChapter sends coins to a chapter's translator.
+//
+// Tips draw on purchased coins only — see wallet.PlanSpendPaidOnly — and they
+// credit writer_earnings rather than the translator's spendable wallet, so the
+// command still touches exactly one wallet row.
+func (s *Service) TipChapter(ctx context.Context, userID, chapterID int64, coins int, idempotencyKey string) (*domain.Receipt, error) {
+	amount := coins
+	if err := domain.ValidateTip(amount); err != nil {
+		return nil, err
+	}
+
+	sale, err := s.repo.ChapterForSale(ctx, chapterID)
+	if err != nil {
+		return nil, err
+	}
+	if !sale.TipsEnabled {
+		return nil, domain.ErrTipsDisabled
+	}
+	if sale.TranslatorID == nil {
+		return nil, domain.ErrNotFound
+	}
+	if *sale.TranslatorID == userID {
+		return nil, domain.ErrCannotTipSelf
+	}
+
+	refID := chapterID
+	return s.repo.Apply(ctx, domain.Command{
+		UserID:         userID,
+		IdempotencyKey: namespaced("tip", idempotencyKey),
+		Now:            s.now(),
+		Op: domain.Operation{
+			Kind:    domain.KindTip,
+			Amount:  amount,
+			RefType: domain.RefChapterTip,
+			RefID:   &refID,
+		},
+		Child: domain.ChildWrite{
+			Kind:      domain.ChildTip,
+			ChapterID: chapterID,
+			WriterID:  *sale.TranslatorID,
+			NetCoins:  domain.NetCoins(amount, s.feePercent),
+		},
+	})
+}
+
+// assertBuyable rejects a sale of a chapter still inside its early-access
+// window to a reader who is not subscribed.
+func (s *Service) assertBuyable(ctx context.Context, userID int64, sale domain.ChapterSale) error {
+	if sale.IsPublic(s.now()) {
+		return nil
+	}
+	subscribed, err := s.repo.IsSubscribed(ctx, userID, sale.NovelID)
+	if err != nil {
+		return err
+	}
+	if !subscribed {
+		return domain.ErrEarlyAccessOnly
+	}
+	return nil
+}
+
+func (s *Service) hasEarlyChapters(chapters []domain.ChapterSale, now time.Time) bool {
+	for _, c := range chapters {
+		if !c.IsPublic(now) {
+			return true
+		}
+	}
+	return false
+}
+
+// unlockChild builds the child write for a single-chapter unlock. A translator
+// unlocking their own chapter is not credited, so they cannot pay themselves.
+func (s *Service) unlockChild(userID int64, sale domain.ChapterSale, coins int) domain.ChildWrite {
+	child := domain.ChildWrite{Kind: domain.ChildChapterUnlock, ChapterID: sale.ChapterID}
+	if sale.TranslatorID != nil && *sale.TranslatorID != userID {
+		child.WriterID = *sale.TranslatorID
+		child.NetCoins = domain.NetCoins(coins, s.feePercent)
+	}
+	return child
+}
+
+// ArcQuote is what the reader is shown before buying a bundle, and what the
+// purchase then applies.
+type ArcQuote struct {
+	ArcID    int64
+	NovelID  int64
+	ArcNo    int
+	Name     string
+	Quote    domain.BundleQuote
+	Chapters []domain.ChapterSale
+	Items    []domain.ChildItem
 }
 
 // Adjust applies an administrative correction, recorded with the acting admin
@@ -159,6 +358,74 @@ func (s *Service) Adjust(ctx context.Context, targetUserID int64, delta, bonusDe
 		},
 		ActorUserID: &actorUserID,
 		Reason:      reason,
+	})
+}
+
+// ListSubscriptions returns the reader's auto-unlock opt-ins.
+func (s *Service) ListSubscriptions(ctx context.Context, userID int64) ([]domain.Subscription, error) {
+	return s.repo.ListSubscriptions(ctx, userID)
+}
+
+// SetSubscription turns auto-unlock on or off for one novel.
+func (s *Service) SetSubscription(ctx context.Context, userID, novelID int64, active bool, maxCoins int) (*domain.Subscription, error) {
+	if maxCoins < 0 {
+		return nil, domain.ErrInvalidAmount
+	}
+	return s.repo.UpsertSubscription(ctx, domain.Subscription{
+		UserID:             userID,
+		NovelID:            novelID,
+		Active:             active,
+		MaxCoinsPerChapter: maxCoins,
+	})
+}
+
+// RemoveSubscription cancels auto-unlock. Chapters already unlocked stay
+// unlocked — the reader paid for them.
+func (s *Service) RemoveSubscription(ctx context.Context, userID, novelID int64) error {
+	return s.repo.DeleteSubscription(ctx, userID, novelID)
+}
+
+// IsSubscribed satisfies the reading and catalog contexts' Subscriptions port.
+func (s *Service) IsSubscribed(ctx context.Context, userID, novelID int64) (bool, error) {
+	return s.repo.IsSubscribed(ctx, userID, novelID)
+}
+
+// AutoUnlockCandidates lists subscriber/chapter pairs the fan-out may debit.
+func (s *Service) AutoUnlockCandidates(ctx context.Context, publishedAfter, retryBefore time.Time, maxAttempts, limit int) ([]domain.AutoUnlockCandidate, error) {
+	return s.repo.AutoUnlockCandidates(ctx, publishedAfter, retryBefore, maxAttempts, limit)
+}
+
+// RecordAutoUnlockAttempt stores what the fan-out decided for one pair.
+func (s *Service) RecordAutoUnlockAttempt(ctx context.Context, a domain.AutoUnlockAttempt) error {
+	return s.repo.RecordAutoUnlockAttempt(ctx, a)
+}
+
+// AutoUnlockChapter debits a subscriber for a newly published chapter.
+//
+// The idempotency key is derived from the pair rather than supplied, so a
+// repeated fan-out — or two replicas claiming the same candidate — replays
+// instead of charging twice.
+func (s *Service) AutoUnlockChapter(ctx context.Context, userID, chapterID int64) (*domain.Receipt, error) {
+	sale, err := s.repo.ChapterForSale(ctx, chapterID)
+	if err != nil {
+		return nil, err
+	}
+	if sale.PriceCoins <= 0 {
+		return nil, domain.ErrChapterNotForSale
+	}
+
+	refID := chapterID
+	return s.repo.Apply(ctx, domain.Command{
+		UserID:         userID,
+		IdempotencyKey: fmt.Sprintf("autounlock:%d:%d", userID, chapterID),
+		Now:            s.now(),
+		Op: domain.Operation{
+			Kind:    domain.KindSpendUnlock,
+			Amount:  sale.PriceCoins,
+			RefType: domain.RefAutoUnlock,
+			RefID:   &refID,
+		},
+		Child: s.unlockChild(userID, *sale, sale.PriceCoins),
 	})
 }
 

@@ -13,9 +13,13 @@ import (
 
 // Notification kinds.
 const (
-	KindNewChapter    = "new_chapter"
-	KindReply         = "reply"
-	KindBonusExpiring = "bonus_expiring"
+	KindNewChapter = "new_chapter"
+	KindReply      = "reply"
+	// KindAutoUnlockFailed tells a subscriber their wallet was short when a new
+	// chapter published. It is deduped per chapter, so a retry does not tell
+	// them twice.
+	KindAutoUnlockFailed = "auto_unlock_failed"
+	KindBonusExpiring    = "bonus_expiring"
 )
 
 // Notification is one inbox row.

@@ -64,6 +64,19 @@ func PublishDecision(scheduledAt *time.Time, now time.Time) (status string, publ
 	return StatusPublished, &published
 }
 
+// PublicAt is when a published chapter becomes visible to readers who are not
+// auto-unlock subscribers.
+//
+// It is snapshotted at publish time rather than derived from the novel's
+// setting at read time, so a translator changing the window later cannot
+// retroactively un-publish chapters that readers can already see.
+func PublicAt(publishedAt time.Time, earlyAccessHours int) time.Time {
+	if earlyAccessHours <= 0 {
+		return publishedAt
+	}
+	return publishedAt.Add(time.Duration(earlyAccessHours) * time.Hour)
+}
+
 // SlugFromTitle derives a URL-safe slug (W-01).
 //
 // Thai has no ASCII transliteration here, so a Thai-only title yields no ASCII

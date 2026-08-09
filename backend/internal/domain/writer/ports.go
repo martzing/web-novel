@@ -19,6 +19,21 @@ type Repository interface {
 	ListNovels(ctx context.Context, ownerID int64, p page.Page) ([]NovelDraft, string, error)
 	SetCoverURL(ctx context.Context, novelID int64, url string) error
 
+	// Series are owned by a translator and hold their reading order on
+	// novels.series_position, so SetSeriesOrder is a single renumbering write.
+	ListSeries(ctx context.Context, ownerID int64) ([]Series, error)
+	GetSeries(ctx context.Context, id int64) (*Series, error)
+	CreateSeries(ctx context.Context, s Series) (*Series, error)
+	UpdateSeries(ctx context.Context, id int64, s Series) (*Series, error)
+	DeleteSeries(ctx context.Context, id int64) error
+	SeriesBooks(ctx context.Context, seriesID int64) ([]SeriesBook, error)
+	SetSeriesOrder(ctx context.Context, seriesID int64, positions map[int64]int) error
+	SetSeriesNote(ctx context.Context, novelID int64, note string) error
+
+	ListRelations(ctx context.Context, novelID int64) ([]Relation, error)
+	UpsertRelation(ctx context.Context, r Relation) (*Relation, error)
+	DeleteRelation(ctx context.Context, novelID, relatedNovelID int64) error
+
 	ListArcs(ctx context.Context, novelID int64) ([]Arc, error)
 	CreateArc(ctx context.Context, a Arc) (*Arc, error)
 	UpdateArc(ctx context.Context, id int64, a Arc) (*Arc, error)

@@ -174,13 +174,21 @@ func (j *PublishScheduledJob) Run(ctx context.Context, now time.Time) (Report, e
 			return err
 		}
 
-		res := tx.Model(&entities.Chapter{}).
-			Where("status = ? AND scheduled_at IS NOT NULL AND scheduled_at <= ?",
-				entities.ChapterScheduled, now).
-			Updates(map[string]any{
-				"status":       entities.ChapterPublished,
-				"published_at": now,
-			})
+		// public_at is stamped from the novel's early-access window, so a
+		// scheduled publish behaves exactly like a manual one.
+		res := tx.Exec(`
+			UPDATE chapters c
+			   SET status = ?,
+			       published_at = ?,
+			       -- The cast is required: an untyped placeholder makes
+			       -- Postgres read this as interval + interval.
+			       public_at = ?::timestamptz + make_interval(hours => n.early_access_hours)
+			  FROM novels n
+			 WHERE n.id = c.novel_id
+			   AND c.status = ?
+			   AND c.scheduled_at IS NOT NULL
+			   AND c.scheduled_at <= ?`,
+			entities.ChapterPublished, now, now, entities.ChapterScheduled, now)
 		if res.Error != nil {
 			return res.Error
 		}
@@ -221,10 +229,17 @@ func (j *StatsRollupJob) Run(ctx context.Context, now time.Time) (Report, error)
 			       ?::date,
 			       COUNT(*),
 			       COUNT(DISTINCT e.user_id),
+			       -- Unlocks plus tips. A tip writes no chapter_unlocks row, so
+			       -- without the second term it would silently vanish from the
+			       -- writer's revenue tile.
 			       COALESCE((SELECT SUM(u.coins_spent) FROM chapter_unlocks u
 			                  WHERE u.chapter_id = e.chapter_id
 			                    AND u.unlocked_at >= ?::date
 			                    AND u.unlocked_at < ?::date + 1), 0)
+			     + COALESCE((SELECT SUM(w.gross_coins) FROM writer_earnings w
+			                  WHERE w.chapter_id = e.chapter_id AND w.kind = 'tip'
+			                    AND w.created_at >= ?::date
+			                    AND w.created_at < ?::date + 1), 0)
 			  FROM chapter_read_events e
 			 WHERE e.occurred_at >= ?::date AND e.occurred_at < ?::date + 1
 			 GROUP BY e.chapter_id
@@ -232,7 +247,7 @@ func (j *StatsRollupJob) Run(ctx context.Context, now time.Time) (Report, error)
 			   SET reads = EXCLUDED.reads,
 			       unique_readers = EXCLUDED.unique_readers,
 			       coins_earned = EXCLUDED.coins_earned`,
-			day, day, day, day, day).Error
+			day, day, day, day, day, day, day).Error
 		if err != nil {
 			return err
 		}

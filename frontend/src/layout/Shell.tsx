@@ -53,14 +53,21 @@ export default function Shell() {
     },
   ];
 
+  // จัดการผลงาน leads the writer group: it is where a translator sets up a
+  // work before there is anything to write into it.
   const writerNav: NavEntry[] = [
+    { to: "/works", label: "จัดการผลงาน", icon: "❒" },
     { to: "/write", label: "เขียนบท", icon: "✎" },
     { to: "/stats", label: "สถิติผลงาน", icon: "◔" },
   ];
 
+  // The phone tab bar has room for one writer entry, and เขียนบท is the daily
+  // one — จัดการผลงาน is setup work, done rarely and on a bigger screen.
+  const writeTab = writerNav.find((entry) => entry.to === "/write")!;
+
   const tabs: NavEntry[] = [
     ...readerNav,
-    isTranslator ? writerNav[0] : { to: user ? "/account" : "/login", label: user ? "บัญชี" : "เข้าสู่ระบบ", icon: "◍" },
+    isTranslator ? writeTab : { to: user ? "/account" : "/login", label: user ? "บัญชี" : "เข้าสู่ระบบ", icon: "◍" },
   ];
 
   return (

@@ -41,6 +41,7 @@
     <div data-writergroup style="display: var(--writer-d, grid);">
     <div data-writerlabel style="margin: 24px 10px 10px; font-size: 10.5px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">สำหรับนักเขียน</div>
     <nav data-navrow style="display: grid; gap: 2px;">
+      <button data-s="works" onClick="{{ go }}" style="text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-works-bg, transparent); color: var(--n-works-c, #6B6357);">จัดการผลงาน</button>
       <button data-s="write" onClick="{{ go }}" style="text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-write-bg, transparent); color: var(--n-write-c, #6B6357);">เขียนบท</button>
       <button data-s="stats" onClick="{{ go }}" style="text-align: left; border: 0; cursor: pointer; padding: 10px 12px; border-radius: 3px; font-size: 13.5px; background: var(--n-stats-bg, transparent); color: var(--n-stats-c, #6B6357);">สถิติผลงาน</button>
     </nav>
@@ -71,9 +72,10 @@
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
           <div style="font-family: Trirong, serif; font-size: 19px; font-weight: 600;">เซียนดาบเก้าสายธาร</div>
           <div style="font-size: 12.5px; color: #6B6357; margin-top: 5px;">ภาคที่ 2 · สำนักเมฆาวสันต์ · บทที่ 87 — ดาบแรกใต้ฟ้าหมอก</div>
+          <div style="font-size: 11.5px; color: #A9803F; margin-top: 4px;">มีบทใหม่ 1 บท · ปลดล็อก 5 เหรียญ</div>
           <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px;">
-            <div style="flex: 1; height: 3px; background: rgba(35,32,27,0.10); border-radius: 2px; overflow: hidden;"><div style="width: 41%; height: 100%; background: #A8382B;"></div></div>
-            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357;">87 / 214</div>
+            <div style="flex: 1; height: 3px; background: rgba(35,32,27,0.10); border-radius: 2px; overflow: hidden;"><div style="width: 99%; height: 100%; background: #A8382B;"></div></div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357;">87 / 88</div>
           </div>
         </div>
         <div style="align-self: center; padding: 12px 20px; border: 1px solid #A8382B; border-radius: 3px; color: #A8382B; font-size: 13px; white-space: nowrap;">อ่านต่อ</div>
@@ -182,7 +184,8 @@
 
           <div style="display: flex; gap: 26px; flex-wrap: wrap; margin-top: 24px; padding: 18px 0; border-top: 1px solid rgba(35,32,27,0.09); border-bottom: 1px solid rgba(35,32,27,0.09);">
             <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">4.8</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">2,140 รีวิว</div></div>
-            <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">214</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">บททั้งหมด</div></div>
+            <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">88</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">บทที่แปลแล้ว</div></div>
+            <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">214</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">บทในต้นฉบับ</div></div>
             <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">4</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">ภาค</div></div>
             <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">38,400</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">ผู้ติดตาม</div></div>
           </div>
@@ -191,24 +194,52 @@
 
           <div style="display: flex; gap: 10px; margin-top: 20px;">
             <a href="Xianxia%20Reader.dc.html" style="font-size: 12.5px; padding: 9px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; color: #23201B;">อภิธานศัพท์ 27 คำ</a>
-            <button data-s="comments" onClick="{{ go }}" style="font-size: 12.5px; padding: 9px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; background: none; cursor: pointer; color: #23201B;">ความเห็น 1,208</button>
+            <button data-s="comments" onClick="{{ go }}" style="font-size: 12.5px; padding: 9px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; background: none; cursor: pointer; color: #23201B;">ความเห็นบทที่ 87 · 1,208</button>
             <button data-s="series" onClick="{{ go }}" style="font-size: 12.5px; padding: 9px 15px; border: 1px solid #A8382B; border-radius: 999px; background: none; cursor: pointer; color: #A8382B;">ดูทั้งชุด · 5 เรื่อง 8 ภาค</button>
           </div>
         </div>
       </div>
 
-      <div style="margin-top: 48px; display: flex; align-items: baseline; justify-content: space-between;">
+      <div style="margin-top: 44px; padding: 18px 22px; background: #F3EFE6; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;">
+        <div style="min-width: 0;">
+          <div style="font-size: 11px; letter-spacing: 0.16em; color: #A9803F; text-transform: uppercase;">อ่านค้างไว้</div>
+          <div style="font-size: 14px; margin-top: 6px;">บทที่ 87 — ดาบแรกใต้ฟ้าหมอก</div>
+          <div style="font-size: 11.5px; color: #6B6357; margin-top: 4px;">ค้างไว้ที่ย่อหน้า 12 · อ่านเมื่อวาน</div>
+        </div>
+        <a href="Xianxia%20Reader.dc.html" style="padding: 13px 24px; border: 0; border-radius: 3px; background: #A8382B; color: #FAF8F3; font-size: 13.5px; white-space: nowrap;">อ่านต่อจากที่ค้างไว้</a>
+      </div>
+
+      <div style="margin-top: 34px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
         <div style="font-family: Trirong, serif; font-size: 20px; font-weight: 600;">สารบัญ</div>
         <div style="font-size: 12px; color: #6B6357;">บทที่ 1–48 (ภาคที่ 1) อ่านฟรี · บทหลังจากนั้น 5 เหรียญต่อบท</div>
       </div>
 
-      <div style="margin-top: 18px; border-top: 1px solid rgba(35,32,27,0.09);">
-        <sc-for list="{{ detailChapters }}" as="c" hint-placeholder-count="8">
-          <div data-chrow style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 13px 8px; border-bottom: 1px solid rgba(35,32,27,0.07);">
-            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6B6357; min-width: 34px;">{{ c.n }}</div>
-            <div data-lock="{{ c.lockedFlag }}" style="flex: 1; min-width: 0; font-size: 14px; color: #23201B;">{{ c.title }}</div>
-            <div style="font-size: 11.5px; color: #6B6357;">{{ c.date }}</div>
-            <button data-n="{{ c.n }}" data-locked="{{ c.lockedFlag }}" onClick="{{ chapterClick }}" style="min-width: 96px; padding: 8px 14px; border: 1px solid rgba(35,32,27,0.14); border-radius: 3px; background: none; cursor: pointer; font-size: 12px; color: #23201B;">{{ c.action }}</button>
+      <div style="display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap;">
+        <sc-for list="{{ chapterFilters }}" as="cf" hint-placeholder-count="4">
+          <button data-cf="{{ cf.id }}" onClick="{{ setChapterFilter }}" style="padding: 8px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; background: none; cursor: pointer; font-size: 12.5px; color: #23201B; white-space: nowrap;">{{ cf.name }}</button>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 18px;">
+        <sc-for list="{{ detailArcs }}" as="ar" hint-placeholder-count="4">
+          <div style="margin-bottom: 26px;">
+            <div style="display: flex; align-items: baseline; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid rgba(35,32,27,0.14); flex-wrap: wrap;">
+              <div style="font-family: Trirong, serif; font-size: 14px; font-weight: 600; color: #A8382B;">ภาคที่ {{ ar.n }}</div>
+              <div style="font-size: 13.5px;">{{ ar.name }}</div>
+              <div style="margin-left: auto; font-size: 11.5px; color: #6B6357;">{{ ar.meta }}</div>
+            </div>
+            <sc-for list="{{ ar.items }}" as="c" hint-placeholder-count="5">
+              <div data-chrow style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 13px 8px; border-bottom: 1px solid rgba(35,32,27,0.07);">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6B6357; min-width: 34px;">{{ c.n }}</div>
+                <div data-lock="{{ c.lockedFlag }}" style="flex: 1 1 160px; min-width: 0; font-size: 14px; color: #23201B;">{{ c.title }}</div>
+                <div data-chtag="{{ c.tagKind }}" style="font-size: 11px; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(35,32,27,0.12); color: #6B6357; white-space: nowrap;">{{ c.tag }}</div>
+                <div style="font-size: 11.5px; color: #6B6357; min-width: 66px; text-align: right;">{{ c.date }}</div>
+                <button data-n="{{ c.n }}" data-locked="{{ c.lockedFlag }}" onClick="{{ chapterClick }}" style="min-width: 96px; padding: 8px 14px; border: 1px solid rgba(35,32,27,0.14); border-radius: 3px; background: none; cursor: pointer; font-size: 12px; color: #23201B;">{{ c.action }}</button>
+              </div>
+            </sc-for>
+            <sc-if value="{{ ar.more }}" hint-placeholder-val="{{ false }}">
+              <button data-arc="{{ ar.n }}" onClick="{{ toggleArc }}" style="width: 100%; padding: 13px; border: 0; background: none; cursor: pointer; font-size: 12.5px; color: #A8382B;">{{ ar.moreLabel }}</button>
+            </sc-if>
           </div>
         </sc-for>
       </div>
@@ -224,19 +255,22 @@
 
       <div style="margin-top: 6px;">
         <sc-for list="{{ shelf }}" as="b" hint-placeholder-count="5">
-          <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding: 20px 8px; border-bottom: 1px solid rgba(35,32,27,0.08);">
-            <div style="flex: 0 0 58px; height: 78px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
+          <div data-shelfrow style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding: 20px 8px; border-bottom: 1px solid rgba(35,32,27,0.08);">
+            <button data-s="detail" onClick="{{ go }}" style="flex: 0 0 58px; height: 78px; padding: 0; border: 0; border-radius: 2px; cursor: pointer; background: repeating-linear-gradient(135deg, #E7E0D2 0 6px, #F0EADE 6px 12px); display: flex; align-items: center; justify-content: center;">
               <div style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 12px; color: #6B6357; letter-spacing: 0.14em;">{{ b.cn }}</div>
-            </div>
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-family: Trirong, serif; font-size: 16.5px; font-weight: 600;">{{ b.t }}</div>
+            </button>
+            <div style="flex: 1 1 220px; min-width: 0;">
+              <button data-s="detail" onClick="{{ go }}" style="display: block; text-align: left; border: 0; background: none; padding: 0; cursor: pointer; font-family: Trirong, serif; font-size: 16.5px; font-weight: 600; color: #23201B;" style-hover="color: #A8382B;">{{ b.t }}</button>
               <div style="font-size: 12px; color: #6B6357; margin-top: 4px;">{{ b.sub }}</div>
               <div style="display: flex; align-items: center; gap: 12px; margin-top: 12px; max-width: 420px;">
                 <div style="flex: 1; height: 3px; background: rgba(35,32,27,0.10); border-radius: 2px; overflow: hidden;"><div data-bar="{{ b.pct }}" style="width: 0%; height: 100%; background: #A8382B; transition: width 400ms ease;"></div></div>
                 <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357;">{{ b.progress }}</div>
               </div>
             </div>
-            <a href="Xianxia%20Reader.dc.html" style="padding: 10px 18px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; font-size: 12.5px; color: #23201B;">{{ b.cta }}</a>
+            <div style="flex: 0 0 auto; display: flex; gap: 8px; align-items: center;">
+              <button data-s="detail" onClick="{{ go }}" style="padding: 10px 16px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 12.5px; color: #23201B; white-space: nowrap;">รายละเอียดและสารบัญ</button>
+              <a href="Xianxia%20Reader.dc.html" style="padding: 10px 18px; border: 1px solid #A8382B; border-radius: 3px; font-size: 12.5px; color: #A8382B; white-space: nowrap;">{{ b.cta }}</a>
+            </div>
           </div>
         </sc-for>
       </div>
@@ -327,47 +361,97 @@
     </section>
 
     <section style="display: var(--s-write, none); max-width: 1120px;">
-      <div style="display: flex; align-items: baseline; justify-content: space-between;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 18px; flex-wrap: wrap;">
         <h1 style="font-family: Trirong, serif; font-size: 26px; font-weight: 600; margin: 0;">เขียนบท</h1>
-        <div style="font-size: 12px; color: #6B6357;">บันทึกอัตโนมัติเมื่อ 2 นาทีที่แล้ว</div>
+        <div style="display: var(--wr-autosave, none); font-size: 12px; color: #6B6357;">บันทึกอัตโนมัติเมื่อ 2 นาทีที่แล้ว</div>
       </div>
 
-      <div data-grid="write" style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; margin-top: 26px; align-items: start;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap;">
+        <div data-step="1" style="display: flex; align-items: center; gap: 9px; padding: 9px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; font-size: 12.5px; white-space: nowrap;">
+          <span data-stepn="1" style="width: 19px; height: 19px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px;">1</span>
+          <span>เลือกเรื่อง</span>
+        </div>
+        <div style="width: 18px; height: 1px; background: rgba(35,32,27,0.18);"></div>
+        <div data-step="2" style="display: flex; align-items: center; gap: 9px; padding: 9px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; font-size: 12.5px; white-space: nowrap;">
+          <span data-stepn="2" style="width: 19px; height: 19px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px;">2</span>
+          <span>เลือกบทหรือสร้างบทใหม่</span>
+        </div>
+        <div style="width: 18px; height: 1px; background: rgba(35,32,27,0.18);"></div>
+        <div data-step="3" style="display: flex; align-items: center; gap: 9px; padding: 9px 15px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; font-size: 12.5px; white-space: nowrap;">
+          <span data-stepn="3" style="width: 19px; height: 19px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px;">3</span>
+          <span>เขียน</span>
+        </div>
+      </div>
+
+      <div style="display: var(--wr-pick, block); margin-top: 28px;">
+        <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">เลือกเรื่องที่จะเขียน</div>
+        <p style="font-family: Sarabun, sans-serif; font-size: 14px; line-height: 1.9; color: #6B6357; margin: 10px 0 0; max-width: 560px;">บทที่เขียนจะถูกเพิ่มเข้าไปในเรื่องที่เลือก พร้อมสืบทอดราคาต่อบทและรอบปล่อยของเรื่องนั้น</p>
+        <input data-x type="text" placeholder="ค้นหาชื่อเรื่อง หรือชื่อชุดหนังสือ" onInput="{{ onWorkSearch }}" style="width: 100%; max-width: 460px; box-sizing: border-box; margin-top: 18px; padding: 13px 16px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+        <div style="font-size: 11.5px; color: #6B6357; margin-top: 12px;">{{ workSearchLabel }}</div>
+        <div data-grid="pickwork" style="margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px;">
+          <sc-for list="{{ writableWorks }}" as="w" hint-placeholder-count="6">
+            <button data-pw="{{ w.id }}" onClick="{{ pickWriteWork }}" style="display: flex; gap: 15px; align-items: center; text-align: left; padding: 17px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; cursor: pointer;" style-hover="border-color: #A8382B;">
+              <div style="flex: 0 0 42px; height: 56px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 5px, #F0EADE 5px 10px);"></div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-family: Trirong, serif; font-size: 15.5px; font-weight: 600; line-height: 1.45;">{{ w.t }}</div>
+                <div style="font-size: 11px; color: #6B6357; margin-top: 5px;">{{ w.group }}</div>
+                <div data-wstate="{{ w.state }}" style="font-size: 11px; color: #6B6357; margin-top: 3px;">{{ w.state }} · แปลแล้ว {{ w.chapters }}</div>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div data-grid="write" style="display: var(--wr-work, none); grid-template-columns: 250px 1fr; gap: 30px; margin-top: 24px; align-items: start;">
         <div style="border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; background: #FFFDF8; overflow: hidden;">
-          <div style="padding: 14px 16px; border-bottom: 1px solid rgba(35,32,27,0.09); font-size: 12px; color: #6B6357;">ร่างและบทที่เผยแพร่</div>
+          <div style="padding: 14px 16px; border-bottom: 1px solid rgba(35,32,27,0.09);">
+            <div style="font-size: 10.5px; letter-spacing: 0.16em; color: #A9803F; text-transform: uppercase;">กำลังเขียนให้</div>
+            <div style="font-family: Trirong, serif; font-size: 15px; font-weight: 600; margin-top: 5px; line-height: 1.45;">{{ writeWorkTitle }}</div>
+            <button onClick="{{ clearWriteWork }}" style="margin-top: 8px; border: 0; background: none; padding: 0; cursor: pointer; font-size: 11.5px; color: #A8382B;">เปลี่ยนเรื่อง</button>
+          </div>
+          <div style="padding: 12px 16px 6px;">
+            <input data-x type="text" placeholder="ค้นหาบท หรือพิมพ์เลขบท" onInput="{{ onChapterSearch }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-size: 12.5px; outline: none;" style-focus="border-color: #A8382B;">
+            <div style="font-size: 10.5px; color: #6B6357; margin-top: 9px;">{{ chapterSearchLabel }}</div>
+          </div>
           <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="6">
-            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(35,32,27,0.06);">
+            <button data-dn="{{ d.n }}" data-dsel="{{ d.n }}" onClick="{{ pickWriteChapter }}" style="display: block; width: 100%; text-align: left; border: 0; border-left: 2px solid transparent; background: none; cursor: pointer; padding: 12px 16px; border-bottom: 1px solid rgba(35,32,27,0.06);" style-hover="background: rgba(35,32,27,0.03);">
               <div style="display: flex; align-items: baseline; gap: 8px;">
                 <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B6357;">{{ d.n }}</div>
                 <div style="font-size: 13px; flex: 1; min-width: 0;">{{ d.t }}</div>
               </div>
               <div data-status="{{ d.status }}" style="font-size: 10.5px; color: #A9803F; margin-top: 4px;">{{ d.status }}</div>
-            </div>
+            </button>
           </sc-for>
-          <button style="width: 100%; padding: 14px; border: 0; background: none; cursor: pointer; font-size: 13px; color: #A8382B;">+ สร้างบทใหม่</button>
+          <button onClick="{{ newWriteChapter }}" style="width: 100%; padding: 14px; border: 0; background: none; cursor: pointer; font-size: 13px; color: #A8382B;">+ สร้างบทใหม่</button>
         </div>
 
-        <div style="border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; background: #FFFDF8;">
+        <div style="display: var(--wr-empty, none); padding: 64px 30px; text-align: center; border: 1px dashed rgba(35,32,27,0.20); border-radius: 4px; background: #FFFDF8;">
+          <div style="font-family: Trirong, serif; font-size: 19px; font-weight: 600;">เลือกบทที่จะเขียน</div>
+          <p style="font-family: Sarabun, sans-serif; font-size: 13.5px; line-height: 1.9; color: #6B6357; margin: 10px auto 0; max-width: 380px;">{{ emptyHint }}</p>
+          <button onClick="{{ newWriteChapter }}" style="margin-top: 20px; padding: 12px 24px; border: 0; border-radius: 3px; background: #A8382B; color: #FAF8F3; cursor: pointer; font-size: 13px;">+ สร้างบทที่ {{ nextChapterN }}</button>
+        </div>
+
+        <div style="display: var(--wr-editor, none); border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; background: #FFFDF8;">
           <div style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid rgba(35,32,27,0.09); flex-wrap: wrap;">
             <button style="border: 1px solid rgba(35,32,27,0.12); background: none; border-radius: 3px; cursor: pointer; font-size: 12px; padding: 7px 12px;">แทรกเชิงอรรถ</button>
             <button style="border: 1px solid rgba(35,32,27,0.12); background: none; border-radius: 3px; cursor: pointer; font-size: 12px; padding: 7px 12px;">ผูกศัพท์อภิธาน</button>
             <button style="border: 1px solid rgba(35,32,27,0.12); background: none; border-radius: 3px; cursor: pointer; font-size: 12px; padding: 7px 12px;">คั่นฉาก</button>
             <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: #6B6357;">
               <span>ราคาปลดล็อก</span>
-              <span style="font-family: 'IBM Plex Mono', monospace; border: 1px solid rgba(35,32,27,0.12); border-radius: 3px; padding: 5px 10px; color: #A9803F;">5 เหรียญ</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; border: 1px solid rgba(35,32,27,0.12); border-radius: 3px; padding: 5px 10px; color: #A9803F;">{{ writePrice }}</span>
             </div>
           </div>
 
           <div style="padding: 26px 30px 20px;">
-            <input data-x type="text" value="ดาบแรกใต้ฟ้าหมอก" style="width: 100%; box-sizing: border-box; border: 0; outline: none; background: none; font-family: Trirong, serif; font-size: 26px; font-weight: 600; color: #23201B;">
-            <div style="font-size: 11.5px; color: #6B6357; margin-top: 6px;">บทที่ 87 · ภาคที่ 2 สำนักเมฆาวสันต์</div>
-            <textarea data-x onInput="{{ onDraft }}" style="width: 100%; box-sizing: border-box; margin-top: 20px; min-height: 340px; border: 0; outline: none; resize: vertical; background: none; font-family: Sarabun, sans-serif; font-size: 16px; line-height: 2; color: #23201B;">หิมะบางโปรยลงเหนือหุบเขาเมฆาวสันต์มาตั้งแต่ยามดึก พอฟ้าสาง ลานฝึกก็ขาวจนแทบมองไม่เห็นรอยหินใต้ฝ่าเท้า
+            <input data-x data-wrtitle type="text" value="{{ writeChapterTitle }}" placeholder="ตั้งชื่อบท" onInput="{{ onWriteTitle }}" style="width: 100%; box-sizing: border-box; border: 0; outline: none; background: none; font-family: Trirong, serif; font-size: 26px; font-weight: 600; color: #23201B;">
+            <div style="font-size: 11.5px; color: #6B6357; margin-top: 6px;">{{ writeChapterMeta }}</div>
+            <textarea data-x data-wrbody onInput="{{ onDraft }}" style="width: 100%; box-sizing: border-box; margin-top: 20px; min-height: 340px; border: 0; outline: none; resize: vertical; background: none; font-family: Sarabun, sans-serif; font-size: 16px; line-height: 2; color: #23201B;">หิมะบางโปรยลงเหนือหุบเขาเมฆาวสันต์มาตั้งแต่ยามดึก พอฟ้าสาง ลานฝึกก็ขาวจนแทบมองไม่เห็นรอยหินใต้ฝ่าเท้า
 
 เยี่ยหลิงเฟิงยืนอยู่กลางลาน มือขวากุมด้ามกระบี่ไม้ที่สึกจนมันวาว เขาสูดลมเย็นเข้าเต็มปอด แล้วปล่อยให้ชี่ไหลออกจากตันเถียน ขึ้นไปตามจิงม่ายทั้งสิบสองสาย</textarea>
           </div>
 
           <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid rgba(35,32,27,0.09);">
-            <div style="font-size: 11.5px; color: #6B6357;">{{ wordCount }} ตัวอักษร · เชิงอรรถ 6 จุด · ศัพท์ผูกแล้ว 4 คำ</div>
+            <div style="font-size: 11.5px; color: #6B6357;">{{ wordCount }} ตัวอักษร · {{ writeFootnotes }}</div>
             <div style="display: flex; gap: 8px;">
               <button style="border: 1px solid rgba(35,32,27,0.14); background: none; border-radius: 3px; cursor: pointer; font-size: 13px; padding: 10px 18px;">บันทึกร่าง</button>
               <button style="border: 0; background: #A8382B; color: #FAF8F3; border-radius: 3px; cursor: pointer; font-size: 13px; padding: 10px 22px;">ตั้งเวลาเผยแพร่</button>
@@ -474,6 +558,270 @@
       </div>
     </section>
 
+    <section style="display: var(--s-works, none); max-width: 1120px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div>
+          <h1 style="font-family: Trirong, serif; font-size: 26px; font-weight: 600; margin: 0;">จัดการผลงาน</h1>
+          <div style="font-size: 12.5px; color: #6B6357; margin-top: 6px;">6 เรื่อง · 2 ชุดหนังสือ</div>
+        </div>
+        <button onClick="{{ openNewWork }}" style="padding: 12px 22px; border: 0; border-radius: 3px; background: #A8382B; color: #FAF8F3; cursor: pointer; font-size: 13.5px; white-space: nowrap;">+ เพิ่มเรื่องใหม่</button>
+      </div>
+
+      <div data-grid="works" style="display: grid; grid-template-columns: 268px 1fr; gap: 26px; margin-top: 26px; align-items: start;">
+
+        <div style="background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; overflow: hidden;">
+          <div style="padding: 13px 16px; border-bottom: 1px solid rgba(35,32,27,0.09); font-size: 11px; letter-spacing: 0.16em; color: #A9803F; text-transform: uppercase;">ชุดและเรื่อง</div>
+          <sc-for list="{{ workGroups }}" as="grp" hint-placeholder-count="2">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 13px 16px 8px; background: #F8F4EB;">
+                <div style="font-family: Trirong, serif; font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0;">{{ grp.name }}</div>
+                <div style="font-size: 10.5px; color: #6B6357; white-space: nowrap;">{{ grp.count }}</div>
+              </div>
+              <sc-for list="{{ grp.items }}" as="w" hint-placeholder-count="3">
+                <button data-w="{{ w.id }}" data-wsel="{{ w.id }}" onClick="{{ selectWork }}" style="display: flex; gap: 11px; align-items: center; width: 100%; text-align: left; border: 0; border-left: 2px solid transparent; background: none; cursor: pointer; padding: 11px 16px;" style-hover="background: rgba(35,32,27,0.03);">
+                  <div style="flex: 0 0 26px; height: 35px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 4px, #F0EADE 4px 8px);"></div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ w.t }}</div>
+                    <div data-wstate="{{ w.state }}" style="font-size: 10.5px; margin-top: 3px; color: #6B6357;">{{ w.state }} · แปลแล้ว {{ w.chapters }}</div>
+                  </div>
+                </button>
+              </sc-for>
+            </div>
+          </sc-for>
+          <button onClick="{{ openNewGroup }}" style="width: 100%; padding: 13px; border: 0; border-top: 1px solid rgba(35,32,27,0.09); background: none; cursor: pointer; font-size: 12.5px; color: #A8382B;">+ สร้างชุดหนังสือใหม่</button>
+        </div>
+
+        <div data-workspane style="min-width: 0; overflow-x: hidden;">
+          <div style="display: flex; gap: 2px; border-bottom: 1px solid rgba(35,32,27,0.10); flex-wrap: wrap;">
+            <button data-wt="info" onClick="{{ setWorkTab }}" style="border: 0; background: none; cursor: pointer; padding: 12px 15px; font-size: 13px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;">ข้อมูลเรื่อง</button>
+            <button data-wt="cover" onClick="{{ setWorkTab }}" style="border: 0; background: none; cursor: pointer; padding: 12px 15px; font-size: 13px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;">หน้าปก</button>
+            <button data-wt="arcs" onClick="{{ setWorkTab }}" style="border: 0; background: none; cursor: pointer; padding: 12px 15px; font-size: 13px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;">ภาคและบท</button>
+            <button data-wt="group" onClick="{{ setWorkTab }}" style="border: 0; background: none; cursor: pointer; padding: 12px 15px; font-size: 13px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;">ชุดและเรื่องเกี่ยวเนื่อง</button>
+            <button data-wt="price" onClick="{{ setWorkTab }}" style="border: 0; background: none; cursor: pointer; padding: 12px 15px; font-size: 13px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;">ราคาและการเผยแพร่</button>
+          </div>
+
+          <div style="display: var(--wt-info, block); padding: 26px 0 0;">
+            <div data-grid="wform" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <label style="display: block;">
+                <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ชื่อเรื่องภาษาไทย</span>
+                <input data-x type="text" value="เซียนดาบเก้าสายธาร" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+              </label>
+              <label style="display: block;">
+                <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ชื่อต้นฉบับ</span>
+                <input data-x type="text" value="九流剑仙" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-family: Trirong, serif; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+              </label>
+              <label style="display: block;">
+                <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ผู้แต่ง</span>
+                <input data-x type="text" value="เยี่ยจื่อหลิง" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+              </label>
+              <label style="display: block;">
+                <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ทีมแปล</span>
+                <input data-x type="text" value="สำนักแปลหมอกจันทร์" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+              </label>
+            </div>
+
+            <div style="margin-top: 16px;">
+              <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">เรื่องย่อ</span>
+              <textarea data-x style="width: 100%; box-sizing: border-box; min-height: 120px; padding: 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; resize: vertical; font-family: Sarabun, sans-serif; font-size: 14px; line-height: 1.95; outline: none;" style-focus="border-color: #A8382B;">เยี่ยหลิงเฟิงเกิดมาพร้อมเส้นชี่ที่แคบกว่าคนทั่วไปเกือบครึ่ง สามปีในสำนักเมฆาวสันต์เขาได้แต่แบกฟืนขึ้นเขา จนคืนหนึ่งเขาพบคัมภีร์ดาบที่ถูกเผาไปครึ่งเล่มในลำธารใต้หน้าผา</textarea>
+            </div>
+
+            <div style="margin-top: 18px;">
+              <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 8px;">หมวดหมู่ เลือกได้สูงสุด 3 หมวด</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <sc-for list="{{ genres }}" as="g" hint-placeholder-count="8">
+                  <button data-wg="{{ g.name }}" onClick="{{ toggleWorkGenre }}" style="padding: 9px 16px; border: 1px solid rgba(35,32,27,0.14); border-radius: 999px; background: transparent; cursor: pointer; font-size: 12.5px; color: #23201B;">{{ g.name }}</button>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap;">
+              <button style="padding: 12px 24px; border: 0; border-radius: 3px; background: #23201B; color: #FAF8F3; cursor: pointer; font-size: 13px;">บันทึกการแก้ไข</button>
+              <button style="padding: 12px 20px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 13px;">ดูตัวอย่างหน้าเรื่อง</button>
+            </div>
+          </div>
+
+          <div style="display: var(--wt-cover, none); padding: 26px 0 0;">
+            <div data-grid="cover" style="display: grid; grid-template-columns: 220px 1fr; gap: 30px; align-items: start;">
+              <div>
+                <div data-coverart style="aspect-ratio: 3 / 4; border-radius: 3px; border: 1px solid rgba(35,32,27,0.10); background: repeating-linear-gradient(135deg, #E7E0D2 0 7px, #F0EADE 7px 14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px; box-sizing: border-box;">
+                  <div data-covertitle style="writing-mode: vertical-rl; font-family: Trirong, serif; font-size: 28px; letter-spacing: 0.2em; color: #6B6357;">九流剑仙</div>
+                </div>
+                <div style="font-size: 11px; color: #6B6357; text-align: center; margin-top: 10px;">ตัวอย่างหน้าปก 600 × 800</div>
+              </div>
+
+              <div style="display: grid; gap: 20px;">
+                <div>
+                  <div style="font-size: 11.5px; color: #6B6357; margin-bottom: 8px;">อัปโหลดภาพปก</div>
+                  <div style="padding: 26px; border: 1px dashed rgba(35,32,27,0.24); border-radius: 4px; background: #FFFDF8; text-align: center;">
+                    <div style="font-size: 13px;">ลากไฟล์มาวาง หรือเลือกจากเครื่อง</div>
+                    <div style="font-size: 11.5px; color: #6B6357; margin-top: 6px;">JPG หรือ PNG อัตราส่วน 3:4 อย่างน้อย 600 × 800 px</div>
+                    <button style="margin-top: 14px; padding: 10px 20px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 12.5px;">เลือกไฟล์</button>
+                  </div>
+                </div>
+
+                <div>
+                  <div style="font-size: 11.5px; color: #6B6357; margin-bottom: 8px;">หรือสร้างปกจากแม่แบบ</div>
+                  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <sc-for list="{{ coverStyles }}" as="cs" hint-placeholder-count="4">
+                      <button data-cs="{{ cs.id }}" onClick="{{ setCoverStyle }}" style="padding: 10px 16px; border: 1px solid rgba(35,32,27,0.14); border-radius: 3px; background: none; cursor: pointer; font-size: 12.5px; white-space: nowrap;">{{ cs.name }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div>
+                  <div style="font-size: 11.5px; color: #6B6357; margin-bottom: 8px;">สีพื้นปก</div>
+                  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <sc-for list="{{ coverColors }}" as="cc" hint-placeholder-count="5">
+                      <button data-cc="{{ cc.v }}" data-swatch="{{ cc.v }}" onClick="{{ setCoverColor }}" style="width: 38px; height: 38px; border-radius: 3px; border: 1px solid rgba(35,32,27,0.16); cursor: pointer;"></button>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <label style="display: block;">
+                  <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ตัวอักษรบนปก</span>
+                  <input data-x type="text" value="九流剑仙" onInput="{{ onCoverText }}" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-family: Trirong, serif; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+                </label>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <button style="padding: 12px 24px; border: 0; border-radius: 3px; background: #23201B; color: #FAF8F3; cursor: pointer; font-size: 13px;">ใช้ปกนี้</button>
+                  <button style="padding: 12px 20px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 13px;">คืนค่าปกเดิม</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: var(--wt-arcs, none); padding: 26px 0 0;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+              <div style="font-size: 13.5px; font-weight: 600;">ภาคในเรื่องนี้</div>
+              <button onClick="{{ openNewArc }}" style="padding: 10px 18px; border: 1px solid #A8382B; border-radius: 3px; background: none; cursor: pointer; font-size: 12.5px; color: #A8382B; white-space: nowrap;">+ เพิ่มภาคใหม่</button>
+            </div>
+
+            <div style="margin-top: 14px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; overflow: hidden;">
+              <sc-for list="{{ editArcs }}" as="a" hint-placeholder-count="4">
+                <div data-arcedit style="display: flex; align-items: center; gap: 14px; padding: 15px 18px; border-bottom: 1px solid rgba(35,32,27,0.06);">
+                  <div style="font-size: 12px; color: #6B6357; cursor: grab; flex: 0 0 auto;">⣿</div>
+                  <div style="font-family: Trirong, serif; font-size: 13px; color: #A8382B; flex: 0 0 auto; white-space: nowrap;">ภาคที่ {{ a.n }}</div>
+                  <div style="flex: 1 1 160px; min-width: 0; font-size: 13.5px;">{{ a.name }}</div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6B6357; flex: 0 0 auto;">{{ a.range }}</div>
+                  <div data-arcstate="{{ a.state }}" style="font-size: 11px; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(35,32,27,0.14); color: #6B6357; flex: 0 0 auto; white-space: nowrap;">{{ a.state }}</div>
+                  <button style="border: 0; background: none; cursor: pointer; font-size: 12px; color: #6B6357; flex: 0 0 auto;">แก้ไข</button>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="margin-top: 22px; font-size: 13.5px; font-weight: 600;">บทล่าสุด</div>
+            <div style="margin-top: 12px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; overflow: hidden;">
+              <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="4">
+                <div data-arcedit style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid rgba(35,32,27,0.06);">
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6B6357; flex: 0 0 auto;">{{ d.n }}</div>
+                  <div style="flex: 1 1 140px; min-width: 0; font-size: 13.5px;">{{ d.t }}</div>
+                  <div data-status="{{ d.status }}" style="font-size: 11px; color: #A9803F; flex: 0 0 auto;">{{ d.status }}</div>
+                  <button data-s="write" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 12px; color: #A8382B; flex: 0 0 auto;">เปิดในตัวแก้ไข</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: var(--wt-group, none); padding: 26px 0 0;">
+            <label style="display: block; max-width: 420px;">
+              <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ชุดหนังสือที่เรื่องนี้สังกัด</span>
+              <select data-x style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-size: 14px; outline: none;">
+                <option>ชุดเก้าสายธาร</option>
+                <option>ชุดบันทึกเมืองชิงเหอ</option>
+                <option>ไม่สังกัดชุดใด</option>
+              </select>
+            </label>
+
+            <div style="margin-top: 24px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+              <div style="font-size: 13.5px; font-weight: 600;">ลำดับการอ่านในชุด</div>
+              <div style="font-size: 11.5px; color: #6B6357;">ลากเพื่อจัดลำดับ ผู้อ่านจะเห็นลำดับนี้ในหน้าชุดหนังสือ</div>
+            </div>
+            <div style="margin-top: 12px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; overflow: hidden;">
+              <sc-for list="{{ readingOrder }}" as="o" hint-placeholder-count="5">
+                <div data-arcedit style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid rgba(35,32,27,0.06);">
+                  <div style="font-size: 12px; color: #6B6357; cursor: grab; flex: 0 0 auto;">⣿</div>
+                  <div style="font-family: Trirong, serif; font-size: 15px; color: #A8382B; flex: 0 0 auto;">{{ o.n }}</div>
+                  <div style="flex: 1 1 150px; min-width: 0; font-size: 13.5px;">{{ o.t }}</div>
+                  <div style="font-size: 11.5px; color: #6B6357; flex: 0 1 auto; min-width: 0;">{{ o.note }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="margin-top: 26px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+              <div style="font-size: 13.5px; font-weight: 600;">เรื่องเกี่ยวเนื่อง</div>
+              <button onClick="{{ openLink }}" style="padding: 9px 16px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 12.5px; white-space: nowrap;">+ ผูกเรื่องเกี่ยวเนื่อง</button>
+            </div>
+            <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px;">
+              <sc-for list="{{ sideWorks }}" as="w" hint-placeholder-count="3">
+                <div style="display: flex; gap: 14px; align-items: center; padding: 14px 16px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px;">
+                  <div style="flex: 0 0 34px; height: 46px; border-radius: 2px; background: repeating-linear-gradient(135deg, #E7E0D2 0 5px, #F0EADE 5px 10px);"></div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 10.5px; color: #A9803F;">{{ w.type }}</div>
+                    <div style="font-size: 13px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ w.t }}</div>
+                  </div>
+                  <button style="border: 0; background: none; cursor: pointer; font-size: 11.5px; color: #6B6357; flex: 0 0 auto;">ปลด</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: var(--wt-price, none); padding: 26px 0 0;">
+            <div data-grid="wform" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <label style="display: block;">
+                <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ราคาต่อบท (เหรียญ)</span>
+                <input data-x type="text" value="5" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-family: 'IBM Plex Mono', monospace; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+              </label>
+              <label style="display: block;">
+                <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">อ่านฟรีถึงบทที่</span>
+                <input data-x type="text" value="48" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-family: 'IBM Plex Mono', monospace; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+              </label>
+            </div>
+
+            <div style="margin-top: 18px; padding: 18px 20px; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.10); border-radius: 4px; display: grid; gap: 14px;">
+              <label style="display: flex; align-items: flex-start; gap: 11px; cursor: pointer;">
+                <input data-x type="checkbox" checked style="accent-color: #A8382B; width: 15px; height: 15px; margin-top: 2px;">
+                <span style="font-size: 13px; line-height: 1.8;">เปิดขายเป็นภาค ผู้อ่านซื้อทั้งภาคได้ในราคาลด 15%</span>
+              </label>
+              <label style="display: flex; align-items: flex-start; gap: 11px; cursor: pointer;">
+                <input data-x type="checkbox" checked style="accent-color: #A8382B; width: 15px; height: 15px; margin-top: 2px;">
+                <span style="font-size: 13px; line-height: 1.8;">ปล่อยบทล่วงหน้าให้ผู้ที่เปิดปลดล็อกอัตโนมัติก่อน 24 ชั่วโมง</span>
+              </label>
+              <label style="display: flex; align-items: flex-start; gap: 11px; cursor: pointer;">
+                <input data-x type="checkbox" style="accent-color: #A8382B; width: 15px; height: 15px; margin-top: 2px;">
+                <span style="font-size: 13px; line-height: 1.8;">เปิดรับทิปจากผู้อ่านท้ายบท</span>
+              </label>
+            </div>
+
+            <div data-grid="wform" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px;">
+              <label style="display: block;">
+                <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">สถานะการเผยแพร่</span>
+                <select data-x style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-size: 14px; outline: none;">
+                  <option>เผยแพร่ กำลังแปล</option>
+                  <option>เผยแพร่ จบแล้ว</option>
+                  <option>พักการแปลชั่วคราว</option>
+                  <option>ซ่อนจากหน้าร้าน</option>
+                </select>
+              </label>
+              <label style="display: block;">
+                <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">รอบปล่อยบทใหม่</span>
+                <select data-x style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FFFDF8; font-size: 14px; outline: none;">
+                  <option>สัปดาห์ละ 2 บท จันทร์และพฤหัส</option>
+                  <option>สัปดาห์ละ 1 บท</option>
+                  <option>ทุกวัน</option>
+                  <option>ไม่กำหนด</option>
+                </select>
+              </label>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap;">
+              <button style="padding: 12px 24px; border: 0; border-radius: 3px; background: #23201B; color: #FAF8F3; cursor: pointer; font-size: 13px;">บันทึกการตั้งค่า</button>
+              <button style="padding: 12px 20px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 13px;">ดูรายได้ที่คาดการณ์</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section style="display: var(--s-series, none); max-width: 1000px;">
       <button data-s="detail" onClick="{{ go }}" style="border: 0; background: none; cursor: pointer; font-size: 12.5px; color: #6B6357; padding: 0 0 20px;">← เซียนดาบเก้าสายธาร</button>
 
@@ -486,8 +834,8 @@
         <div style="display: flex; gap: 30px;">
           <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">5</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">เรื่องในชุด</div></div>
           <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">8</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">ภาค</div></div>
-          <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">562</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">บททั้งชุด</div></div>
-          <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px; color: #A8382B;">16%</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">คุณอ่านไปแล้ว</div></div>
+          <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">204</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">บทที่แปลแล้ว</div></div>
+          <div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 19px;">740</div><div style="font-size: 11px; color: #6B6357; margin-top: 3px;">บทในต้นฉบับ</div></div>
         </div>
       </div>
 
@@ -695,6 +1043,96 @@
 
   </main>
 
+  <div data-x onClick="{{ closeSheet }}" style="position: fixed; inset: 0; z-index: 96; background: rgba(12,11,10,0.44); opacity: var(--sheet-op, 0); pointer-events: var(--sheet-pe, none); transition: opacity 260ms ease;"></div>
+  <div style="position: fixed; z-index: 97; left: 50%; top: 50%; width: min(520px, calc(100vw - 28px)); box-sizing: border-box; max-height: 86vh; overflow-y: auto; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.12); border-radius: 4px; box-shadow: 0 28px 70px rgba(12,11,10,0.26); padding: 28px 30px; transform: translate(-50%, calc(-50% + var(--sheet-y, 10px))); opacity: var(--sheet-op, 0); pointer-events: var(--sheet-pe, none); transition: opacity 260ms ease, transform 260ms ease;">
+    <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">{{ sheetKicker }}</div>
+    <div style="font-family: Trirong, serif; font-size: 22px; font-weight: 600; margin-top: 9px;">{{ sheetTitle }}</div>
+
+    <div style="display: var(--sheet-work, none); margin-top: 20px; gap: 14px;">
+      <label style="display: block;">
+        <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ชื่อเรื่องภาษาไทย</span>
+        <input data-x type="text" placeholder="เช่น ฟ้าเหนือเก้าภพ" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+      </label>
+      <label style="display: block;">
+        <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ชื่อต้นฉบับ</span>
+        <input data-x type="text" placeholder="九霄之上" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-family: Trirong, serif; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+      </label>
+      <label style="display: block;">
+        <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">เพิ่มเป็น</span>
+        <select data-x style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-size: 14px; outline: none;">
+          <option>เรื่องใหม่ในชุดเก้าสายธาร</option>
+          <option>เรื่องเดี่ยว ไม่สังกัดชุด</option>
+          <option>ภาคพิเศษของเซียนดาบเก้าสายธาร</option>
+        </select>
+      </label>
+    </div>
+
+    <div style="display: var(--sheet-arc, none); margin-top: 20px; gap: 14px;">
+      <label style="display: block;">
+        <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ชื่อภาค</span>
+        <input data-x type="text" placeholder="เช่น ด่านเก้าประตู" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+      </label>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <label style="display: block;">
+          <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">บทเริ่มต้น</span>
+          <input data-x type="text" placeholder="215" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-family: 'IBM Plex Mono', monospace; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+        </label>
+        <label style="display: block;">
+          <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">บทสิ้นสุด (เว้นได้)</span>
+          <input data-x type="text" placeholder="—" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-family: 'IBM Plex Mono', monospace; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+        </label>
+      </div>
+    </div>
+
+    <div style="display: var(--sheet-group, none); margin-top: 20px; gap: 14px;">
+      <label style="display: block;">
+        <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ชื่อชุดหนังสือ</span>
+        <input data-x type="text" placeholder="เช่น ชุดเก้าสายธาร" style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-size: 14px; outline: none;" style-focus="border-color: #A8382B;">
+      </label>
+      <div>
+        <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 8px;">เลือกเรื่องที่จะรวมเข้าชุด</span>
+        <div style="display: grid; gap: 2px; border: 1px solid rgba(35,32,27,0.12); border-radius: 3px; padding: 6px; max-height: 190px; overflow-y: auto;">
+          <sc-for list="{{ allWorks }}" as="w" hint-placeholder-count="5">
+            <label style="display: flex; align-items: center; gap: 11px; padding: 9px 10px; cursor: pointer; font-size: 13px;">
+              <input data-x type="checkbox" style="accent-color: #A8382B; width: 15px; height: 15px;">
+              <span style="flex: 1; min-width: 0;">{{ w.t }}</span>
+              <span style="font-size: 11px; color: #6B6357; white-space: nowrap;">{{ w.chapters }} บท</span>
+            </label>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: var(--sheet-link, none); margin-top: 20px; gap: 14px;">
+      <label style="display: block;">
+        <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 6px;">ความสัมพันธ์</span>
+        <select data-x style="width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: #FAF8F3; font-size: 14px; outline: none;">
+          <option>ภาคพิเศษ</option>
+          <option>ปฐมบท</option>
+          <option>ภาคแยก</option>
+          <option>ภาคต่อโดยตรง</option>
+          <option>เกิดในโลกเดียวกัน</option>
+        </select>
+      </label>
+      <div>
+        <span style="display: block; font-size: 11.5px; color: #6B6357; margin-bottom: 8px;">เรื่องที่จะผูก</span>
+        <div style="display: grid; gap: 2px; border: 1px solid rgba(35,32,27,0.12); border-radius: 3px; padding: 6px; max-height: 190px; overflow-y: auto;">
+          <sc-for list="{{ allWorks }}" as="w" hint-placeholder-count="5">
+            <label style="display: flex; align-items: center; gap: 11px; padding: 9px 10px; cursor: pointer; font-size: 13px;">
+              <input data-x type="radio" name="linkwork" style="accent-color: #A8382B; width: 15px; height: 15px;">
+              <span style="flex: 1; min-width: 0;">{{ w.t }}</span>
+            </label>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 9px; margin-top: 24px; flex-wrap: wrap;">
+      <button onClick="{{ closeSheet }}" style="flex: 1; min-width: 130px; padding: 13px; border: 0; border-radius: 3px; background: #A8382B; color: #FAF8F3; cursor: pointer; font-size: 13.5px;">{{ sheetCta }}</button>
+      <button onClick="{{ closeSheet }}" style="padding: 13px 20px; border: 1px solid rgba(35,32,27,0.16); border-radius: 3px; background: none; cursor: pointer; font-size: 13.5px;">ยกเลิก</button>
+    </div>
+  </div>
+
   <div data-x onClick="{{ closeUnlock }}" style="position: fixed; inset: 0; z-index: 90; background: rgba(12,11,10,0.44); opacity: var(--u-op, 0); pointer-events: var(--u-pe, none); transition: opacity 260ms ease;"></div>
   <div style="position: fixed; z-index: 95; left: 50%; top: 50%; width: min(420px, calc(100vw - 32px)); box-sizing: border-box; background: #FFFDF8; border: 1px solid rgba(35,32,27,0.12); border-radius: 4px; box-shadow: 0 28px 70px rgba(12,11,10,0.26); padding: 30px 32px; transform: translate(-50%, calc(-50% + var(--u-y, 10px))); opacity: var(--u-op, 0); pointer-events: var(--u-pe, none); transition: opacity 260ms ease, transform 260ms ease;">
     <div style="font-size: 11px; letter-spacing: 0.18em; color: #A9803F; text-transform: uppercase;">บทนี้ยังไม่ปลดล็อก</div>
@@ -713,9 +1151,9 @@
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;browse&quot;,&quot;detail&quot;,&quot;series&quot;,&quot;library&quot;,&quot;coins&quot;,&quot;checkout&quot;,&quot;comments&quot;,&quot;write&quot;,&quot;stats&quot;,&quot;onboard&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;หน้าจอ&quot;},&quot;showWriterTools&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;หน้าจอ&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;browse&quot;,&quot;detail&quot;,&quot;series&quot;,&quot;library&quot;,&quot;coins&quot;,&quot;checkout&quot;,&quot;comments&quot;,&quot;works&quot;,&quot;write&quot;,&quot;stats&quot;,&quot;onboard&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;หน้าจอ&quot;},&quot;showWriterTools&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;หน้าจอ&quot;}}">
 const NOVELS = [
-  { id:1, t:'เซียนดาบเก้าสายธาร', cn:'九流剑仙', genre:'เซียน', ch:214, score:'4.8', tr:'หมอกจันทร์', upd:'2 ชม.ที่แล้ว', desc:'ศิษย์แบกฟืนที่เส้นชี่แคบผิดปกติ พบคัมภีร์ดาบครึ่งเล่มที่ถูกเผาในลำธารใต้หน้าผา' },
+  { id:1, t:'เซียนดาบเก้าสายธาร', cn:'九流剑仙', genre:'เซียน', ch:214, score:'4.8', tr:'หมอกจันทร์', upd:'เมื่อวาน', desc:'ศิษย์แบกฟืนที่เส้นชี่แคบผิดปกติ พบคัมภีร์ดาบครึ่งเล่มที่ถูกเผาในลำธารใต้หน้าผา' },
   { id:2, t:'คืนกลับสู่ปีที่สิบเก้า', cn:'重回十九', genre:'ย้อนเวลา', ch:143, score:'4.9', tr:'หมอกจันทร์', upd:'วันนี้', desc:'ผู้บำเพ็ญขั้นแปรวิญญาณตายกลางฟ้าลงทัณฑ์ แล้วลืมตาขึ้นในร่างตัวเองตอนอายุสิบเก้า' },
   { id:3, t:'กระบี่เดียวดายใต้ฟ้ากว้าง', cn:'独剑长天', genre:'กำลังภายใน', ch:402, score:'4.7', tr:'ใบชาเย็น', upd:'เมื่อวาน', desc:'จอมยุทธ์ไร้สังกัดเดินทางจากด่านเหนือลงใต้เพื่อทวงคืนชื่อของอาจารย์ที่ตายไปแล้ว' },
   { id:4, t:'บันทึกหมอยาเมืองชิงเหอ', cn:'青河药录', genre:'เซียน', ch:96, score:'4.6', tr:'หมอกจันทร์', upd:'3 วันที่แล้ว', desc:'หมอยาสามัญชนที่แยกแยะสมุนไพรเซียนได้ด้วยกลิ่น ถูกลากเข้าสงครามระหว่างสามสำนักใหญ่' },
@@ -733,7 +1171,7 @@ const GENRES = [
 
 const SHELF = {
   reading: [
-    { cn:'九流剑仙', t:'เซียนดาบเก้าสายธาร', sub:'บทที่ 87 · อ่านล่าสุดเมื่อวาน', progress:'41%', pct:41, cta:'อ่านต่อ' },
+    { cn:'九流剑仙', t:'เซียนดาบเก้าสายธาร', sub:'บทที่ 87 จาก 88 บทที่แปลแล้ว · มีบทใหม่ 1 บท', progress:'99%', pct:99, cta:'อ่านต่อ' },
     { cn:'重回十九', t:'คืนกลับสู่ปีที่สิบเก้า', sub:'บทที่ 12 · อ่านล่าสุด 3 วันที่แล้ว', progress:'8%', pct:8, cta:'อ่านต่อ' },
     { cn:'独剑长天', t:'กระบี่เดียวดายใต้ฟ้ากว้าง', sub:'บทที่ 245 · มีบทใหม่ 4 บท', progress:'61%', pct:61, cta:'อ่านต่อ' },
     { cn:'青河药录', t:'บันทึกหมอยาเมืองชิงเหอ', sub:'บทที่ 71 · อ่านล่าสุดสัปดาห์ที่แล้ว', progress:'74%', pct:74, cta:'อ่านต่อ' },
@@ -767,6 +1205,9 @@ const COMMENTS = [
   { user:'ลมผ่านด่านเหนือ', badge:'', when:'เมื่อวาน', likes:'188', body:'อ่านจบแล้วย้อนไปดูบทที่ 12 ใหม่ ประโยคที่อาจารย์พูดตอนนั้นมันคือคำใบ้ทั้งหมดเลย', hasReply:false }
 ];
 
+const SAMPLE_BODY = 'ลมพัดผ่านลานหินจนใบสนสั่นทั้งแถว เขายืนนิ่งอยู่ตรงนั้นจนเงาเคลื่อนไปครึ่งฝ่ามือ แล้วจึงยกกระบี่ขึ้นอีกครั้ง';
+const WORK_PRICE = { w1:'5 เหรียญ', w2:'5 เหรียญ', w3:'อ่านฟรี', w4:'อ่านฟรี', w5:'5 เหรียญ', w6:'4 เหรียญ' };
+
 const DRAFTS = [
   { n:'90', t:'เสียงระฆังจากยอดเขา', status:'ร่าง · แก้ล่าสุดเมื่อครู่' },
   { n:'89', t:'ผู้มาก่อนรุ่งสาง', status:'ตั้งเวลา 10 ส.ค. 20:00' },
@@ -783,6 +1224,11 @@ const TOP_CHAPTERS = [
   { n:'44', t:'รอยเท้าบนน้ำ', views:'12,110', coins:'0', done:'94%' },
   { n:'72', t:'เงาในหุบผา', views:'11,640', coins:'2,510', done:'85%' }
 ];
+
+const TITLE_POOL = ['ดาบแรกใต้ฟ้าหมอก','เลือดบนหิมะ','ประตูสำนักเปิดแล้ว','ยาชี่เม็ดสุดท้าย','คำสาบานใต้ต้นท้อ','เงาในหุบผา','ลมหวนคืนสู่ตะวันตก','บทเพลงของคนตาบอด','แขกจากทะเลทราย','กระบี่ที่ไม่มีคม','เสียงระฆังจากยอดเขา','ธุลีดาวร่วง','คืนที่ไฟไม่ดับ','รอยเท้าบนน้ำ','ผู้มาเยือนสวมหมวกฟาง'];
+const TITLE_POOL_B = ['ผู้เฒ่าที่ไม่มีชื่อ','ฝนแรกของฤดูใบไม้ร่วง','คัมภีร์ที่ถูกเผา','สามก้าวก่อนหน้าผา','เจ้าของโรงเตี๊ยมเก่า','หมอกลงที่ท่าเรือใต้','ดาบสองเล่มในกล่องเดียว','คำถามที่ไม่มีใครตอบ','เด็กหญิงกับโคมกระดาษ','ทางแยกใต้ต้นสนแฝด','ผู้มาก่อนรุ่งสาง','เสียงหินร่วงในบ่อลึก','จดหมายจากคนตาย','ตลาดยาเมืองชิงเหอ','ลมหนาวข้ามด่านเหนือ','แผลเก่าที่ไหล่ซ้าย','คืนสุดท้ายในหุบเขา'];
+const chapterTitle = (n) => n === 87 ? 'ดาบแรกใต้ฟ้าหมอก'
+  : (n % 2 ? TITLE_POOL[(n * 7) % TITLE_POOL.length] : TITLE_POOL_B[(n * 5) % TITLE_POOL_B.length]);
 
 const CH_MAP = {
   44:'รอยเท้าบนน้ำ', 64:'ยาชี่เม็ดสุดท้าย', 72:'เงาในหุบผา',
@@ -804,12 +1250,12 @@ const SERIES_BOOKS = [
   {
     order:'เรื่องหลัก เล่ม 1', t:'เซียนดาบเก้าสายธาร', cn:'九流剑仙', state:'กำลังแปล',
     desc:'เรื่องหลักของชุด เริ่มจากเมืองชายแดนจนถึงนครเซียนเหนือเมฆ ครอบคลุมสี่ภาคแรกของต้นฉบับ',
-    pct:41, progress:'87 / 214 บท', cta:'อ่านต่อ',
+    pct:99, progress:'87 / 88 บทที่แปลแล้ว', cta:'อ่านต่อ',
     arcs:[
       { n:'1', name:'ธุลีเมืองชายแดน', range:'1–48', state:'อ่านจบแล้ว', dim:'' },
-      { n:'2', name:'สำนักเมฆาวสันต์', range:'49–120', state:'กำลังอ่าน', dim:'' },
-      { n:'3', name:'ทะเลทรายกระดูกขาว', range:'121–186', state:'แปลแล้ว', dim:'' },
-      { n:'4', name:'นครเซียนเหนือเมฆ', range:'187–214', state:'แปลถึงบท 88', dim:'' }
+      { n:'2', name:'สำนักเมฆาวสันต์', range:'49–120', state:'แปลถึงบท 88', dim:'' },
+      { n:'3', name:'ทะเลทรายกระดูกขาว', range:'121–186', state:'ยังไม่แปล', dim:'1' },
+      { n:'4', name:'นครเซียนเหนือเมฆ', range:'187–214', state:'ยังไม่แปล', dim:'1' }
     ]
   },
   {
@@ -828,8 +1274,43 @@ const SERIES_BOOKS = [
 const SIDE_WORKS = [
   { type:'ปฐมบท', t:'หิมะปีที่ศูนย์', cn:'零年雪', meta:'8 ตอน · แปลจบแล้ว' },
   { type:'ภาคพิเศษ', t:'บันทึกข้างทางของไป๋เฉิน', cn:'白尘外记', meta:'12 ตอน · แปลจบแล้ว' },
-  { type:'ภาคแยก', t:'นางพญาสำนักดอกท้อ', cn:'桃花宗主', meta:'158 บท · กำลังแปล' }
+  { type:'ภาคแยก', t:'นางพญาสำนักดอกท้อ', cn:'桃花宗主', meta:'แปลแล้ว 96 จาก 158 บท' }
 ];
+
+const WORK_GROUPS = [
+  { name:'ชุดเก้าสายธาร', count:'5 เรื่อง', items:[
+    { id:'w1', t:'เซียนดาบเก้าสายธาร', state:'กำลังแปล', chapters:'88 / 214' },
+    { id:'w2', t:'ฟ้าเหนือเก้าภพ', state:'ร่าง', chapters:'0 / 348' },
+    { id:'w3', t:'หิมะปีที่ศูนย์', state:'จบแล้ว', chapters:'8 / 8' },
+    { id:'w4', t:'บันทึกข้างทางของไป๋เฉิน', state:'จบแล้ว', chapters:'12 / 12' },
+    { id:'w5', t:'นางพญาสำนักดอกท้อ', state:'กำลังแปล', chapters:'96 / 158' }
+  ]},
+  { name:'ชุดบันทึกเมืองชิงเหอ', count:'1 เรื่อง', items:[
+    { id:'w6', t:'บันทึกหมอยาเมืองชิงเหอ', state:'กำลังแปล', chapters:'82 / 96' }
+  ]}
+];
+
+const COVER_STYLES = [
+  { id:'ink', name:'หมึกจีนแนวตั้ง' }, { id:'seal', name:'ตราประทับ' },
+  { id:'brush', name:'ลายพู่กัน' }, { id:'plain', name:'เรียบ ตัวอักษรอย่างเดียว' }
+];
+const COVER_COLORS = [
+  { v:'#E7E0D2' }, { v:'#23201B' }, { v:'#8A2B22' }, { v:'#2E4A42' }, { v:'#3A3550' }, { v:'#A9803F' }
+];
+
+const EDIT_ARCS = [
+  { n:'1', name:'ธุลีเมืองชายแดน', range:'1–48', state:'เผยแพร่แล้ว' },
+  { n:'2', name:'สำนักเมฆาวสันต์', range:'49–120', state:'กำลังแปล' },
+  { n:'3', name:'ทะเลทรายกระดูกขาว', range:'121–186', state:'ยังไม่แปล' },
+  { n:'4', name:'นครเซียนเหนือเมฆ', range:'187–214', state:'ยังไม่แปล' }
+];
+
+const SHEETS = {
+  work:  { kicker:'เพิ่มผลงาน', title:'เพิ่มเรื่องใหม่หรือภาคใหม่', cta:'สร้างเรื่อง' },
+  arc:   { kicker:'โครงสร้างเรื่อง', title:'เพิ่มภาคใหม่', cta:'เพิ่มภาค' },
+  group: { kicker:'จัดกลุ่ม', title:'สร้างชุดหนังสือใหม่', cta:'สร้างชุด' },
+  link:  { kicker:'ความเกี่ยวเนื่อง', title:'ผูกเรื่องเกี่ยวเนื่อง', cta:'ผูกเรื่อง' }
+};
 
 const METHOD_LABEL = { card: 'บัตรเครดิต', promptpay: 'พร้อมเพย์', truemoney: 'ทรูมันนี่ วอลเล็ท' };
 const PACKS = [
@@ -840,7 +1321,7 @@ const PACKS = [
 ];
 
 class Component extends DCLogic {
-  state = { screen: 'home', q: '', genre: null, tab: 'reading', taste: ['เซียน','กำลังภายใน'], unlock: null, chars: 268, pack: 'p700', method: 'card', paid: false, narrow: false };
+  state = { screen: 'home', q: '', genre: null, tab: 'reading', taste: ['เซียน','กำลังภายใน'], unlock: null, chars: 268, pack: 'p700', method: 'card', paid: false, narrow: false, work: 'w1', workTab: 'info', workGenres: ['เซียน','กำลังภายใน'], coverStyle: 'ink', coverColor: '#E7E0D2', coverText: '九流剑仙', sheet: null, chapterFilter: 'all', openArcs: [], writeWork: null, writeChapter: null, workQ: '', chQ: '', writeTitle: '' };
 
   componentDidMount() {
     if (this.props.startScreen && this.props.startScreen !== 'home') this.setState({ screen: this.props.startScreen });
@@ -854,6 +1335,11 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+
+  fillEditor(title, body) {
+    const b = document.querySelector('[data-wrbody]');
+    if (b) b.value = body;
+  }
 
   syncResponsive() {
     const m = this.state.narrow;
@@ -891,7 +1377,13 @@ class Component extends DCLogic {
     set(one('[data-main]'), { padding: m ? '24px 16px 72px' : (this.state.screen === 'onboard' ? '64px 56px 96px' : '44px 56px 96px') });
     set(one('[data-grid="home"]'), { gridTemplateColumns: m ? '1fr' : '1.35fr 1fr', gap: m ? '34px' : '40px', marginTop: m ? '34px' : '46px' });
     set(one('[data-grid="kpi"]'), { gridTemplateColumns: m ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)' });
-    set(one('[data-grid="write"]'), { gridTemplateColumns: m ? '1fr' : '250px 1fr', gap: m ? '18px' : '30px' });
+    const w = window.innerWidth;
+    set(one('[data-grid="works"]'), { gridTemplateColumns: (m || w < 1080) ? '1fr' : '268px minmax(0, 1fr)', gap: m ? '18px' : '26px' });
+    set(one('[data-grid="cover"]'), { gridTemplateColumns: w < 720 ? '1fr' : '220px minmax(0, 1fr)', gap: m ? '22px' : '30px' });
+    all('[data-grid="wform"]').forEach((el) => set(el, { gridTemplateColumns: w < 620 ? '1fr' : '1fr 1fr' }));
+    all('[data-shelfrow]').forEach((el) => set(el, { gap: m ? '14px' : '20px', padding: m ? '18px 4px' : '20px 8px' }));
+    all('[data-arcedit]').forEach((el) => set(el, { flexWrap: m ? 'wrap' : 'nowrap', gap: m ? '6px 12px' : '14px', padding: m ? '13px 14px' : '15px 18px' }));
+set(one('[data-grid="write"]'), { gridTemplateColumns: m ? '1fr' : '250px minmax(0, 1fr)', gap: m ? '18px' : '30px' });
     set(one('[data-flex="cont"]'), { flexDirection: m ? 'column' : 'row', gap: m ? '16px' : '22px', alignItems: m ? 'flex-start' : 'stretch' });
     set(one('[data-contcover]'), { flex: '0 0 auto', width: '74px', height: '104px' });
     set(one('[data-flex="detail"]'), { flexDirection: m ? 'column' : 'row', gap: m ? '24px' : '38px' });
@@ -923,10 +1415,26 @@ class Component extends DCLogic {
     this.v('--pay-form-d', s.paid ? 'none' : 'block');
     this.v('--pay-done-d', s.paid ? 'block' : 'none');
     this.v('--pay-btn-d', s.paid ? 'none' : 'block');
-    ['home','browse','detail','series','library','coins','checkout','comments','write','stats','onboard'].forEach((k) => {
+    const wrStep = !s.writeWork ? 1 : (!s.writeChapter ? 2 : 3);
+    this.v('--wr-pick', s.writeWork ? 'none' : 'block');
+    this.v('--wr-work', s.writeWork ? 'grid' : 'none');
+    this.v('--wr-empty', s.writeWork && !s.writeChapter ? 'block' : 'none');
+    this.v('--wr-editor', s.writeChapter ? 'block' : 'none');
+    this.v('--wr-autosave', s.writeChapter ? 'block' : 'none');
+
+    ['info','cover','arcs','group','price'].forEach((k) => {
+      this.v('--wt-' + k, s.workTab === k ? 'block' : 'none');
+    });
+    ['work','arc','group','link'].forEach((k) => {
+      this.v('--sheet-' + k, s.sheet === k ? 'grid' : 'none');
+    });
+    this.v('--sheet-op', s.sheet ? '1' : '0');
+    this.v('--sheet-pe', s.sheet ? 'auto' : 'none');
+    this.v('--sheet-y', s.sheet ? '0px' : '10px');
+    ['home','browse','detail','series','library','coins','checkout','comments','works','write','stats','onboard'].forEach((k) => {
       this.v('--s-' + k, s.screen === k ? 'block' : 'none');
     });
-    ['home','browse','library','coins','write','stats'].forEach((k) => {
+    ['home','browse','library','coins','works','write','stats'].forEach((k) => {
       const on = s.screen === k || (k === 'browse' && (s.screen === 'detail' || s.screen === 'series')) || (k === 'coins' && s.screen === 'checkout');
       this.v('--n-' + k + '-bg', on ? 'rgba(35,32,27,0.06)' : 'transparent');
       this.v('--n-' + k + '-c', on ? '#23201B' : '#6B6357');
@@ -968,6 +1476,93 @@ class Component extends DCLogic {
       el.style.color = on ? '#A8382B' : '#23201B';
     });
     root.querySelectorAll('[data-bar]').forEach((el) => { el.style.width = el.dataset.bar + '%'; });
+    root.querySelectorAll('[data-step]').forEach((el) => {
+      const n = Number(el.dataset.step);
+      const on = n === wrStep, done = n < wrStep;
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.14)';
+      el.style.color = on ? '#A8382B' : (done ? '#23201B' : '#6B6357');
+      el.style.background = on ? 'rgba(168,56,43,0.06)' : 'transparent';
+    });
+    root.querySelectorAll('[data-stepn]').forEach((el) => {
+      const n = Number(el.dataset.stepn);
+      const on = n === wrStep, done = n < wrStep;
+      el.style.background = on ? '#A8382B' : (done ? '#23201B' : 'rgba(35,32,27,0.10)');
+      el.style.color = (on || done) ? '#FAF8F3' : '#6B6357';
+      el.textContent = done ? '✓' : String(n);
+    });
+    root.querySelectorAll('[data-dsel]').forEach((el) => {
+      const on = el.dataset.dsel === s.writeChapter;
+      el.style.background = on ? 'rgba(168,56,43,0.07)' : 'transparent';
+      el.style.borderLeftColor = on ? '#A8382B' : 'transparent';
+    });
+    root.querySelectorAll('[data-cf]').forEach((el) => {
+      const on = el.dataset.cf === s.chapterFilter;
+      el.style.background = on ? 'rgba(168,56,43,0.08)' : 'transparent';
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.14)';
+      el.style.color = on ? '#A8382B' : '#23201B';
+    });
+    root.querySelectorAll('[data-chtag]').forEach((el) => {
+      const k = el.dataset.chtag;
+      const map = { free: '#3F5D52', owned: '#6B6357', locked: '#A9803F', future: '#9A9284' };
+      el.style.color = map[k] || '#6B6357';
+      el.style.borderColor = k === 'locked' ? 'rgba(169,128,63,0.45)' : 'rgba(35,32,27,0.12)';
+    });
+    root.querySelectorAll('[data-wsel]').forEach((el) => {
+      const on = el.dataset.wsel === s.work;
+      el.style.background = on ? 'rgba(168,56,43,0.07)' : 'transparent';
+      el.style.borderLeftColor = on ? '#A8382B' : 'transparent';
+    });
+    root.querySelectorAll('[data-wt]').forEach((el) => {
+      const on = el.dataset.wt === s.workTab;
+      el.style.color = on ? '#23201B' : '#6B6357';
+      el.style.borderBottomColor = on ? '#A8382B' : 'transparent';
+    });
+    root.querySelectorAll('[data-wg]').forEach((el) => {
+      const on = s.workGenres.indexOf(el.dataset.wg) >= 0;
+      el.style.background = on ? 'rgba(168,56,43,0.08)' : 'transparent';
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.14)';
+      el.style.color = on ? '#A8382B' : '#23201B';
+    });
+    root.querySelectorAll('[data-cs]').forEach((el) => {
+      const on = el.dataset.cs === s.coverStyle;
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.14)';
+      el.style.color = on ? '#A8382B' : '#23201B';
+    });
+    root.querySelectorAll('[data-swatch]').forEach((el) => {
+      el.style.background = el.dataset.swatch;
+      const on = el.dataset.swatch === s.coverColor;
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.16)';
+      el.style.boxShadow = on ? '0 0 0 2px #FAF8F3, 0 0 0 3px #A8382B' : 'none';
+    });
+    const art = root.querySelector('[data-coverart]');
+    if (art) {
+      const dark = ['#23201B','#8A2B22','#2E4A42','#3A3550'].indexOf(s.coverColor) >= 0;
+      const fg = dark ? 'rgba(250,248,243,0.86)' : '#6B6357';
+      const styles = {
+        ink: 'repeating-linear-gradient(135deg, ' + s.coverColor + ' 0 7px, rgba(255,255,255,0.14) 7px 14px)',
+        seal: s.coverColor,
+        brush: 'linear-gradient(160deg, ' + s.coverColor + ' 0%, rgba(255,255,255,0.22) 100%)',
+        plain: s.coverColor
+      };
+      art.style.background = styles[s.coverStyle] || s.coverColor;
+      const t2 = root.querySelector('[data-covertitle]');
+      if (t2) {
+        t2.style.color = fg;
+        t2.style.writingMode = s.coverStyle === 'plain' ? 'horizontal-tb' : 'vertical-rl';
+        t2.style.border = s.coverStyle === 'seal' ? '2px solid ' + fg : 'none';
+        t2.style.padding = s.coverStyle === 'seal' ? '18px 12px' : '0';
+      }
+    }
+    root.querySelectorAll('[data-arcstate]').forEach((el) => {
+      const v = el.dataset.arcstate;
+      const on = v === 'กำลังแปล';
+      el.style.color = on ? '#A8382B' : (v === 'ร่าง' ? '#A9803F' : '#6B6357');
+      el.style.borderColor = on ? '#A8382B' : 'rgba(35,32,27,0.14)';
+    });
+    root.querySelectorAll('[data-wstate]').forEach((el) => {
+      const v = el.dataset.wstate;
+      el.style.color = v === 'ร่าง' ? '#A9803F' : '#6B6357';
+    });
     root.querySelectorAll('[data-state]').forEach((el) => {
       const on = el.dataset.state === 'กำลังแปล';
       el.style.color = on ? '#A8382B' : '#6B6357';
@@ -990,6 +1585,19 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state;
     const pack = PACKS.find((p) => p.id === s.pack) || PACKS[2];
+    const sheet = SHEETS[s.sheet] || { kicker: '', title: '', cta: 'ยืนยัน' };
+    const writeWork = WORK_GROUPS.reduce((a, g) => a.concat(g.items), []).find((w) => w.id === s.writeWork);
+    const translated = writeWork ? Number(String(writeWork.chapters).split('/')[0].trim()) : 0;
+    const nextChapterN = s.writeWork === 'w1' ? 91 : translated + 1;
+    const allWritable = WORK_GROUPS.reduce((a, g) => a.concat(g.items.map((w) => Object.assign({ group: g.name }, w))), []);
+    const wq = s.workQ.trim();
+    const filteredWorks = wq ? allWritable.filter((w) => w.t.includes(wq) || w.group.includes(wq)) : allWritable;
+    const workDrafts = s.writeWork === 'w1' ? DRAFTS
+      : (translated === 0 ? [] : [translated, translated - 1, translated - 2].filter((n) => n > 0).map((n) => ({
+          n: String(n), t: chapterTitle(n), status: 'เผยแพร่แล้ว'
+        })));
+    const cq = s.chQ.trim();
+    const visibleDrafts = cq ? workDrafts.filter((d) => d.t.includes(cq) || String(d.n).includes(cq)) : workDrafts;
     const q = s.q.trim();
     const results = NOVELS.filter((n) => {
       const okG = !s.genre || n.genre === s.genre;
@@ -997,17 +1605,45 @@ class Component extends DCLogic {
       return okG && okQ;
     });
 
-    const DATES = { 83:'28 ก.ค.', 84:'30 ก.ค.', 85:'1 ส.ค.', 86:'4 ส.ค.', 87:'6 ส.ค.', 88:'8 ส.ค.', 89:'ตั้งเวลา 10 ส.ค. 20:00' };
-    const detailChapters = [83, 84, 85, 86, 87, 88, 89].map((n) => {
+    const DATES = { 1:'12 ม.ค.', 2:'14 ม.ค.', 3:'17 ม.ค.', 47:'6 พ.ค.', 48:'9 พ.ค.', 49:'12 พ.ค.', 50:'15 พ.ค.', 83:'28 ก.ค.', 84:'30 ก.ค.', 85:'1 ส.ค.', 86:'4 ส.ค.', 87:'6 ส.ค.', 88:'8 ส.ค.', 89:'ตั้งเวลา 10 ส.ค.' };
+    const mkChapter = (n) => {
       const future = n > PUBLISHED_UNTIL;
-      const locked = !future && n > FREE_UNTIL && n > OWNED_UNTIL;
+      const free = n <= FREE_UNTIL;
+      const owned = !free && !future && n <= OWNED_UNTIL;
+      const locked = !future && !free && !owned;
+      let tag = 'อ่านฟรี', tagKind = 'free';
+      if (future) { tag = 'ยังไม่แปล'; tagKind = 'future'; }
+      else if (locked) { tag = '5 เหรียญ'; tagKind = 'locked'; }
+      else if (owned) { tag = 'ปลดล็อกแล้ว'; tagKind = 'owned'; }
       return {
-        n, title: CH_MAP[n] || ('บทที่ ' + n),
+        n, title: CH_MAP[n] || chapterTitle(n),
         date: DATES[n] || '',
-        action: future ? 'แจ้งเตือน' : (locked ? '5 เหรียญ' : 'อ่าน'),
-        lockedFlag: locked ? '1' : (future ? 'future' : '')
+        tag, tagKind,
+        action: future ? 'แจ้งเตือน' : (locked ? 'ปลดล็อก' : (n === 87 ? 'อ่านต่อ' : 'อ่าน')),
+        lockedFlag: locked ? '1' : (future ? 'future' : ''),
+        _state: future ? 'future' : (locked ? 'locked' : (free ? 'free' : 'owned'))
       };
-    });
+    };
+    const ARC_SPANS = [
+      { n:'1', name:'ธุลีเมืองชายแดน', from:1, to:48, show:[1,2,3,47,48], meta:'48 บท · อ่านฟรีทั้งภาค' },
+      { n:'2', name:'สำนักเมฆาวสันต์', from:49, to:120, show:[49,50,85,86,87,88], meta:'72 บท · แปลแล้ว 40 บท' },
+      { n:'3', name:'ทะเลทรายกระดูกขาว', from:121, to:186, show:[], meta:'66 บท · ยังไม่เริ่มแปล' },
+      { n:'4', name:'นครเซียนเหนือเมฆ', from:187, to:214, show:[], meta:'28 บท · ยังไม่เริ่มแปล' }
+    ];
+    const detailArcs = ARC_SPANS.map((a) => {
+      const open = s.openArcs.indexOf(a.n) >= 0;
+      let nums;
+      if (open) { nums = []; for (let i = a.from; i <= a.to; i++) nums.push(i); }
+      else nums = a.show.length ? a.show : [a.from];
+      const list = nums.map(mkChapter)
+        .filter((c) => s.chapterFilter === 'all' || c._state === s.chapterFilter);
+      const hidden = a.to - a.from + 1 - (a.show.length || 1);
+      return {
+        n: a.n, name: a.name, meta: a.meta, items: list,
+        more: list.length > 0 && hidden > 0,
+        moreLabel: open ? 'ย่อรายการบทในภาคนี้' : 'แสดงอีก ' + hidden + ' บทในภาคนี้'
+      };
+    }).filter((a) => a.items.length);
 
     return {
       novels: NOVELS,
@@ -1015,11 +1651,21 @@ class Component extends DCLogic {
       genres: GENRES,
       results,
       resultLabel: results.length + ' เรื่อง' + (s.genre ? ' ในหมวด ' + s.genre : ''),
-      detailChapters,
+      detailArcs,
+      chapterFilters: [
+        { id:'all', name:'ทั้งหมด' }, { id:'free', name:'อ่านฟรี' },
+        { id:'owned', name:'ปลดล็อกแล้ว' }, { id:'locked', name:'ยังไม่ปลดล็อก' }
+      ],
+      setChapterFilter: (e) => this.setState({ chapterFilter: e.currentTarget.dataset.cf }),
+      toggleArc: (e) => {
+        const a = e.currentTarget.dataset.arc;
+        const has = s.openArcs.indexOf(a) >= 0;
+        this.setState({ openArcs: has ? s.openArcs.filter((x) => x !== a) : s.openArcs.concat([a]) });
+      },
       shelf: (SHELF[s.tab] || SHELF.reading).map((b) => Object.assign({ barSpacer: '' }, b)),
       ledger: LEDGER,
       comments: COMMENTS,
-      drafts: DRAFTS,
+      drafts: s.screen === 'write' ? visibleDrafts : DRAFTS,
       topChapters: TOP_CHAPTERS,
       wordCount: s.chars,
       unlockN: s.unlock ? s.unlock.n : '',
@@ -1038,11 +1684,68 @@ class Component extends DCLogic {
       chapterClick: (e) => {
         const n = Number(e.currentTarget.dataset.n);
         if (e.currentTarget.dataset.locked) {
-          const c = detailChapters.find((x) => x.n === n);
-          this.setState({ unlock: { n, title: c ? c.title : '' } });
+          this.setState({ unlock: { n, title: CH_MAP[n] || chapterTitle(n) } });
         } else {
           window.location.href = 'Xianxia%20Reader.dc.html';
         }
+      },
+      workGroups: WORK_GROUPS,
+      allWorks: WORK_GROUPS.reduce((a, g) => a.concat(g.items), []),
+      coverStyles: COVER_STYLES,
+      coverColors: COVER_COLORS,
+      editArcs: EDIT_ARCS,
+      sheetKicker: sheet.kicker, sheetTitle: sheet.title, sheetCta: sheet.cta,
+      selectWork: (e) => this.setState({ work: e.currentTarget.dataset.w }),
+      setWorkTab: (e) => this.setState({ workTab: e.currentTarget.dataset.wt }),
+      toggleWorkGenre: (e) => {
+        const g = e.currentTarget.dataset.wg;
+        const has = s.workGenres.indexOf(g) >= 0;
+        if (!has && s.workGenres.length >= 3) return;
+        this.setState({ workGenres: has ? s.workGenres.filter((x) => x !== g) : s.workGenres.concat([g]) });
+      },
+      setCoverStyle: (e) => this.setState({ coverStyle: e.currentTarget.dataset.cs }),
+      setCoverColor: (e) => this.setState({ coverColor: e.currentTarget.dataset.cc }),
+      onCoverText: (e) => {
+        const el = document.querySelector('[data-covertitle]');
+        if (el) el.textContent = e.target.value;
+      },
+      openNewWork: () => this.setState({ sheet: 'work' }),
+      openNewArc: () => this.setState({ sheet: 'arc' }),
+      openNewGroup: () => this.setState({ sheet: 'group' }),
+      openLink: () => this.setState({ sheet: 'link' }),
+      closeSheet: () => this.setState({ sheet: null }),
+      writableWorks: filteredWorks,
+      workSearchLabel: filteredWorks.length ? 'พบ ' + filteredWorks.length + ' เรื่อง' : 'ไม่พบเรื่องที่ตรงกับคำค้น',
+      chapterSearchLabel: visibleDrafts.length ? 'ร่างและบทที่เผยแพร่ ' + visibleDrafts.length + ' บท' : (s.chQ.trim() ? 'ไม่พบบทที่ตรงกับคำค้น' : 'ยังไม่มีบทในเรื่องนี้'),
+      writeChapterTitle: s.writeTitle,
+      onWriteTitle: (e) => this.setState({ writeTitle: e.target.value }),
+      onWorkSearch: (e) => this.setState({ workQ: e.target.value }),
+      onChapterSearch: (e) => this.setState({ chQ: e.target.value }),
+      writeWorkTitle: writeWork ? writeWork.t : '',
+      writePrice: (writeWork && WORK_PRICE[writeWork.id]) || 'อ่านฟรี',
+      writeFootnotes: s.writeChapter === 'new' ? 'ยังไม่มีเชิงอรรถ' : 'เชิงอรรถ 6 จุด · ศัพท์ผูกแล้ว 4 คำ',
+      emptyHint: workDrafts.length
+        ? 'เลือกบทจากรายการทางซ้ายเพื่อแก้ไขต่อ หรือสร้างบทใหม่เป็นบทที่ ' + nextChapterN
+        : 'เรื่องนี้ยังไม่มีบท เริ่มจากสร้างบทที่ ' + nextChapterN,
+      writeChapterMeta: (writeWork ? writeWork.t + ' · ' : '') + (s.writeChapter === 'new'
+        ? 'บทใหม่ · บทที่ ' + nextChapterN
+        : 'บทที่ ' + s.writeChapter),
+      nextChapterN,
+      pickWriteWork: (e) => this.setState({ writeWork: e.currentTarget.dataset.pw, writeChapter: null, chQ: '', writeTitle: '' }),
+      clearWriteWork: () => this.setState({ writeWork: null, writeChapter: null, chQ: '', writeTitle: '' }),
+      pickWriteChapter: (e) => {
+        const n = e.currentTarget.dataset.dn;
+        const d = visibleDrafts.find((x) => x.n === n) || workDrafts.find((x) => x.n === n);
+        const body = n === '87' ? "หิมะบางโปรยลงเหนือหุบเขาเมฆาวสันต์มาตั้งแต่ยามดึก พอฟ้าสาง ลานฝึกก็ขาวจนแทบมองไม่เห็นรอยหินใต้ฝ่าเท้า" : (d && d.body) || SAMPLE_BODY;
+        this.fillEditor(null, body);
+        this.setState({ writeChapter: n, chars: body.length, writeTitle: d ? d.t : '' });
+      },
+      newWriteChapter: () => {
+        this.fillEditor(null, '');
+        this.setState({ writeChapter: 'new', chars: 0, writeTitle: '' }, () => {
+          const t = document.querySelector('[data-wrtitle]');
+          if (t) t.focus();
+        });
       },
       readingOrder: READING_ORDER,
       seriesBooks: SERIES_BOOKS,

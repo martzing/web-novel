@@ -27,17 +27,22 @@ func New(db *gorm.DB) *GormRepository { return &GormRepository{db: db} }
 var _ domain.Repository = (*GormRepository)(nil)
 
 type shelfRow struct {
-	UserID        int64
-	NovelID       int64
-	Status        string
-	AddedAt       string
-	Slug          string
-	TitleTH       string
-	TitleCN       *string
-	CoverURL      *string
-	ChaptersCount int
-	LastChapterNo *int
-	Pct           *float64
+	UserID              int64
+	NovelID             int64
+	Status              string
+	AddedAt             string
+	Slug                string
+	TitleTH             string
+	TitleCN             *string
+	CoverURL            *string
+	ChaptersCount       int
+	SourceChaptersCount int
+	LastChapterNo       *int
+	LastChapterID       *int64
+	Pct                 *float64
+	CoverStyle          string
+	CoverColor          *string
+	CoverText           *string
 }
 
 func (r *GormRepository) ListShelf(ctx context.Context, userID int64, tab string, p page.Page) ([]domain.EntryWithNovel, string, error) {
@@ -45,7 +50,8 @@ func (r *GormRepository) ListShelf(ctx context.Context, userID int64, tab string
 		Table("library_entries le").
 		Select(`le.user_id, le.novel_id, le.status, le.added_at,
 		        n.slug, n.title_th, n.title_cn, n.cover_url, n.chapters_count,
-		        rp.last_chapter_no, rp.pct`).
+		        n.source_chapters_count, n.cover_style, n.cover_color, n.cover_text,
+		        rp.last_chapter_no, rp.last_chapter_id, rp.pct`).
 		Joins("JOIN novels n ON n.id = le.novel_id").
 		Joins("LEFT JOIN reading_progress rp ON rp.user_id = le.user_id AND rp.novel_id = le.novel_id").
 		Where("le.user_id = ?", userID)
@@ -88,10 +94,19 @@ func (r *GormRepository) ListShelf(ctx context.Context, userID int64, tab string
 				NovelID: row.NovelID,
 				Status:  row.Status,
 			},
-			Slug:          row.Slug,
-			TitleTH:       row.TitleTH,
-			ChaptersCount: row.ChaptersCount,
-			LastChapterNo: row.LastChapterNo,
+			Slug:                row.Slug,
+			TitleTH:             row.TitleTH,
+			ChaptersCount:       row.ChaptersCount,
+			SourceChaptersCount: row.SourceChaptersCount,
+			LastChapterNo:       row.LastChapterNo,
+			LastChapterID:       row.LastChapterID,
+			CoverStyle:          row.CoverStyle,
+		}
+		if row.CoverColor != nil {
+			item.CoverColor = *row.CoverColor
+		}
+		if row.CoverText != nil {
+			item.CoverText = *row.CoverText
 		}
 		if row.TitleCN != nil {
 			item.TitleCN = *row.TitleCN

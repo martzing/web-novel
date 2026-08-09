@@ -41,7 +41,7 @@ func (r *GormRepository) ListGenres(ctx context.Context) ([]domain.Genre, error)
 
 func (r *GormRepository) ListNovels(ctx context.Context, filter domain.NovelFilter) ([]domain.Novel, bool, error) {
 	db := dbctx.From(ctx, r.db)
-	query := db.Model(&entities.Novel{})
+	query := db.Model(&entities.Novel{}).Where("status <> ?", entities.NovelHidden)
 
 	if q := strings.TrimSpace(filter.Query); q != "" {
 		// Thai has no word boundaries, so `เซียนดาบ` is a substring of the single
@@ -142,7 +142,13 @@ func (r *GormRepository) novelDetail(ctx context.Context, where string, arg any)
 		return nil, err
 	}
 
-	detail := &domain.NovelDetail{Novel: toDomainNovel(n)}
+	detail := &domain.NovelDetail{
+		Novel:            toDomainNovel(n),
+		SellByArc:        n.SellByArc,
+		TipsEnabled:      n.TipsEnabled,
+		ReleaseSchedule:  n.ReleaseSchedule,
+		EarlyAccessHours: int(n.EarlyAccessHours),
+	}
 
 	genres, err := r.genresForNovels(ctx, []int64{n.ID})
 	if err != nil {
@@ -297,8 +303,11 @@ func (r *GormRepository) WeeklyRanking(ctx context.Context, limit int) ([]domain
 	for _, r := range ranks {
 		ids = append(ids, r.NovelID)
 	}
+	// A novel hidden after the weekly snapshot was taken must drop out of the
+	// chart too, or ซ่อนจากหน้าร้าน leaves it on the busiest page on the site.
 	var novels []entities.Novel
-	if err := db.Where("id IN ?", ids).Find(&novels).Error; err != nil {
+	err = db.Where("id IN ? AND status <> ?", ids, entities.NovelHidden).Find(&novels).Error
+	if err != nil {
 		return nil, err
 	}
 	byID := make(map[int64]entities.Novel, len(novels))
@@ -378,6 +387,13 @@ func toDomainNovel(n entities.Novel) domain.Novel {
 		ChaptersCount:  n.ChaptersCount,
 		Genres:         []domain.Genre{},
 		UpdatedAt:      n.UpdatedAt.Format(time.RFC3339Nano),
+
+		SourceChaptersCount: n.SourceChaptersCount,
+		CoverStyle:          n.CoverStyle,
+		CoverColor:          derefString(n.CoverColor),
+		CoverText:           derefString(n.CoverText),
+		SeriesID:            n.SeriesID,
+		PrimaryTranslatorID: n.PrimaryTranslatorID,
 	}
 }
 

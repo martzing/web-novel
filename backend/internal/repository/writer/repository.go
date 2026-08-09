@@ -90,6 +90,57 @@ func (r *GormRepository) UpdateNovel(ctx context.Context, id int64, n domain.Nov
 	if n.Status != "" {
 		updates["status"] = n.Status
 	}
+	if n.ReleaseSchedule != "" {
+		updates["release_schedule"] = n.ReleaseSchedule
+	}
+	if n.CoverStyle != "" {
+		updates["cover_style"] = n.CoverStyle
+	}
+	if n.CoverColor != "" {
+		updates["cover_color"] = n.CoverColor
+	}
+	if n.CoverText != "" {
+		updates["cover_text"] = n.CoverText
+	}
+	if n.SeriesNote != "" {
+		updates["series_note"] = n.SeriesNote
+	}
+
+	// The pointer settings apply whenever they are supplied, including their
+	// zero values: "free until chapter 0" and "arc sales off" are exactly the
+	// edits a translator makes, and a non-zero test would silently drop them.
+	if n.SourceChaptersCount != nil {
+		updates["source_chapters_count"] = *n.SourceChaptersCount
+	}
+	if n.PricePerChapter != nil {
+		updates["price_per_chapter"] = *n.PricePerChapter
+	}
+	if n.FreeUntilChapter != nil {
+		updates["free_until_chapter"] = *n.FreeUntilChapter
+	}
+	if n.SellByArc != nil {
+		updates["sell_by_arc"] = *n.SellByArc
+	}
+	if n.TipsEnabled != nil {
+		updates["tips_enabled"] = *n.TipsEnabled
+	}
+	if n.EarlyAccessHours != nil {
+		updates["early_access_hours"] = *n.EarlyAccessHours
+	}
+	if n.SeriesPosition != nil {
+		updates["series_position"] = *n.SeriesPosition
+	}
+	// SeriesIDSet separates "leave the series alone" from "remove it", which a
+	// nil SeriesID alone cannot express.
+	if n.SeriesIDSet {
+		updates["series_id"] = n.SeriesID
+		if n.SeriesID == nil {
+			// Leaving a series drops its reading-order slot with it, or the
+			// novel rejoins a different series carrying a stale position.
+			updates["series_position"] = nil
+			updates["series_note"] = nil
+		}
+	}
 
 	err := dbctx.From(ctx, r.db).Transaction(func(tx *gorm.DB) error {
 		if len(updates) > 0 {
@@ -477,6 +528,14 @@ func (r *GormRepository) PublishChapter(ctx context.Context, chapterID int64, st
 			"scheduled_at": scheduledAt,
 			"updated_at":   time.Now(),
 		}
+		// Snapshot when non-subscribers may read it. Deriving this at read time
+		// would let a later settings change retroactively hide chapters that
+		// readers can already see.
+		if publishedAt != nil {
+			updates["public_at"] = domain.PublicAt(*publishedAt, int(novel.EarlyAccessHours))
+		} else {
+			updates["public_at"] = nil
+		}
 		if err := tx.Model(&entities.Chapter{}).Where("id = ?", chapterID).Updates(updates).Error; err != nil {
 			return err
 		}
@@ -502,6 +561,7 @@ func (r *GormRepository) UnpublishChapter(ctx context.Context, chapterID int64) 
 				"status":       entities.ChapterDraftStatus,
 				"published_at": nil,
 				"scheduled_at": nil,
+				"public_at":    nil,
 			}).Error
 		if err != nil {
 			return err
@@ -600,6 +660,38 @@ func assignOptional(row *entities.Novel, n domain.NovelDraft) {
 		v := n.CoverURL
 		row.CoverURL = &v
 	}
+	if n.CoverStyle != "" {
+		row.CoverStyle = n.CoverStyle
+	}
+	if n.CoverColor != "" {
+		v := n.CoverColor
+		row.CoverColor = &v
+	}
+	if n.CoverText != "" {
+		v := n.CoverText
+		row.CoverText = &v
+	}
+	if n.ReleaseSchedule != "" {
+		row.ReleaseSchedule = n.ReleaseSchedule
+	}
+	if n.SourceChaptersCount != nil {
+		row.SourceChaptersCount = *n.SourceChaptersCount
+	}
+	if n.PricePerChapter != nil {
+		row.PricePerChapter = int16(*n.PricePerChapter)
+	}
+	if n.FreeUntilChapter != nil {
+		row.FreeUntilChapter = *n.FreeUntilChapter
+	}
+	if n.SellByArc != nil {
+		row.SellByArc = *n.SellByArc
+	}
+	if n.TipsEnabled != nil {
+		row.TipsEnabled = *n.TipsEnabled
+	}
+	if n.EarlyAccessHours != nil {
+		row.EarlyAccessHours = int16(*n.EarlyAccessHours)
+	}
 }
 
 func toDomainNovel(row entities.Novel) domain.NovelDraft {
@@ -622,6 +714,31 @@ func toDomainNovel(row entities.Novel) domain.NovelDraft {
 	}
 	if row.CoverURL != nil {
 		out.CoverURL = *row.CoverURL
+	}
+
+	sourceCount := row.SourceChaptersCount
+	price := int(row.PricePerChapter)
+	freeUntil := row.FreeUntilChapter
+	sellByArc := row.SellByArc
+	tips := row.TipsEnabled
+	earlyHours := int(row.EarlyAccessHours)
+
+	out.SourceChaptersCount = &sourceCount
+	out.PricePerChapter = &price
+	out.FreeUntilChapter = &freeUntil
+	out.SellByArc = &sellByArc
+	out.TipsEnabled = &tips
+	out.EarlyAccessHours = &earlyHours
+	out.ReleaseSchedule = row.ReleaseSchedule
+	out.CoverStyle = row.CoverStyle
+	out.CoverColor = derefString(row.CoverColor)
+	out.CoverText = derefString(row.CoverText)
+	out.SeriesNote = derefString(row.SeriesNote)
+	out.ChaptersCount = row.ChaptersCount
+	out.Title = row.TitleTH
+	if row.SeriesPosition != nil {
+		pos := int(*row.SeriesPosition)
+		out.SeriesPosition = &pos
 	}
 	return out
 }

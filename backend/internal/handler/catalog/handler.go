@@ -32,10 +32,14 @@ func New(svc *catalogsvc.Service) *Handler {
 func (h *Handler) Register(r gin.IRouter, optionalAuth gin.HandlerFunc) {
 	r.GET("/genres", h.listGenres)
 	r.GET("/novels", h.listNovels)
-	r.GET("/novels/:id", h.getNovel)
+	// optionalAuth so a translator can still open their own hidden novel.
+	r.GET("/novels/:id", optionalAuth, h.getNovel)
 	r.GET("/novels/:id/chapters", optionalAuth, h.listChapters)
 	r.GET("/novels/:id/arcs", h.listArcs)
 	r.GET("/novels/:id/glossary", h.getGlossary)
+	r.GET("/novels/:id/related", h.listRelated)
+	// /series/:id accepts an id or a slug, matching /novels/:id.
+	r.GET("/series/:id", h.getSeries)
 	r.GET("/search", h.search)
 	r.GET("/ranking/weekly", h.weeklyRanking)
 }
@@ -108,12 +112,34 @@ func (h *Handler) respondNovelList(c *gin.Context, query string) {
 }
 
 func (h *Handler) getNovel(c *gin.Context) {
-	novel, err := h.Service.GetNovel(c.Request.Context(), c.Param("id"))
+	novel, err := h.Service.GetNovel(c.Request.Context(), c.Param("id"), middleware.ViewerID(c))
 	if err != nil {
 		h.writeErr(c, err, "ไม่พบนิยายเรื่องนี้")
 		return
 	}
 	httpx.OK(c, toNovelDetailResponse(*novel))
+}
+
+func (h *Handler) getSeries(c *gin.Context) {
+	series, err := h.Service.GetSeries(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		h.writeErr(c, err, "ไม่พบชุดหนังสือนี้")
+		return
+	}
+	httpx.OK(c, toSeriesResponse(*series))
+}
+
+func (h *Handler) listRelated(c *gin.Context) {
+	id, ok := httpx.IDParam(c, "id", "รหัสนิยายไม่ถูกต้อง")
+	if !ok {
+		return
+	}
+	items, err := h.Service.RelatedNovels(c.Request.Context(), id)
+	if err != nil {
+		httpx.Internal(c, err)
+		return
+	}
+	httpx.List(c, http.StatusOK, toRelatedNovelResponses(items), "")
 }
 
 func (h *Handler) listArcs(c *gin.Context) {

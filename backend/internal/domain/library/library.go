@@ -43,6 +43,18 @@ type EntryWithNovel struct {
 	ChaptersCount int
 	LastChapterNo *int
 	Pct           float64
+
+	// SourceChaptersCount lets the shelf show "บทที่ 87 จาก 88 บทที่แปลแล้ว"
+	// against the original's length rather than a bare percentage.
+	SourceChaptersCount int
+
+	// LastChapterID is what the continue button opens. Without it the shelf
+	// can only link to the novel, which is not "resume where I left off".
+	LastChapterID *int64
+
+	CoverStyle string
+	CoverColor string
+	CoverText  string
 }
 
 // Counts drives the shelf tab badges.

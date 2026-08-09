@@ -34,11 +34,37 @@ func (s *Service) ListNovels(ctx context.Context, filter domain.NovelFilter) ([]
 // GetNovel resolves a novel by numeric id or by slug. The route parameter is a
 // single wildcard because gin panics when two names occupy the same path
 // segment, so the discrimination happens here.
-func (s *Service) GetNovel(ctx context.Context, idOrSlug string) (*domain.NovelDetail, error) {
-	if id, err := strconv.ParseInt(idOrSlug, 10, 64); err == nil && id > 0 {
-		return s.repo.GetNovelByID(ctx, id)
+// viewerID is 0 for anonymous callers. A hidden novel is a 404 for everyone but
+// its own translator — the filter lives here rather than in SQL because the
+// same two repository reads serve the writer workspace, where hidden work must
+// still be reachable.
+func (s *Service) GetNovel(ctx context.Context, idOrSlug string, viewerID int64) (*domain.NovelDetail, error) {
+	var (
+		detail *domain.NovelDetail
+		err    error
+	)
+	if id, parseErr := strconv.ParseInt(idOrSlug, 10, 64); parseErr == nil && id > 0 {
+		detail, err = s.repo.GetNovelByID(ctx, id)
+	} else {
+		detail, err = s.repo.GetNovelBySlug(ctx, idOrSlug)
 	}
-	return s.repo.GetNovelBySlug(ctx, idOrSlug)
+	if err != nil {
+		return nil, err
+	}
+	if !detail.VisibleTo(viewerID) {
+		return nil, domain.ErrNotFound
+	}
+	return detail, nil
+}
+
+// GetSeries returns the public ชุดหนังสือ page by id or slug.
+func (s *Service) GetSeries(ctx context.Context, idOrSlug string) (*domain.SeriesDetail, error) {
+	return s.repo.GetSeries(ctx, idOrSlug)
+}
+
+// RelatedNovels returns เรื่องเกี่ยวเนื่อง grouped-ready for the detail page.
+func (s *Service) RelatedNovels(ctx context.Context, novelID int64) ([]domain.RelatedNovel, error) {
+	return s.repo.RelatedNovels(ctx, novelID)
 }
 
 // ListArcs returns the arc breakdown used by the reader's table of contents.

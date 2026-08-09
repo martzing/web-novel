@@ -62,6 +62,27 @@
   opacity: 0.75;
 }
 
+/* A generated cover paints its own background, so its text takes its contrast
+   from the swatch rather than from the theme. */
+.cover--template {
+  padding: 8px;
+}
+
+.cover__label {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  line-height: 1.35;
+  writing-mode: vertical-rl;
+  text-align: center;
+  color: rgba(35, 32, 27, 0.82);
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.cover--on-dark .cover__label {
+  color: rgba(255, 253, 248, 0.92);
+}
+
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 
 .btn {
@@ -105,6 +126,18 @@
   border-color: transparent;
   color: var(--soft);
   padding: 8px 10px;
+}
+
+/* The shelf's continue CTA: accent-outlined rather than filled, so it reads as
+   primary next to the detail button without competing with the page's own
+   primary actions. */
+.btn--accent {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.btn--accent:hover:not(:disabled) {
+  background: var(--sel);
 }
 
 .btn--block {
@@ -402,4 +435,225 @@
 .chapter-body [data-k] {
   border-bottom: 1px dashed var(--noteline);
   cursor: pointer;
+}
+
+/* ── Shelf row ──────────────────────────────────────────────────────────── */
+
+.shelf-row {
+  display: flex;
+  gap: var(--s4);
+  align-items: stretch;
+}
+
+.shelf-row__cover {
+  flex: 0 0 auto;
+  display: block;
+}
+
+.shelf-row__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.shelf-row__title {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.shelf-row__title:hover {
+  color: var(--red);
+}
+
+.shelf-row__sub {
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.7;
+}
+
+.shelf-row__actions {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s2);
+  flex: 0 0 auto;
+}
+
+.shelf-row__pct {
+  font-size: 11.5px;
+  text-align: center;
+}
+
+/* Below 820px the row tightens rather than reflowing: the actions drop under
+   the text so the cover and title keep their reading order. */
+@media (max-width: 820px) {
+  .shelf-row {
+    flex-wrap: wrap;
+    gap: var(--s3);
+    padding: 14px;
+  }
+
+  .shelf-row__actions {
+    flex-direction: row;
+    align-items: center;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+
+  .shelf-row__actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .shelf-row__pct {
+    flex: 0 0 auto;
+  }
+}
+
+/* ── Reading order (series page) ────────────────────────────────────────── */
+
+.reading-order {
+  list-style: none;
+  margin: var(--s4) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s4);
+}
+
+.reading-order__item {
+  display: flex;
+  gap: var(--s4);
+  align-items: flex-start;
+}
+
+.reading-order__no {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  color: var(--soft);
+}
+
+.reading-order__cover {
+  flex: 0 0 auto;
+  display: block;
+}
+
+.reading-order__title {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.reading-order__title:hover {
+  color: var(--red);
+}
+
+/* The translator's note is the point of the page, so it is set apart rather
+   than folded into the metadata line. */
+.reading-order__note {
+  margin: 10px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--line-strong);
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--soft);
+}
+
+@media (max-width: 620px) {
+  .reading-order__item {
+    flex-wrap: wrap;
+    gap: var(--s3);
+  }
+}
+
+/* ── Novel detail ───────────────────────────────────────────────────────── */
+
+.resume-card {
+  margin-top: var(--s5);
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  flex-wrap: wrap;
+}
+
+.auto-unlock {
+  margin-top: var(--s5);
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s4);
+  flex-wrap: wrap;
+}
+
+.auto-unlock__cap {
+  flex: 0 0 150px;
+}
+
+/* The arc header is a button so the whole strip is one keyboard target. */
+.arc-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: var(--soft);
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.arc-head:hover .arc-head__name {
+  color: var(--ink);
+}
+
+.arc-head__caret {
+  width: 14px;
+  flex: 0 0 auto;
+}
+
+.arc-head__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.arc-head__bundle {
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* An untranslated chapter is listed but not navigable. */
+.row--pending {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.row--pending:hover {
+  background: var(--panel);
+}
+
+.related-card {
+  display: flex;
+  gap: var(--s3);
+  align-items: flex-start;
+  color: inherit;
+}
+
+@media (max-width: 620px) {
+  .resume-card,
+  .auto-unlock {
+    align-items: stretch;
+  }
+
+  .auto-unlock__cap {
+    flex-basis: 100%;
+  }
 }

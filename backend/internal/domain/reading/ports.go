@@ -22,3 +22,9 @@ type Repository interface {
 type Entitlements interface {
 	IsChapterUnlocked(ctx context.Context, userID, chapterID int64) (bool, error)
 }
+
+// Subscriptions reports auto-unlock opt-in, which is what grants the
+// early-access window. Also satisfied by the wallet repository.
+type Subscriptions interface {
+	IsSubscribed(ctx context.Context, userID, novelID int64) (bool, error)
+}

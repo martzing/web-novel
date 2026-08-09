@@ -18,36 +18,108 @@ type Genre struct {
 
 func (Genre) TableName() string { return "genres" }
 
-// Series matches the `series` table.
+// Series matches the `series` table — a collection of related novels
+// (ชุดหนังสือ) with a translator-curated reading order.
 type Series struct {
-	ID          int64     `gorm:"primaryKey;column:id"          json:"id,string"`
-	Title       string    `gorm:"column:title;not null"         json:"title"`
-	Description *string   `gorm:"column:description"            json:"description,omitempty"`
-	CoverURL    *string   `gorm:"column:cover_url"              json:"cover_url,omitempty"`
+	ID          int64     `gorm:"primaryKey;column:id"             json:"id,string"`
+	Slug        string    `gorm:"column:slug;uniqueIndex;not null" json:"slug"`
+	Title       string    `gorm:"column:title;not null"            json:"title"`
+	Description *string   `gorm:"column:description"               json:"description,omitempty"`
+	CoverURL    *string   `gorm:"column:cover_url"                 json:"cover_url,omitempty"`
+	OwnerUserID *int64    `gorm:"column:owner_user_id"             json:"owner_user_id,string,omitempty"`
 	CreatedAt   time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 }
 
 func (Series) TableName() string { return "series" }
 
+// Relation kinds between two novels, matching the CHECK on
+// novel_relations.kind.
+const (
+	RelationSequel    = "sequel"     // ภาคต่อโดยตรง
+	RelationPrequel   = "prequel"    // ปฐมบท
+	RelationSpinoff   = "spinoff"    // ภาคแยก
+	RelationSideStory = "side_story" // ภาคพิเศษ
+	RelationSameWorld = "same_world" // เกิดในโลกเดียวกัน
+)
+
+// NovelRelation matches `novel_relations` — เรื่องเกี่ยวเนื่อง.
+//
+// Stored directional: the kind is stated from NovelID's point of view.
+// RelationSameWorld is the one symmetric kind and is mirrored when read.
+type NovelRelation struct {
+	NovelID        int64     `gorm:"primaryKey;column:novel_id"`
+	RelatedNovelID int64     `gorm:"primaryKey;column:related_novel_id"`
+	Kind           string    `gorm:"column:kind;not null"`
+	Note           *string   `gorm:"column:note"`
+	SortNo         int16     `gorm:"column:sort_no;not null;default:0"`
+	CreatedAt      time.Time `gorm:"column:created_at;autoCreateTime"`
+}
+
+func (NovelRelation) TableName() string { return "novel_relations" }
+
+// Novel publication statuses, matching the CHECK on novels.status.
+const (
+	NovelOngoing  = "ongoing"
+	NovelComplete = "complete"
+	NovelHiatus   = "hiatus"
+	// NovelHidden is ซ่อนจากหน้าร้าน: still editable by its translator, but
+	// absent from every reader-facing list, search result and ranking.
+	NovelHidden = "hidden"
+)
+
+// Cover styles. CoverImage means "use cover_url"; the rest are generated from
+// cover_color and cover_text.
+const (
+	CoverImage = "image"
+	CoverInk   = "ink"
+	CoverSeal  = "seal"
+	CoverBrush = "brush"
+	CoverPlain = "plain"
+)
+
 // Novel matches the `novels` table.
 type Novel struct {
-	ID                  int64     `gorm:"primaryKey;column:id"                       json:"id,string"`
-	SeriesID            *int64    `gorm:"column:series_id"                           json:"series_id,string,omitempty"`
-	Slug                string    `gorm:"column:slug;uniqueIndex;not null"           json:"slug"`
-	TitleTH             string    `gorm:"column:title_th;not null"                   json:"title_th"`
-	TitleCN             *string   `gorm:"column:title_cn"                            json:"title_cn,omitempty"`
-	AuthorName          *string   `gorm:"column:author_name"                         json:"author_name,omitempty"`
-	Description         *string   `gorm:"column:description"                         json:"description,omitempty"`
-	CoverURL            *string   `gorm:"column:cover_url"                           json:"cover_url,omitempty"`
-	Status              string    `gorm:"column:status;not null;default:ongoing"     json:"status"`
-	PrimaryTranslatorID *int64    `gorm:"column:primary_translator_id"               json:"primary_translator_id,string,omitempty"`
-	RatingAvg           float64   `gorm:"column:rating_avg;not null;default:0"       json:"rating_avg"`
-	RatingCount         int       `gorm:"column:rating_count;not null;default:0"     json:"rating_count"`
-	FollowersCount      int       `gorm:"column:followers_count;not null;default:0"  json:"followers_count"`
-	ChaptersCount       int       `gorm:"column:chapters_count;not null;default:0"   json:"chapters_count"`
-	GlossaryRev         int       `gorm:"column:glossary_rev;not null;default:0"     json:"glossary_rev"`
-	CreatedAt           time.Time `gorm:"column:created_at;autoCreateTime"           json:"created_at"`
-	UpdatedAt           time.Time `gorm:"column:updated_at;autoUpdateTime"           json:"updated_at"`
+	ID                  int64   `gorm:"primaryKey;column:id"                       json:"id,string"`
+	SeriesID            *int64  `gorm:"column:series_id"                           json:"series_id,string,omitempty"`
+	Slug                string  `gorm:"column:slug;uniqueIndex;not null"           json:"slug"`
+	TitleTH             string  `gorm:"column:title_th;not null"                   json:"title_th"`
+	TitleCN             *string `gorm:"column:title_cn"                            json:"title_cn,omitempty"`
+	AuthorName          *string `gorm:"column:author_name"                         json:"author_name,omitempty"`
+	Description         *string `gorm:"column:description"                         json:"description,omitempty"`
+	CoverURL            *string `gorm:"column:cover_url"                           json:"cover_url,omitempty"`
+	Status              string  `gorm:"column:status;not null;default:ongoing"     json:"status"`
+	PrimaryTranslatorID *int64  `gorm:"column:primary_translator_id"               json:"primary_translator_id,string,omitempty"`
+	RatingAvg           float64 `gorm:"column:rating_avg;not null;default:0"       json:"rating_avg"`
+	RatingCount         int     `gorm:"column:rating_count;not null;default:0"     json:"rating_count"`
+	FollowersCount      int     `gorm:"column:followers_count;not null;default:0"  json:"followers_count"`
+	ChaptersCount       int     `gorm:"column:chapters_count;not null;default:0"   json:"chapters_count"`
+	GlossaryRev         int     `gorm:"column:glossary_rev;not null;default:0"     json:"glossary_rev"`
+
+	// SourceChaptersCount is how many chapters the original work has, as
+	// opposed to ChaptersCount which counts what has been translated and
+	// published. Every "บทในต้นฉบับ" figure reads this.
+	SourceChaptersCount int `gorm:"column:source_chapters_count;not null;default:0" json:"source_chapters_count"`
+
+	// Monetisation settings, all writer-controlled.
+	PricePerChapter  int16  `gorm:"column:price_per_chapter;not null;default:0"  json:"price_per_chapter"`
+	FreeUntilChapter int    `gorm:"column:free_until_chapter;not null;default:0" json:"free_until_chapter"`
+	SellByArc        bool   `gorm:"column:sell_by_arc;not null;default:false"    json:"sell_by_arc"`
+	TipsEnabled      bool   `gorm:"column:tips_enabled;not null;default:false"   json:"tips_enabled"`
+	EarlyAccessHours int16  `gorm:"column:early_access_hours;not null;default:0" json:"early_access_hours"`
+	ReleaseSchedule  string `gorm:"column:release_schedule"                      json:"release_schedule,omitempty"`
+
+	// Cover: either an uploaded image (CoverURL) or a generated template.
+	CoverStyle string  `gorm:"column:cover_style;not null;default:image" json:"cover_style"`
+	CoverColor *string `gorm:"column:cover_color"                        json:"cover_color,omitempty"`
+	CoverText  *string `gorm:"column:cover_text"                         json:"cover_text,omitempty"`
+
+	// Placement within SeriesID. A novel belongs to at most one series, so the
+	// reading-order slot and its note live here rather than in a join table.
+	SeriesPosition *int16  `gorm:"column:series_position" json:"series_position,omitempty"`
+	SeriesNote     *string `gorm:"column:series_note"     json:"series_note,omitempty"`
+
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 
 	Genres []Genre `gorm:"many2many:novel_genres;joinForeignKey:novel_id;joinReferences:genre_id" json:"genres,omitempty"`
 	Arcs   []Arc   `gorm:"foreignKey:NovelID"                                                     json:"arcs,omitempty"`
@@ -88,8 +160,15 @@ type Chapter struct {
 	TranslatorID *int64     `gorm:"column:translator_id"                    json:"translator_id,string,omitempty"`
 	PublishedAt  *time.Time `gorm:"column:published_at"                     json:"published_at,omitempty"`
 	ScheduledAt  *time.Time `gorm:"column:scheduled_at"                     json:"scheduled_at,omitempty"`
-	CreatedAt    time.Time  `gorm:"column:created_at;autoCreateTime"        json:"created_at"`
-	UpdatedAt    time.Time  `gorm:"column:updated_at;autoUpdateTime"        json:"updated_at"`
+
+	// PublicAt is when a published chapter becomes visible to readers who are
+	// not auto-unlock subscribers. It is snapshotted at publish time as
+	// published_at + novels.early_access_hours, never derived at read time.
+	// nil means "immediately".
+	PublicAt *time.Time `gorm:"column:public_at" json:"public_at,omitempty"`
+
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 }
 
 func (Chapter) TableName() string { return "chapters" }

@@ -112,6 +112,20 @@ func (r *GormRepository) Apply(ctx context.Context, cmd domain.Command) (*domain
 			return err
 		}
 
+		// The child rows and the debit must describe the same money, or the
+		// daily stats rollup — which sums chapter_unlocks.coins_spent — drifts
+		// away from coin_ledger. The allocator guarantees this; the check is
+		// here so a future change cannot break it silently.
+		if cmd.Child.Kind == domain.ChildArcBundle {
+			allocated := 0
+			for _, item := range cmd.Child.Items {
+				allocated += item.Coins
+			}
+			if allocated != -(plan.Entry.Delta + plan.Entry.BonusDelta) {
+				return domain.ErrInvalidAmount
+			}
+		}
+
 		if err := writeChild(tx, cmd, main.ID, plan.Entry); err != nil {
 			return err
 		}
@@ -127,6 +141,35 @@ func (r *GormRepository) Apply(ctx context.Context, cmd domain.Command) (*domain
 		return nil, err
 	}
 	return receipt, nil
+}
+
+// ReplayByKey reports whether an idempotency key has already been applied.
+func (r *GormRepository) ReplayByKey(ctx context.Context, userID int64, idempotencyKey string) (*domain.Receipt, error) {
+	if idempotencyKey == "" {
+		return nil, nil
+	}
+
+	db := dbctx.From(ctx, r.db)
+
+	var existing entities.CoinLedgerEntry
+	err := db.Where("user_id = ? AND idempotency_key = ?", userID, idempotencyKey).
+		Take(&existing).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var balance entities.WalletBalance
+	if err := db.Where("user_id = ?", userID).Take(&balance).Error; err != nil {
+		return nil, err
+	}
+	return &domain.Receipt{
+		Ledger:   toDomainLedger(existing),
+		Balance:  toDomainBalance(balance),
+		Replayed: true,
+	}, nil
 }
 
 func ensureBalanceRow(tx *gorm.DB, userID int64) error {
@@ -164,8 +207,19 @@ func findReplay(tx *gorm.DB, cmd domain.Command) (*domain.Receipt, error) {
 	}, nil
 }
 
+// sameTarget reports whether a stored ledger row describes the same operation
+// the caller is now asking for.
+//
+// All three of kind, ref_type and ref_id matter. Kind alone is not enough
+// because several operations share `spend_unlock`, and kind+ref_id is not
+// enough either: a single-chapter unlock of chapter 42 and an arc bundle for
+// arc 42 would compare equal, so reusing one key across them would replay the
+// wrong receipt and silently skip the purchase.
 func sameTarget(existing entities.CoinLedgerEntry, cmd domain.Command) bool {
 	if existing.Kind != string(cmd.Op.Kind) {
+		return false
+	}
+	if derefString(existing.RefType) != cmd.Op.RefType {
 		return false
 	}
 	if (existing.RefID == nil) != (cmd.Op.RefID == nil) {
@@ -175,6 +229,13 @@ func sameTarget(existing entities.CoinLedgerEntry, cmd domain.Command) bool {
 		return false
 	}
 	return true
+}
+
+func derefString(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
 }
 
 func checkChildPreconditions(tx *gorm.DB, cmd domain.Command) error {
@@ -209,7 +270,53 @@ func checkChildPreconditions(tx *gorm.DB, cmd domain.Command) error {
 			return domain.ErrPurchaseNotPending
 		}
 
-	case domain.ChildNone:
+	case domain.ChildArcBundle:
+		// The quote was taken outside the wallet lock, so everything it assumed
+		// is re-checked here. No row lock is taken on `chapters`: that would
+		// introduce a second lock-acquisition order and reopen the deadlock
+		// this design closes.
+		ids := make([]int64, 0, len(cmd.Child.Items))
+		for _, item := range cmd.Child.Items {
+			ids = append(ids, item.ChapterID)
+		}
+		if len(ids) == 0 {
+			return domain.ErrArcAlreadyOwned
+		}
+
+		var owned int64
+		err := tx.Model(&entities.ChapterUnlock{}).
+			Where("user_id = ? AND chapter_id IN ?", cmd.UserID, ids).
+			Count(&owned).Error
+		if err != nil {
+			return err
+		}
+		// A concurrent unlock of any member chapter invalidates the quote:
+		// the reader would otherwise be charged for something they now own.
+		if owned > 0 {
+			return domain.ErrBundleStale
+		}
+
+		var rows []entities.Chapter
+		if err := tx.Select("id, status, price_coins").Where("id IN ?", ids).Find(&rows).Error; err != nil {
+			return err
+		}
+		if len(rows) != len(ids) {
+			return domain.ErrBundleStale
+		}
+		byID := make(map[int64]entities.Chapter, len(rows))
+		for _, row := range rows {
+			byID[row.ID] = row
+		}
+		for _, item := range cmd.Child.Items {
+			row, ok := byID[item.ChapterID]
+			if !ok || row.Status != entities.ChapterPublished || int(row.PriceCoins) != item.ListPrice {
+				return domain.ErrBundleStale
+			}
+		}
+
+	case domain.ChildTip, domain.ChildNone:
+		// A tip has no precondition of its own: repeat tipping is legitimate,
+		// so the Idempotency-Key is the only guard against a double submit.
 	}
 	return nil
 }
@@ -218,6 +325,9 @@ func planFor(balance domain.Balance, cmd domain.Command) (domain.Plan, error) {
 	switch cmd.Op.Kind {
 	case domain.KindSpendUnlock:
 		return domain.PlanSpend(balance, cmd.Op.Amount, cmd.Now)
+	case domain.KindTip:
+		// Tips draw on purchased coins only.
+		return domain.PlanSpendPaidOnly(balance, cmd.Op.Amount, cmd.Now)
 	case domain.KindTopup, domain.KindBonusGrant, domain.KindRefund:
 		plan, err := domain.PlanCredit(balance, cmd.Op.Coins, cmd.Op.BonusCoins, cmd.Op.BonusTTL, cmd.Now)
 		if err != nil {
@@ -284,6 +394,61 @@ func writeChild(tx *gorm.DB, cmd domain.Command, ledgerID int64, entry domain.Le
 		// an invariant broke rather than a benign race.
 		if res.RowsAffected != 1 {
 			return domain.ErrPurchaseNotPending
+		}
+
+	case domain.ChildArcBundle:
+		unlocks := make([]entities.ChapterUnlock, 0, len(cmd.Child.Items))
+		earnings := make([]entities.WriterEarning, 0, len(cmd.Child.Items))
+
+		for _, item := range cmd.Child.Items {
+			unlocks = append(unlocks, entities.ChapterUnlock{
+				UserID:     cmd.UserID,
+				ChapterID:  item.ChapterID,
+				CoinsSpent: int16(item.Coins),
+				LedgerID:   ledgerID,
+				UnlockedAt: cmd.Now,
+			})
+			if item.WriterID != 0 {
+				earnings = append(earnings, entities.WriterEarning{
+					WriterID:       item.WriterID,
+					ChapterID:      item.ChapterID,
+					UnlockLedgerID: ledgerID,
+					GrossCoins:     item.Coins,
+					NetCoins:       item.NetCoins,
+					Kind:           entities.EarningUnlock,
+					CreatedAt:      cmd.Now,
+				})
+			}
+		}
+
+		if err := tx.Create(&unlocks).Error; err != nil {
+			// Backstop for a race that slipped past the precondition check.
+			if isUniqueViolation(err) {
+				return domain.ErrBundleStale
+			}
+			return err
+		}
+		if len(earnings) > 0 {
+			if err := tx.Create(&earnings).Error; err != nil {
+				return err
+			}
+		}
+
+	case domain.ChildTip:
+		if cmd.Child.WriterID == 0 {
+			return domain.ErrNotFound
+		}
+		earning := entities.WriterEarning{
+			WriterID:       cmd.Child.WriterID,
+			ChapterID:      cmd.Child.ChapterID,
+			UnlockLedgerID: ledgerID,
+			GrossCoins:     -(entry.Delta + entry.BonusDelta),
+			NetCoins:       cmd.Child.NetCoins,
+			Kind:           entities.EarningTip,
+			CreatedAt:      cmd.Now,
+		}
+		if err := tx.Create(&earning).Error; err != nil {
+			return err
 		}
 
 	case domain.ChildNone:
