@@ -1,9 +1,9 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
-import { useAuth } from "../lib/auth";
-import NotificationBell from "./NotificationBell";
+import { useAuth } from "@/features/identity";
+import { useShelfCounts } from "@/features/library";
+import { NotificationBell } from "@/features/notification";
+import { useWallet } from "@/features/wallet";
 
 interface NavEntry {
   to: string;
@@ -23,19 +23,9 @@ export default function Shell() {
   const { user, isTranslator, logout } = useAuth();
   const navigate = useNavigate();
 
-  const wallet = useQuery({
-    queryKey: ["wallet"],
-    queryFn: api.getWallet,
-    enabled: Boolean(user),
-    staleTime: 30_000,
-  });
+  const wallet = useWallet(Boolean(user));
 
-  const shelf = useQuery({
-    queryKey: ["shelf", "counts"],
-    queryFn: () => api.getShelf(),
-    enabled: Boolean(user),
-    staleTime: 60_000,
-  });
+  const shelf = useShelfCounts(Boolean(user));
 
   const readerNav: NavEntry[] = [
     { to: "/", label: "หน้าแรก", icon: "☰" },

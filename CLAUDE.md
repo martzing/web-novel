@@ -34,9 +34,14 @@ not implemented. Phase 7 is intentionally the **last** phase.
 - Put HTTP DTOs and status mapping in handlers.
 - Put database mapping and queries in repositories.
 - Register new backend routes and dependencies from `backend/internal/server/`.
-- Keep React route/page work under `frontend/src/routes/`, shared API calls in
-  `frontend/src/lib/api.ts`, styling in `frontend/src/styles/`, and
-  shell/navigation work under `frontend/src/layout/`.
+- The frontend is feature-sliced by the same bounded contexts as the backend.
+  Put a screen in `frontend/src/features/<context>/pages/`, its endpoints in
+  that context's `api.ts`, and its React Query keys and hooks in its
+  `queries.ts`. Cross-context imports go through `@/features/<context>`, never
+  a deeper path. Truly shared code lives in `frontend/src/shared/`
+  (`api/`, `ui/`, `lib/`, `styles/`), and routing/providers only in
+  `frontend/src/app/`.
+- Never hand-write a React Query key; use the feature's key factory.
 
 `AGENT.md` has a "Rules With Teeth" section listing the traps that have already
 caused defects here — gin wildcard names, the single coin write path, counting
@@ -68,7 +73,9 @@ Frontend:
 
 ```bash
 cd frontend
+nvm use            # Node 18+; vitest will not start on Node 16
 npm run typecheck
+npm test
 npm run build
 npm run dev
 ```

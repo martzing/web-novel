@@ -5,6 +5,11 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    // No `baseUrl`: it is deprecated in TS 6+, and since TS 4.1 `paths` patterns
+    // resolve relative to this file without it.
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

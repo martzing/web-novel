@@ -54,13 +54,38 @@ Backend:
 - `backend/test/makeme/`: test data builder helpers.
 - `backend/test/apitest/`: shared handler integration-test harness.
 
-Frontend:
+Frontend (feature-sliced; the slices are named after the backend's bounded
+contexts on purpose):
 
-- `frontend/src/styles/`: design tokens and stylesheets.
-- `frontend/src/lib/`: API client, auth context, reader prefs, formatting.
-- `frontend/src/components/`: shared UI pieces.
+- `frontend/src/app/`: composition root — `main.tsx`, `providers.tsx`,
+  `router.tsx`, `queryClient.ts`. Nothing else declares routes or providers.
+- `frontend/src/features/<context>/`: one folder per context — `identity`,
+  `catalog`, `reading`, `library`, `wallet`, `social`, `notification`,
+  `writer`. Each holds `api.ts`, `queries.ts`, `components/`, `pages/`, and an
+  `index.ts` that is its public surface.
+- `frontend/src/shared/api/`: `client.ts` (transport, token refresh, upload)
+  and `types.ts` (wire types more than one context speaks).
+- `frontend/src/shared/ui/`: the UI kit, one component per file.
+- `frontend/src/shared/lib/`: formatting and reorder helpers.
+- `frontend/src/shared/styles/`: design tokens and stylesheets.
 - `frontend/src/layout/`: application shell, sidebar, bottom tab bar.
-- `frontend/src/routes/`: page-level route components.
+
+Frontend rules:
+
+- Import with the `@/` alias, never a `../../..` chain.
+- `features/*` may import `shared/*`; `shared/*` must never import `features/*`.
+- One feature may use another only through its `index.ts`
+  (`@/features/wallet`), never a path inside it. If that list has to grow to
+  make something work, the coupling is real and belongs in a narrower hook —
+  the same discipline the Go contexts get.
+- Build every React Query key from the feature's key factory in `queries.ts`.
+  Hand-written key arrays are how `["writer-series-books", id]` and
+  `["writer-series-books"]` drifted apart and broke an invalidation.
+- A mutation invalidates its own context's keys only. When another screen's
+  data also goes stale, the hook takes a callback and the calling screen
+  invalidates what it owns.
+- Pages should not call `useQuery`/`useMutation` directly; wrap them in a
+  feature hook so the page reads as screen logic and the hook can be tested.
 
 ## Bounded Contexts
 
@@ -141,6 +166,18 @@ These encode defects that have already bitten this codebase.
 - **`hidden` is enforced, not decorative.** `ListNovels`, `novelDetail`,
   `WeeklyRanking` and search all exclude it for non-owners. A status the reader
   paths ignore changes nothing.
+- **React Query keys come from a factory, never a literal.** The series tab read
+  `["writer-series-books", id]` while `SeriesNote` invalidated
+  `["writer-series-books"]` — a prefix relationship that only holds if both are
+  built from the same root, which hand-written arrays do not guarantee. Every
+  key now comes from `writerKeys`/`walletKeys`/etc., and
+  `features/*/queries.test.ts` asserts the rooting.
+- **`genre_ids` are JSON numbers, every other id is a string.**
+  `encoding/json`'s `,string` option is silently ignored on slices, so `[]int64`
+  emits and demands numbers. `WriterNovel.genre_ids` is `number[]`; typing it
+  `string[]` makes the compiler agree with a payload the server rejects.
+- **Node 18+ for the frontend toolchain.** Vitest will not start on Node 16
+  (`crypto.getRandomValues is not a function`). `frontend/.nvmrc` pins it.
 
 ## Development Commands
 
@@ -161,8 +198,10 @@ Frontend:
 
 ```bash
 cd frontend
+nvm use            # Node 18+; vitest will not start on Node 16
 npm install
 npm run typecheck
+npm test
 npm run build
 npm run dev
 ```

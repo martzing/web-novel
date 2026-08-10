@@ -52,14 +52,20 @@ web-novel/
 │   └── go.sum
 ├── frontend/                       Vite + React + TypeScript
 │   ├── src/
-│   │   ├── components/             shared UI pieces
+│   │   ├── app/                    composition root: entry, providers, router
+│   │   ├── features/<context>/     one folder per bounded context
+│   │   │   ├── api.ts              that context's endpoints and wire types
+│   │   │   ├── queries.ts          query-key factory and React Query hooks
+│   │   │   ├── components/         components only this context uses
+│   │   │   ├── pages/              route-level screens
+│   │   │   └── index.ts            the context's public surface
 │   │   ├── layout/                 app shell, sidebar, bottom tab bar
-│   │   ├── lib/                    API client, auth, reader prefs, formatting
-│   │   ├── routes/                 page-level route components
-│   │   ├── styles/                 design tokens and stylesheets
-│   │   ├── App.tsx                 route declarations
-│   │   └── main.tsx                React bootstrap
+│   │   ├── shared/api/             HTTP client and cross-context wire types
+│   │   ├── shared/lib/             formatting and reorder helpers
+│   │   ├── shared/styles/          design tokens and stylesheets
+│   │   └── shared/ui/              the UI kit, one component per file
 │   ├── .env.example
+│   ├── .nvmrc                      Node 18+ (vitest needs it)
 │   ├── Dockerfile
 │   ├── index.html
 │   ├── nginx.conf
