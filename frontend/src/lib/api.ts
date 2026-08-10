@@ -433,7 +433,16 @@ export interface WriterNovel {
   description?: string;
   cover_url?: string;
   status: NovelStatus;
-  genre_ids: string[];
+  /**
+   * Genre ids as **numbers**, and the one id in this API that is not a string.
+   *
+   * `encoding/json`'s `,string` option is silently ignored on slices, so
+   * `[]int64` on the Go side emits and demands JSON numbers while every scalar
+   * id — including `Genre.id` from `/genres` — travels as a string. Typing this
+   * `string[]` (as it was) made the compiler agree with a payload the server
+   * rejects.
+   */
+  genre_ids: number[];
 
   series_id?: string;
   series_position: number;
@@ -469,7 +478,14 @@ export interface WriterNovelPatch {
   author_name?: string;
   description?: string;
   status?: NovelStatus;
-  genre_ids?: string[];
+  /**
+   * Numbers, not strings — see `WriterNovel.genre_ids`.
+   *
+   * Omit the key to leave the novel's genres alone; the server replaces them
+   * only when the field is present. An empty array is therefore "remove every
+   * genre", not "no change".
+   */
+  genre_ids?: number[];
   series_id?: string | null;
   series_position?: number;
   series_note?: string;
@@ -810,7 +826,13 @@ export const api = {
     request<Review>(`/novels/${novelId}/reviews`, { method: "POST", body }),
 
   // Writer
-  listWriterNovels: () => request<Paged<WriterNovel>>("/writer/novels"),
+  // The writer lists below ask for the server's maximum page size rather than
+  // letting the smaller default apply. None of these screens has a "load more",
+  // so anything past the first page is simply unreachable — a translator with
+  // 21 works could not open the 21st at all. Past the maximum this still
+  // truncates; that needs real cursor paging in the UI.
+  listWriterNovels: (limit = 100) =>
+    request<Paged<WriterNovel>>(`/writer/novels${qs({ limit })}`),
   createWriterNovel: (body: WriterNovelPatch) =>
     request<WriterNovel>("/writer/novels", { method: "POST", body }),
   updateWriterNovel: (id: string, body: WriterNovelPatch) =>
@@ -852,8 +874,10 @@ export const api = {
     id: string,
     body: { arc_no: number; name: string; from_chapter_no: number; to_chapter_no: number },
   ) => request<WriterArc>(`/writer/arcs/${id}`, { method: "PATCH", body }),
-  listWriterChapters: (novelId: string) =>
-    request<Paged<WriterChapter>>(`/writer/novels/${novelId}/chapters`),
+  // Newest-first, and the editor's chapter rail searches this list client-side,
+  // so a short page would put older chapters out of reach entirely.
+  listWriterChapters: (novelId: string, limit = 500) =>
+    request<Paged<WriterChapter>>(`/writer/novels/${novelId}/chapters${qs({ limit })}`),
   getWriterChapter: (id: string) => request<WriterChapter>(`/writer/chapters/${id}`),
   createWriterChapter: (
     novelId: string,

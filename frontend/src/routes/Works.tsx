@@ -78,7 +78,7 @@ export default function Works() {
 
   const novels = useQuery({
     queryKey: ["writer-novels"],
-    queryFn: api.listWriterNovels,
+    queryFn: () => api.listWriterNovels(),
     enabled: Boolean(user && isTranslator),
   });
 
@@ -294,10 +294,23 @@ function InfoTab({ novel }: { novel: WriterNovel }) {
   const [titleCN, setTitleCN] = useState(novel.title_cn ?? "");
   const [author, setAuthor] = useState(novel.author_name ?? "");
   const [description, setDescription] = useState(novel.description ?? "");
-  const [genreIds, setGenreIds] = useState<string[]>(novel.genre_ids);
   const [sourceCount, setSourceCount] = useState(novel.source_chapters_count);
 
-  const toggleGenre = (id: string) =>
+  // Genre ids are numbers on the wire while `Genre.id` from /genres is a
+  // string, so every id crossing this boundary is converted once, here. Mixing
+  // the two silently breaks `includes`: 1 and "1" are different keys, so a chip
+  // would refuse to deselect and could be added twice.
+  const [genreIds, setGenreIds] = useState<number[]>(novel.genre_ids);
+
+  // Genres are only sent when the translator actually changed them. The patch
+  // treats an absent key as "leave alone" and a present array as the complete
+  // new set, so sending the current state unconditionally would overwrite the
+  // novel's genres with whatever this form happened to be seeded with.
+  const [genresEdited, setGenresEdited] = useState(false);
+
+  const toggleGenre = (rawID: string) => {
+    const id = Number(rawID);
+    setGenresEdited(true);
     setGenreIds((prev) => {
       if (prev.includes(id)) return prev.filter((g) => g !== id);
       // The cap is enforced here rather than by disabling the unselected
@@ -305,6 +318,7 @@ function InfoTab({ novel }: { novel: WriterNovel }) {
       if (prev.length >= MAX_GENRES) return prev;
       return [...prev, id];
     });
+  };
 
   return (
     <div>
@@ -350,7 +364,7 @@ function InfoTab({ novel }: { novel: WriterNovel }) {
           {(genres.data?.data ?? []).map((g: Genre) => (
             <button
               key={g.id}
-              className={`chip${genreIds.includes(g.id) ? " is-active" : ""}`}
+              className={`chip${genreIds.includes(Number(g.id)) ? " is-active" : ""}`}
               onClick={() => toggleGenre(g.id)}
             >
               {g.name_th}
@@ -369,8 +383,8 @@ function InfoTab({ novel }: { novel: WriterNovel }) {
               title_cn: titleCN,
               author_name: author,
               description,
-              genre_ids: genreIds,
               source_chapters_count: sourceCount,
+              ...(genresEdited ? { genre_ids: genreIds } : {}),
             })
           }
         >
@@ -526,7 +540,10 @@ function ChaptersTab({ novel }: { novel: WriterNovel }) {
     queryFn: () => api.listWriterChapters(novel.id),
   });
 
-  const recent = (chapters.data?.data ?? []).slice(-12).reverse();
+  // The API returns chapters newest-first, so the head of the list is the
+  // latest — `.slice(-12)` took the twelve *oldest* it had loaded and showed
+  // them under a "บทล่าสุด" heading.
+  const recent = (chapters.data?.data ?? []).slice(0, 12);
 
   return (
     <div>

@@ -40,8 +40,8 @@ export default function Write() {
   const autosave = useRef<number>();
 
   const novels = useQuery({
-    queryKey: ["writer", "novels"],
-    queryFn: api.listWriterNovels,
+    queryKey: ["writer-novels"],
+    queryFn: () => api.listWriterNovels(),
     enabled: isTranslator,
   });
 
@@ -52,13 +52,13 @@ export default function Write() {
   });
 
   const chapters = useQuery({
-    queryKey: ["writer", "chapters", novelId],
+    queryKey: ["writer-chapters", novelId],
     queryFn: () => api.listWriterChapters(novelId),
     enabled: Boolean(novelId),
   });
 
   const chapter = useQuery({
-    queryKey: ["writer", "chapter", chapterId],
+    queryKey: ["writer-chapter", chapterId],
     queryFn: () => api.getWriterChapter(chapterId),
     enabled: Boolean(chapterId),
   });
@@ -79,7 +79,7 @@ export default function Write() {
     mutationFn: () => api.saveWriterChapter(chapterId, draft),
     onSuccess: (saved) => {
       setSavedAt(saved.updated_at ?? new Date().toISOString());
-      qc.invalidateQueries({ queryKey: ["writer", "chapters", novelId] });
+      qc.invalidateQueries({ queryKey: ["writer-chapters", novelId] });
     },
   });
 
@@ -100,7 +100,7 @@ export default function Write() {
       });
     },
     onSuccess: (created) => {
-      qc.invalidateQueries({ queryKey: ["writer", "chapters", novelId] });
+      qc.invalidateQueries({ queryKey: ["writer-chapters", novelId] });
       setSelection(novelId, created.id);
     },
   });
@@ -109,8 +109,11 @@ export default function Write() {
     mutationFn: () =>
       api.publishChapter(chapterId, scheduledAt ? new Date(scheduledAt).toISOString() : undefined),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["writer", "chapters", novelId] });
-      qc.invalidateQueries({ queryKey: ["writer", "chapter", chapterId] });
+      qc.invalidateQueries({ queryKey: ["writer-chapters", novelId] });
+      qc.invalidateQueries({ queryKey: ["writer-chapter", chapterId] });
+      // Publishing moves novels.chapters_count, which จัดการผลงาน and the work
+      // picker both display — without this they keep showing the old total.
+      qc.invalidateQueries({ queryKey: ["writer-novels"] });
       setScheduledAt("");
     },
   });

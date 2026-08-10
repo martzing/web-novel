@@ -231,6 +231,26 @@ Tip codes: `INSUFFICIENT_PAID_COINS` (402 — **distinct** from
 | GET         | `/writer/earnings`                               |
 | POST        | `/writer/payouts`                                |
 
+### `genre_ids` is the one id that is not a string
+
+Every id in this API is a string-encoded `int64` — except `genre_ids`.
+`encoding/json`'s `,string` option applies to scalars and is **silently ignored
+on slices**, so the field emits and accepts JSON numbers:
+
+```json
+{ "genre_ids": [1, 5, 7] }
+```
+
+`GET /genres` still returns each genre's own `id` as a string, so a client
+building this array from that list has to convert. Sending strings is a `400`.
+The same applies to `ids` on `POST /me/notifications/read`; `novel_ids` on
+`PUT /writer/series/{id}/order` is the exception that is parsed from strings
+explicitly.
+
+`genre_ids` follows the patch's presence rule: omit the key to leave a novel's
+genres alone, and send the complete new set to replace them. An empty array is
+a real edit meaning "remove every genre", not "no change".
+
 ### The novel patch
 
 `PATCH /writer/novels/{id}` is a partial patch, and the settings fields are

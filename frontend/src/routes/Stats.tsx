@@ -20,8 +20,8 @@ export default function Stats() {
   const [view, setView] = useState<View>("stats");
 
   const novels = useQuery({
-    queryKey: ["writer", "novels"],
-    queryFn: api.listWriterNovels,
+    queryKey: ["writer-novels"],
+    queryFn: () => api.listWriterNovels(),
     enabled: isTranslator,
   });
 
@@ -30,7 +30,7 @@ export default function Stats() {
   }, [novels.data, novelId]);
 
   const stats = useQuery({
-    queryKey: ["writer", "stats", novelId, period],
+    queryKey: ["writer-stats", novelId, period],
     queryFn: () => api.getStats(novelId, period),
     enabled: Boolean(novelId),
   });
@@ -228,13 +228,13 @@ function Earnings() {
   const qc = useQueryClient();
   const [amount, setAmount] = useState("");
 
-  const earnings = useQuery({ queryKey: ["writer", "earnings"], queryFn: () => api.listEarnings() });
+  const earnings = useQuery({ queryKey: ["writer-earnings"], queryFn: () => api.listEarnings() });
 
   const payout = useMutation({
     mutationFn: () => api.requestPayout(Math.round(Number(amount) * 100)),
     onSuccess: () => {
       setAmount("");
-      qc.invalidateQueries({ queryKey: ["writer", "earnings"] });
+      qc.invalidateQueries({ queryKey: ["writer-earnings"] });
     },
   });
 

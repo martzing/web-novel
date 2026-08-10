@@ -13,7 +13,7 @@ Every **U** and **I** case below is implemented; the mapping table at the end of
 this document names the file and function for each. **E** and **L** remain out
 of scope — see "Out of scope" at the end.
 
-The suite is 587 passing tests with 0 skips. A skip is not a pass here: without
+The suite is 590 passing tests with 0 skips. A skip is not a pass here: without
 a reachable Docker socket testcontainers skips silently, so always confirm with
 `go test -count=1 -v ./... | grep -c -- '--- SKIP'`.
 
@@ -243,6 +243,20 @@ Added while reconciling the design mocks, the docs and the code (`Check-diff.md`
 | I-WR-07 | same · `TestDeleteGlossaryGroup_RefusesWhileItStillHoldsTerms` |
 | I-WR-08 | `internal/jobs/jobs_integration_test.go` · `TestStatsRollupJob_CountsCompletionsSeparatelyFromReads` |
 | U-WR-01 | `internal/domain/writer/rules_test.go` · `TestAggregate_CompletionRateIsTotalsNotAnAverageOfDays` |
+
+### `genre_ids` — the one id in the API that is not a string
+
+`encoding/json`'s `,string` option is silently ignored on slices, so
+`genre_ids` travels as JSON **numbers** while every scalar id — including
+`Genre.id` from `/genres` — travels as a string. Two defects hid behind that
+asymmetry and behind an endpoint that returned the field empty, so the ข้อมูลเรื่อง
+tab could not save at all. These three cases pin the contract from both ends.
+
+| ID | File · function |
+| --- | --- |
+| I-WR-09 | `internal/handler/writer/genres_integration_test.go` · `TestListNovels_CarriesGenreIDsForEveryNovel` |
+| I-WR-10 | same · `TestUpdateNovel_AcceptsTheGenreIDsItJustReturned` |
+| I-WR-11 | same · `TestUpdateNovel_OmittedGenreIDsLeaveTheGenresAlone` |
 
 ### Supporting unit tests
 

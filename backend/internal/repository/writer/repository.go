@@ -214,11 +214,48 @@ func (r *GormRepository) ListNovels(ctx context.Context, ownerID int64, p page.P
 		})
 	}
 
+	ids := make([]int64, 0, len(rows))
+	for _, row := range rows {
+		ids = append(ids, row.ID)
+	}
+	genres, err := r.genreIDsForNovels(ctx, ids)
+	if err != nil {
+		return nil, "", err
+	}
+
 	out := make([]domain.NovelDraft, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, toDomainNovel(row))
+		draft := toDomainNovel(row)
+		// Without this the works tree hands the editor a novel whose genres
+		// look empty, so the chips render unselected and a save that includes
+		// them replaces the real set with nothing.
+		draft.GenreIDs = genres[row.ID]
+		out = append(out, draft)
 	}
 	return out, next, nil
+}
+
+// genreIDsForNovels loads the genre links for a whole page in one query. A
+// lookup per novel would make listing the works tree cost grow with the number
+// of works a translator has.
+func (r *GormRepository) genreIDsForNovels(ctx context.Context, novelIDs []int64) (map[int64][]int64, error) {
+	out := make(map[int64][]int64, len(novelIDs))
+	if len(novelIDs) == 0 {
+		return out, nil
+	}
+
+	var links []entities.NovelGenre
+	err := dbctx.From(ctx, r.db).
+		Where("novel_id IN ?", novelIDs).
+		Order("novel_id, genre_id").
+		Find(&links).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, link := range links {
+		out[link.NovelID] = append(out[link.NovelID], link.GenreID)
+	}
+	return out, nil
 }
 
 func (r *GormRepository) SetCoverURL(ctx context.Context, novelID int64, url string) error {
