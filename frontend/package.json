@@ -18,7 +18,10 @@
         "react-router-dom": "^6.26.2"
     },
     "engines": {
-        "node": ">=18"
+        "node": ">=24.9.0"
+    },
+    "overrides": {
+        "vite": "$vite"
     },
     "devDependencies": {
         "@testing-library/react": "^14.3.1",

@@ -65,7 +65,7 @@ web-novel/
 │   │   ├── shared/styles/          design tokens and stylesheets
 │   │   └── shared/ui/              the UI kit, one component per file
 │   ├── .env.example
-│   ├── .nvmrc                      Node 18+ (vitest needs it)
+│   ├── .nvmrc                      Node 24.9.0
 │   ├── Dockerfile
 │   ├── index.html
 │   ├── nginx.conf
@@ -87,7 +87,7 @@ Generated/local artifacts are intentionally left out of the map, including
 ## Requirements
 
 - Go 1.25+
-- Node 18+
+- Node 24.9.0+ (`frontend/.nvmrc`)
 - Docker (for Postgres, and for the backend integration tests)
 - `psql` if you want to poke the database
 
@@ -123,6 +123,7 @@ go run ./cmd/api                  # listens on :8080
 # 3. frontend
 cd ../frontend
 cp .env.example .env
+nvm use                           # 24.9.0, per .nvmrc
 npm install
 npm run dev                       # http://localhost:5173, proxies /api → :8080
 ```
@@ -188,9 +189,14 @@ Frontend:
 
 ```bash
 cd frontend
+nvm use            # 24.9.0, per .nvmrc
 npm run typecheck
+npm test           # vitest
 npm run build
 ```
+
+Vitest picks up `src/**/*.test.{ts,tsx}`, so a test sits next to what it covers
+and moves with it.
 
 `docs/test-cases.md` maps every unit and integration case to its test file and
 function.

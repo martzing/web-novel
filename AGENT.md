@@ -176,8 +176,12 @@ These encode defects that have already bitten this codebase.
   `encoding/json`'s `,string` option is silently ignored on slices, so `[]int64`
   emits and demands numbers. `WriterNovel.genre_ids` is `number[]`; typing it
   `string[]` makes the compiler agree with a payload the server rejects.
-- **Node 18+ for the frontend toolchain.** Vitest will not start on Node 16
-  (`crypto.getRandomValues is not a function`). `frontend/.nvmrc` pins it.
+- **One Vite version, enforced by `overrides.vite`.** Vitest lists
+  `vite: ^3 || ^4 || ^5` as a *direct dependency*, so npm otherwise installs a
+  nested Vite 5 alongside the app's Vite 4 — and both read the same
+  `vite.config.ts`. The `"vite": "$vite"` override points vitest at whatever
+  version `devDependencies` declares, so tests transform code the same way the
+  build does.
 
 ## Development Commands
 
@@ -198,7 +202,7 @@ Frontend:
 
 ```bash
 cd frontend
-nvm use            # Node 18+; vitest will not start on Node 16
+nvm use            # 24.9.0, per .nvmrc
 npm install
 npm run typecheck
 npm test

@@ -73,7 +73,7 @@ Frontend:
 
 ```bash
 cd frontend
-nvm use            # Node 18+; vitest will not start on Node 16
+nvm use            # 24.9.0, per .nvmrc
 npm run typecheck
 npm test
 npm run build
