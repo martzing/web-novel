@@ -16,6 +16,7 @@ import {
 } from "../queries";
 
 const AUTOSAVE_MS = 20_000;
+const CHAPTER_PAGE_SIZE = 20;
 
 /**
  * เขียนบท, as a three-step wizard: pick the work, pick or create the chapter,
@@ -43,6 +44,8 @@ export default function Write() {
   const [draft, setDraft] = useState({ chapter_no: 1, title: "", body_source: "", price_coins: 0 });
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [scheduledAt, setScheduledAt] = useState("");
+  const [railQuery, setRailQuery] = useState("");
+  const [railPage, setRailPage] = useState(1);
 
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const autosave = useRef<number>();
@@ -51,6 +54,27 @@ export default function Write() {
   const seriesList = useWriterSeries(isTranslator);
   const chapters = useWriterChapters(novelId);
   const chapter = useWriterChapter(chapterId);
+
+  const railChapters = chapters.data?.data ?? [];
+  const railMatches = useMemo(() => {
+    const needle = railQuery.trim().toLowerCase();
+    if (!needle) return railChapters;
+    return railChapters.filter(
+      (c) => c.title.toLowerCase().includes(needle) || String(c.chapter_no).includes(needle),
+    );
+  }, [railChapters, railQuery]);
+  const railPageCount = Math.max(1, Math.ceil(railMatches.length / CHAPTER_PAGE_SIZE));
+  const railPageSafe = Math.min(railPage, railPageCount);
+  const railPaged = railMatches.slice(
+    (railPageSafe - 1) * CHAPTER_PAGE_SIZE,
+    railPageSafe * CHAPTER_PAGE_SIZE,
+  );
+
+  // Reset to page 1 whenever the search narrows the list or the work changes,
+  // so the rail never opens on a page that no longer has any matches.
+  useEffect(() => {
+    setRailPage(1);
+  }, [railQuery, novelId]);
 
   // Load the selected chapter into the editor.
   useEffect(() => {
@@ -201,7 +225,7 @@ export default function Write() {
         />
       ) : (
         <div className="writer" style={{ marginTop: 18 }}>
-          <aside className="writer__rail">
+          <aside className="writer__rail card">
             <div className="eyebrow" style={{ marginBottom: 10 }}>
               ร่างและบทที่เผยแพร่
             </div>
@@ -212,23 +236,57 @@ export default function Write() {
             >
               + สร้างบทใหม่
             </button>
-            <div className="grid" style={{ gap: 2, marginTop: 12 }}>
-              {(chapters.data?.data ?? []).map((c) => (
-                <button
-                  key={c.id}
-                  className={`panel__item${c.id === chapterId ? " is-current" : ""}`}
-                  onClick={() => setSelection(novelId, c.id)}
-                >
-                  <span className="panel__num">{c.chapter_no}</span>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: "block" }}>{c.title}</span>
-                    <span className="muted" style={{ fontSize: 11 }}>
-                      {chapterStatusLabel(c.status)}
+            <input
+              className="input"
+              style={{ marginTop: 10 }}
+              value={railQuery}
+              onChange={(e) => setRailQuery(e.target.value)}
+              placeholder="ค้นหาบทจากชื่อหรือเลขบท"
+            />
+
+            <div className="writer__rail-list grid" style={{ gap: 2 }}>
+              {railPaged.length === 0 ? (
+                <Empty>ไม่พบบทที่ตรงกับคำค้น</Empty>
+              ) : (
+                railPaged.map((c) => (
+                  <button
+                    key={c.id}
+                    className={`panel__item${c.id === chapterId ? " is-current" : ""}`}
+                    onClick={() => setSelection(novelId, c.id)}
+                  >
+                    <span className="panel__num">{c.chapter_no}</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "block" }}>{c.title}</span>
+                      <span className="muted" style={{ fontSize: 11 }}>
+                        {chapterStatusLabel(c.status)}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              ))}
+                  </button>
+                ))
+              )}
             </div>
+
+            {railPageCount > 1 && (
+              <div className="writer__pager">
+                <button
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setRailPage((p) => Math.max(1, p - 1))}
+                  disabled={railPageSafe <= 1}
+                >
+                  ← ก่อนหน้า
+                </button>
+                <span className="muted" style={{ fontSize: 11.5 }}>
+                  หน้า {numberTH(railPageSafe)}/{numberTH(railPageCount)}
+                </span>
+                <button
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setRailPage((p) => Math.min(railPageCount, p + 1))}
+                  disabled={railPageSafe >= railPageCount}
+                >
+                  ถัดไป →
+                </button>
+              </div>
+            )}
           </aside>
 
           <div className="writer__editor">

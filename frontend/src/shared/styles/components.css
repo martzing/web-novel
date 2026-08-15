@@ -942,6 +942,50 @@
   }
 }
 
+/* ── Write screen ───────────────────────────────────────────────────────── */
+
+.writer {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: var(--s4);
+  align-items: start;
+}
+
+/* Below 900px the rail's search box and pager get cramped next to a full
+   editor, so the two panes stack instead. */
+@media (max-width: 900px) {
+  .writer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.writer__rail {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+  min-height: 360px;
+}
+
+.writer__rail-list {
+  overflow-y: auto;
+  flex: 1;
+  margin-top: 12px;
+}
+
+.writer__pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.writer__editor {
+  min-width: 0;
+}
+
 /* ── Cover editor ───────────────────────────────────────────────────────── */
 
 .cover-editor {
