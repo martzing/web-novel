@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -356,57 +356,171 @@ interface TocRow {
   chapter?: ChapterListItem;
 }
 
+const TOC_RANGE_SIZE = 50;
+
+interface TocRange {
+  key: string;
+  label: string;
+  from: number;
+  to: number;
+}
+
 /**
- * The table of contents: filter pills over an arc-grouped, expandable list.
+ * The table of contents: search by chapter number or title, filter by status
+ * or arc, sort old/new, and jump around a long list via fixed-size chapter
+ * ranges — mirroring the read/reader "jump to chapter" affordance readers
+ * already expect from other Thai novel sites.
  *
  * Chapters beyond what has been translated are listed too, dimmed, up to
  * source_chapters_count. That is derivable on the client from the two counts,
  * so it costs no endpoint — and it is what tells a reader the work is ongoing
- * rather than finished at chapter 87.
+ * rather than finished at chapter 87. Ranges are built over translated +
+ * this (capped) pending count, never over the raw source count, so a
+ * long-running source doesn't produce dozens of near-empty ranges.
  */
 function TableOfContents({ novel, chapters }: { novel: NovelDetail; chapters: ChapterListItem[] }) {
   const [filter, setFilter] = useState<ChapterFilter>("all");
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [query, setQuery] = useState("");
+  const [arcId, setArcId] = useState("all");
+  const [sortDesc, setSortDesc] = useState(false);
+  const [rangeKey, setRangeKey] = useState("all");
+  const [shown, setShown] = useState(TOC_RANGE_SIZE);
 
-  const visible = useMemo(() => {
-    switch (filter) {
-      case "free":
-        return chapters.filter((c) => c.price_coins === 0);
-      case "unlocked":
-        return chapters.filter((c) => c.price_coins > 0 && c.unlocked);
-      case "locked":
-        return chapters.filter((c) => c.price_coins > 0 && !c.unlocked);
-      default:
-        return chapters;
-    }
-  }, [chapters, filter]);
+  // Any change to what's being looked at should land back on the first page
+  // of results, rather than leaving `shown` pointing past a now-shorter list.
+  useEffect(() => {
+    setShown(TOC_RANGE_SIZE);
+  }, [query, arcId, sortDesc, rangeKey, filter]);
 
-  // Untranslated chapters only make sense on the unfiltered list: they have no
-  // price and no unlock state to filter by.
+  const highestTranslated = useMemo(
+    () => chapters.reduce((max, c) => Math.max(max, c.chapter_no), 0),
+    [chapters],
+  );
+
   const untranslated = useMemo<TocRow[]>(() => {
-    if (filter !== "all") return [];
-    const highest = chapters.reduce((max, c) => Math.max(max, c.chapter_no), 0);
     const rows: TocRow[] = [];
-    for (let no = highest + 1; no <= novel.source_chapters_count; no++) {
+    for (let no = highestTranslated + 1; no <= novel.source_chapters_count; no++) {
       rows.push({ key: `pending-${no}`, chapterNo: no });
     }
     // A very long source would otherwise render thousands of empty rows.
     return rows.slice(0, 50);
-  }, [chapters, filter, novel.source_chapters_count]);
+  }, [highestTranslated, novel.source_chapters_count]);
 
-  const groups = useMemo(() => groupByArc(novel.arcs, visible, untranslated), [novel.arcs, visible, untranslated]);
+  const maxChapterNo = highestTranslated + untranslated.length;
 
-  const toggle = (key: string) =>
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
+  const chapterByNo = useMemo(() => {
+    const map = new Map<number, ChapterListItem>();
+    chapters.forEach((c) => map.set(c.chapter_no, c));
+    return map;
+  }, [chapters]);
+
+  const pendingByNo = useMemo(() => {
+    const map = new Map<number, TocRow>();
+    untranslated.forEach((r) => map.set(r.chapterNo, r));
+    return map;
+  }, [untranslated]);
+
+  const ranges = useMemo<TocRange[]>(() => {
+    const list: TocRange[] = [{ key: "all", label: "ทั้งหมด", from: 1, to: maxChapterNo }];
+    for (let from = 1; from <= maxChapterNo; from += TOC_RANGE_SIZE) {
+      const to = Math.min(maxChapterNo, from + TOC_RANGE_SIZE - 1);
+      list.push({ key: `r${from}`, label: `${from}–${to}`, from, to });
+    }
+    return list;
+  }, [maxChapterNo]);
+
+  const rangeIndex = Math.max(0, ranges.findIndex((r) => r.key === rangeKey));
+  const activeRange = ranges[rangeIndex];
+  const selectedArc = novel.arcs.find((a) => a.id === arcId);
+
+  const trimmedQuery = query.trim();
+  const isChapterJump = /^\d+$/.test(trimmedQuery);
+
+  // Choosing an arc and choosing a range are two lenses over the same list —
+  // picking one clears the other rather than compounding them.
+  const pickArc = (id: string) => {
+    setArcId(id);
+    setRangeKey("all");
+  };
+  const pickRange = (key: string) => {
+    setRangeKey(key);
+    setArcId("all");
+  };
+
+  const allRows = useMemo<TocRow[]>(() => {
+    let nums: number[] = [];
+    if (trimmedQuery && isChapterJump) {
+      // A pure chapter number is a "jump near here" request, not a filter —
+      // it ignores whatever arc or range is currently selected.
+      const target = Number(trimmedQuery);
+      for (let n = Math.max(1, target - 3); n <= Math.min(maxChapterNo, target + 6); n++) nums.push(n);
+    } else {
+      const lo = selectedArc ? selectedArc.from_chapter_no : activeRange.from;
+      const hi = selectedArc ? selectedArc.to_chapter_no : activeRange.to;
+      for (let n = lo; n <= hi; n++) nums.push(n);
+    }
+    if (sortDesc) nums.reverse();
+
+    let rows: TocRow[] = nums.map((n) => {
+      const chapter = chapterByNo.get(n);
+      if (chapter) return { key: chapter.id, chapterNo: n, chapter };
+      return pendingByNo.get(n) ?? { key: `pending-${n}`, chapterNo: n };
     });
+
+    rows = rows.filter((r) => {
+      if (filter === "all") return true;
+      // Untranslated rows have no price or unlock state, so they only ever
+      // make sense on the unfiltered list.
+      if (!r.chapter) return false;
+      if (filter === "free") return r.chapter.price_coins === 0;
+      if (filter === "unlocked") return r.chapter.price_coins > 0 && r.chapter.unlocked;
+      return r.chapter.price_coins > 0 && !r.chapter.unlocked; // "locked"
+    });
+
+    if (trimmedQuery && !isChapterJump) {
+      const needle = trimmedQuery.toLowerCase();
+      rows = rows.filter((r) => r.chapter?.title.toLowerCase().includes(needle));
+    }
+
+    return rows;
+  }, [trimmedQuery, isChapterJump, maxChapterNo, selectedArc, activeRange, sortDesc, chapterByNo, pendingByNo, filter]);
+
+  const visibleCount = Math.min(allRows.length, shown);
+  const visibleRows = allRows.slice(0, visibleCount);
+  const remaining = allRows.length - visibleCount;
+
+  const heading = selectedArc
+    ? `ภาคที่ ${selectedArc.arc_no} · ${selectedArc.name}`
+    : trimmedQuery && isChapterJump
+      ? `ใกล้บทที่ ${trimmedQuery}`
+      : `ช่วงบท ${activeRange.label}`;
+
+  const rangePosLabel =
+    arcId === "all" ? `ช่วงที่ ${numberTH(rangeIndex + 1)} จาก ${numberTH(ranges.length)}` : "กรองตามภาค";
 
   return (
     <div style={{ marginTop: 14 }}>
-      <div className="chips" style={{ marginBottom: 16 }}>
+      <div className="toc-bar">
+        <input
+          className="input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="พิมพ์เลขบท เช่น 1450 หรือค้นชื่อบท"
+        />
+        <select className="select" value={arcId} onChange={(e) => pickArc(e.target.value)}>
+          <option value="all">ทุกภาค</option>
+          {novel.arcs.map((a) => (
+            <option key={a.id} value={a.id}>
+              ภาคที่ {a.arc_no} · {a.name}
+            </option>
+          ))}
+        </select>
+        <button className="btn" onClick={() => setSortDesc((d) => !d)}>
+          {sortDesc ? "บทใหม่ → เก่า" : "บทเก่า → ใหม่"}
+        </button>
+      </div>
+
+      <div className="chips" style={{ marginTop: 12 }}>
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -418,84 +532,61 @@ function TableOfContents({ novel, chapters }: { novel: NovelDetail; chapters: Ch
         ))}
       </div>
 
-      {groups.length === 0 ? (
-        <Empty>ไม่มีบทที่ตรงกับตัวกรองนี้</Empty>
+      <div className="toc-heading">
+        <span className="toc-heading__label">
+          {heading}
+          {selectedArc && novel.sell_by_arc && <ArcBundleButton arc={selectedArc} />}
+        </span>
+        <span className="muted" style={{ fontSize: 11.5 }}>
+          {numberTH(allRows.length)} บท · แสดง {numberTH(visibleCount)} บท
+        </span>
+      </div>
+
+      {allRows.length === 0 ? (
+        <Empty>ไม่พบบทที่ตรงกับเงื่อนไข ลองล้างตัวกรองหรือเปลี่ยนช่วงบท</Empty>
       ) : (
-        groups.map((group) => {
-          // The first arc opens by default and the rest stay closed, so a
-          // 400-chapter novel does not arrive as a wall of rows. `expanded`
-          // holds the arcs whose state has been *flipped* from that default,
-          // which keeps "collapse the first one" working too.
-          const openByDefault = group.index === 0;
-          const isOpen = expanded.has(group.key) ? !openByDefault : openByDefault;
+        <ChapterRows rows={visibleRows} />
+      )}
 
-          return (
-            <div key={group.key} style={{ marginBottom: 22 }}>
-              <button className="arc-head" onClick={() => toggle(group.key)} aria-expanded={isOpen}>
-                <span className="arc-head__caret" aria-hidden="true">
-                  {isOpen ? "▾" : "▸"}
-                </span>
-                <span className="arc-head__name">{group.label}</span>
-                <span className="muted mono" style={{ fontSize: 11.5 }}>
-                  {numberTH(group.rows.length)} บท
-                </span>
-                {group.arc && novel.sell_by_arc && <ArcBundleButton arc={group.arc} />}
-              </button>
+      {remaining > 0 && (
+        <button
+          className="btn btn--ghost btn--block"
+          onClick={() => setShown((n) => n + TOC_RANGE_SIZE)}
+        >
+          แสดงอีก {numberTH(Math.min(TOC_RANGE_SIZE, remaining))} บท จากที่เหลือ {numberTH(remaining)} บท
+        </button>
+      )}
 
-              {isOpen && <ChapterRows rows={group.rows} />}
-            </div>
-          );
-        })
+      {ranges.length > 2 && (
+        <>
+          <div className="toc-range">
+            <button
+              className="btn btn--ghost btn--sm"
+              onClick={() => pickRange(ranges[Math.max(0, rangeIndex - 1)].key)}
+              disabled={rangeIndex <= 0}
+            >
+              ‹ ช่วงก่อนหน้า
+            </button>
+            <select className="select mono" value={activeRange.key} onChange={(e) => pickRange(e.target.value)}>
+              {ranges.map((r) => (
+                <option key={r.key} value={r.key}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+            <button
+              className="btn btn--ghost btn--sm"
+              onClick={() => pickRange(ranges[Math.min(ranges.length - 1, rangeIndex + 1)].key)}
+              disabled={rangeIndex >= ranges.length - 1}
+            >
+              ช่วงถัดไป ›
+            </button>
+          </div>
+          <div className="toc-range__pos muted">{rangePosLabel}</div>
+        </>
       )}
     </div>
   );
-}
-
-interface TocGroup {
-  key: string;
-  index: number;
-  label: string;
-  arc?: Arc;
-  rows: TocRow[];
-}
-
-function groupByArc(arcs: Arc[], chapters: ChapterListItem[], untranslated: TocRow[]): TocGroup[] {
-  const rows: TocRow[] = [
-    ...chapters.map((c) => ({ key: c.id, chapterNo: c.chapter_no, chapter: c })),
-    ...untranslated,
-  ];
-
-  const groups: TocGroup[] = [];
-  const claimed = new Set<string>();
-
-  arcs.forEach((arc) => {
-    // Membership by chapter number, matching how the backend prices a bundle —
-    // arc_id is NULL on chapters written before their arc existed.
-    const items = rows.filter(
-      (r) => r.chapterNo >= arc.from_chapter_no && r.chapterNo <= arc.to_chapter_no,
-    );
-    items.forEach((r) => claimed.add(r.key));
-    if (items.length > 0) {
-      groups.push({
-        key: `arc-${arc.id}`,
-        index: groups.length,
-        label: `ภาคที่ ${arc.arc_no} · ${arc.name}`,
-        arc,
-        rows: items,
-      });
-    }
-  });
-
-  const rest = rows.filter((r) => !claimed.has(r.key));
-  if (rest.length > 0) {
-    groups.push({
-      key: "arc-none",
-      index: groups.length,
-      label: groups.length > 0 ? "บทอื่น ๆ" : "สารบัญ",
-      rows: rest,
-    });
-  }
-  return groups;
 }
 
 /** Buys a whole arc at the platform discount, after showing the quote. */
